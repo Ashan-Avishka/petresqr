@@ -3,6 +3,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
+import { useIsMobile } from '../../hooks/useIsMobile'; // Adjust path as needed
 
 interface StatItemProps {
     icon: React.ReactNode;
@@ -18,11 +19,11 @@ const StatItem: React.FC<StatItemProps> = ({ icon, number, label, delay }) => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay }}
-            className="flex flex-col items-center gap-3"
+            className="flex flex-col items-center justify-center gap-3"
         >
             <motion.div
                 whileHover={{ scale: 1.1 }}
-                className="w-20 h-20 rounded-3xl bg-gradient-to-br from-secondary to-amber-600 flex items-center justify-center shadow-lg"
+                className="md:w-20 md:h-20 w-15 h-15 rounded-3xl bg-gradient-to-br from-primary via-black via-60% to-black flex items-center justify-center shadow-lg shadow-primary"
             >
                 {icon}
             </motion.div>
@@ -31,21 +32,23 @@ const StatItem: React.FC<StatItemProps> = ({ icon, number, label, delay }) => {
                 whileInView={{ scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: delay + 0.2 }}
-                className="text-4xl font-bold text-gray-900"
+                className="md:text-4xl text-2xl font-bold md:mt-4 text-gray-300 text-center"
             >
                 {number}
             </motion.div>
-            <p className="text-sm font-medium text-gray-600 text-center">{label}</p>
+            <p className="text-xs md:text-sm font-medium text-gray-400 text-center -mt-2">{label}</p>
         </motion.div>
     );
 };
 
 const WhoWeAreSection: React.FC = () => {
+    const isMobile = useIsMobile();
+
     const stats = [
         {
             icon: (
                 <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
             ),
             number: "50,000+",
@@ -54,7 +57,7 @@ const WhoWeAreSection: React.FC = () => {
         {
             icon: (
                 <svg className="w-11 h-11 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
             ),
             number: "25,000+",
@@ -63,7 +66,7 @@ const WhoWeAreSection: React.FC = () => {
         {
             icon: (
                 <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
             ),
             number: "98%",
@@ -72,7 +75,7 @@ const WhoWeAreSection: React.FC = () => {
         {
             icon: (
                 <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
             ),
             number: "24/7",
@@ -81,7 +84,7 @@ const WhoWeAreSection: React.FC = () => {
         {
             icon: (
                 <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
             ),
             number: "24/7",
@@ -89,16 +92,15 @@ const WhoWeAreSection: React.FC = () => {
         }
     ];
 
-    return (
-        <section className="pt-20 bg-primary-background relative overflow-hidden">
-            {/* Background decoration */}
-            <div className="absolute top-0 left-0 w-64 h-64 bg-amber-200/50 rounded-full blur-3xl" />
-            <div className="absolute bottom-0 right-0 w-96 h-96 bg-yellow-200/20 rounded-full blur-3xl" />
+    // Show only 3 stats on mobile
+    const displayStats = isMobile ? stats.slice(0, 3) : stats;
 
+    return (
+        <section className="pt-20 bg-black relative overflow-hidden">
             <div className="max-w-7xl mx-auto px-6 relative z-10">
                 {/* Stats Section */}
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-8 md:gap-12 mb-30">
-                    {stats.map((stat, index) => (
+                <div className="grid grid-cols-3 md:grid-cols-5 gap-8 md:gap-12 md:mb-30 mb-20 place-items-center">
+                    {displayStats.map((stat, index) => (
                         <StatItem
                             key={index}
                             icon={stat.icon}
@@ -109,14 +111,14 @@ const WhoWeAreSection: React.FC = () => {
                     ))}
                 </div>
 
-                <div className="backdrop-blur-2xl border border-white/30 p-3 mx-auto">
+                <div className="backdrop-blur-2xl p-3 mx-auto">
                     {/* Title */}
                     <motion.h2
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.6, delay: 0.3 }}
-                        className="text-4xl md:text-5xl lg:text-6xl font-bold text-center mb-8 text-gray-900"
+                        className="text-4xl md:text-5xl lg:text-6xl font-bold text-center mb-8 text-white"
                     >
                         Who We Are
                     </motion.h2>
@@ -127,7 +129,7 @@ const WhoWeAreSection: React.FC = () => {
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.6, delay: 0.5 }}
-                        className="text-base md:text-lg text-gray-600 text-center max-w-4xl mx-auto leading-relaxed"
+                        className="text-base md:text-lg text-gray-400 text-center max-w-4xl mx-auto leading-relaxed"
                     >
                         Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut
                         labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco
@@ -143,7 +145,7 @@ const WhoWeAreSection: React.FC = () => {
                     whileInView={{ opacity: 1, scale: 1 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.8, delay: 0.6 }}
-                    className="relative w-full max-w-5xl mx-auto h-[300px] md:h-[400px] lg:h-[500px] -mt-20"
+                    className="relative w-full max-w-5xl mx-auto h-[300px] md:h-[400px] lg:h-[500px] md:-mt-20 -mt-30"
                 >
                     <Image
                         src="/images/who-we-are-img.png"

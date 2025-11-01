@@ -1,21 +1,42 @@
-// app/layout.js
+// app/layout.tsx
+"use client";
+
+import { useState, createContext, useContext } from 'react';
 import "./globals.css";
 import Navbar from "../../components/ui/Navbar";
 import Footer from "../../components/ui/Footer";
+import AuthModal from "../../components/Models/AuthModel";
 
-export const metadata = {
-  title: "PetResQR",
-  description: "An example app with a Navbar and Footer",
-};
+// Create context for auth modal
+const AuthModalContext = createContext({
+  openAuthModal: () => {},
+  closeAuthModal: () => {},
+});
 
+export const useAuthModal = () => useContext(AuthModalContext);
 
 export default function RootLayout({ children }) {
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
   return (
     <html lang="en">
       <body className="flex flex-col min-h-screen">
-        <Navbar />
-        <main className="flex-grow">{children}</main>
-        <Footer />
+        <AuthModalContext.Provider 
+          value={{
+            openAuthModal: () => setIsAuthModalOpen(true),
+            closeAuthModal: () => setIsAuthModalOpen(false),
+          }}
+        >
+          <Navbar />
+          <main className="flex-grow">{children}</main>
+          <Footer />
+          
+          {/* Single AuthModal instance for entire app */}
+          <AuthModal 
+            isOpen={isAuthModalOpen} 
+            onClose={() => setIsAuthModalOpen(false)} 
+          />
+        </AuthModalContext.Provider>
       </body>
     </html>
   );

@@ -87,7 +87,7 @@ const PetCard: React.FC<{
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow overflow-hidden"
+                className="bg-gradient-to-br from-primary via-black to-black rounded-xl  hover:shadow-lg transition-shadow overflow-hidden"
             >
                 <div className="p-6">
                     <div className="flex items-center gap-4">
@@ -96,24 +96,24 @@ const PetCard: React.FC<{
                             height={80}
                             src={pet.image}
                             alt={pet.name}
-                            className="w-20 h-20 rounded-lg object-cover"
+                            className="w-20 h-20 rounded-lg object-cover shadow-lg shadow-black"
                         />
                         <div className="flex-1">
                             <div className="flex items-center gap-3 mb-2">
-                                <h3 className="font-bold text-gray-900 text-lg">{pet.name}</h3>
+                                <h3 className="text-white text-2xl">{pet.name}</h3>
                                 {pet.type === 'dog' ? (
-                                    <Dog className="w-5 h-5 text-amber-500" />
+                                    <Dog className="w-5 h-5 text-primary" />
                                 ) : (
-                                    <Cat className="w-5 h-5 text-amber-500" />
+                                    <Cat className="w-5 h-5 text-primary" />
                                 )}
-                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${pet.tag.status === 'active'
-                                        ? 'bg-green-100 text-green-800'
-                                        : 'bg-gray-100 text-gray-800'
+                                <span className={`px-3 py-1 rounded-full text-xs font-medium shadow-sm shadow-primary ${pet.tag.status === 'active'
+                                    ? 'bg-black text-gray-300'
+                                    : 'bg-gray-400 text-gray-100'
                                     }`}>
                                     {pet.tag.status === 'active' ? 'Active' : 'Inactive'}
                                 </span>
                             </div>
-                            <div className="flex items-center gap-6 text-sm text-gray-600">
+                            <div className="flex items-center gap-6 text-sm text-gray-300">
                                 <span>{pet.breed}</span>
                                 <span>|</span>
                                 <span>{pet.age} years</span>
@@ -128,7 +128,7 @@ const PetCard: React.FC<{
                                 onClick={onEdit}
                                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                             >
-                                <Edit2 className="w-5 h-5 text-amber-600" />
+                                <Edit2 className="w-5 h-5 text-primary" />
                             </button>
                             <button
                                 onClick={onDelete}
@@ -138,7 +138,7 @@ const PetCard: React.FC<{
                             </button>
                             <button
                                 onClick={onToggle}
-                                className="px-4 py-2 bg-gradient-to-r from-yellow-400 to-amber-500 text-white rounded-lg hover:from-yellow-500 hover:to-amber-600 transition-all"
+                                className="px-4 py-2 bg-gradient-to-br from-primary via-black via-80% to-black shadow-md shadow-primary text-white rounded-lg hover:shadow-lg transition-all"
                             >
                                 {isExpanded ? 'Show Less' : 'View Details'}
                             </button>
@@ -162,8 +162,8 @@ const PetCard: React.FC<{
                                                 key={section.id}
                                                 onClick={() => setActiveSection(section.id)}
                                                 className={`px-4 py-2 font-medium text-sm transition-colors relative ${activeSection === section.id
-                                                        ? 'text-amber-600'
-                                                        : 'text-gray-600 hover:text-gray-900'
+                                                    ? 'text-white'
+                                                    : 'text-gray-300 hover:text-gray-100'
                                                     }`}
                                             >
                                                 {section.label}
@@ -190,29 +190,29 @@ const PetCard: React.FC<{
                                             {activeSection === 'bio' && (
                                                 <div className="grid grid-cols-2 gap-6">
                                                     <div className="col-span-2">
-                                                        <label className="text-sm font-medium text-gray-600">Description</label>
-                                                        <p className="text-gray-900 mt-1">{pet.bio.description || 'No description added'}</p>
+                                                        <label className="text-sm font-medium text-gray-400">Description</label>
+                                                        <p className="text-gray-300 mt-1">{pet.bio.description || 'No description added'}</p>
                                                     </div>
                                                     <div>
-                                                        <label className="text-sm font-medium text-gray-600">Birth Date</label>
-                                                        <p className="text-gray-900 mt-1">{pet.bio.birthDate}</p>
+                                                        <label className="text-sm font-medium text-gray-400">Birth Date</label>
+                                                        <p className="text-gray-300 mt-1">{pet.bio.birthDate}</p>
                                                     </div>
                                                     <div>
-                                                        <label className="text-sm font-medium text-gray-600">Gender</label>
-                                                        <p className="text-gray-900 mt-1 capitalize">{pet.gender}</p>
+                                                        <label className="text-sm font-medium text-gray-400">Gender</label>
+                                                        <p className="text-gray-300 mt-1 capitalize">{pet.gender}</p>
                                                     </div>
                                                     <div>
-                                                        <label className="text-sm font-medium text-gray-600">Color</label>
-                                                        <p className="text-gray-900 mt-1">{pet.color}</p>
+                                                        <label className="text-sm font-medium text-gray-400">Color</label>
+                                                        <p className="text-gray-300 mt-1">{pet.color}</p>
                                                     </div>
                                                     <div>
-                                                        <label className="text-sm font-medium text-gray-600">Weight</label>
-                                                        <p className="text-gray-900 mt-1">{pet.weight} kg</p>
+                                                        <label className="text-sm font-medium text-gray-400">Weight</label>
+                                                        <p className="text-gray-300 mt-1">{pet.weight} kg</p>
                                                     </div>
                                                     {pet.bio.microchipId && (
                                                         <div className="col-span-2">
-                                                            <label className="text-sm font-medium text-gray-600">Microchip ID</label>
-                                                            <p className="text-gray-900 mt-1 font-mono">{pet.bio.microchipId}</p>
+                                                            <label className="text-sm font-medium text-gray-400">Microchip ID</label>
+                                                            <p className="text-gray-300 mt-1 font-mono">{pet.bio.microchipId}</p>
                                                         </div>
                                                     )}
                                                 </div>
@@ -221,24 +221,24 @@ const PetCard: React.FC<{
                                             {activeSection === 'medical' && (
                                                 <div className="grid grid-cols-2 gap-6">
                                                     <div>
-                                                        <label className="text-sm font-medium text-gray-600">Allergies</label>
-                                                        <p className="text-gray-900 mt-1">{pet.medical.allergies || 'None reported'}</p>
+                                                        <label className="text-sm font-medium text-gray-400">Allergies</label>
+                                                        <p className="text-gray-300 mt-1">{pet.medical.allergies || 'None reported'}</p>
                                                     </div>
                                                     <div>
-                                                        <label className="text-sm font-medium text-gray-600">Current Medications</label>
-                                                        <p className="text-gray-900 mt-1">{pet.medical.medications || 'None'}</p>
+                                                        <label className="text-sm font-medium text-gray-400">Current Medications</label>
+                                                        <p className="text-gray-300 mt-1">{pet.medical.medications || 'None'}</p>
                                                     </div>
                                                     <div className="col-span-2">
-                                                        <label className="text-sm font-medium text-gray-600">Medical Conditions</label>
-                                                        <p className="text-gray-900 mt-1">{pet.medical.conditions || 'None reported'}</p>
+                                                        <label className="text-sm font-medium text-gray-400">Medical Conditions</label>
+                                                        <p className="text-gray-300 mt-1">{pet.medical.conditions || 'None reported'}</p>
                                                     </div>
                                                     <div>
-                                                        <label className="text-sm font-medium text-gray-600">Veterinarian</label>
-                                                        <p className="text-gray-900 mt-1">{pet.medical.vetName}</p>
+                                                        <label className="text-sm font-medium text-gray-400">Veterinarian</label>
+                                                        <p className="text-gray-300 mt-1">{pet.medical.vetName}</p>
                                                     </div>
                                                     <div>
-                                                        <label className="text-sm font-medium text-gray-600">Vet Phone</label>
-                                                        <p className="text-gray-900 mt-1">{pet.medical.vetPhone}</p>
+                                                        <label className="text-sm font-medium text-gray-400">Vet Phone</label>
+                                                        <p className="text-gray-300 mt-1">{pet.medical.vetPhone}</p>
                                                     </div>
                                                 </div>
                                             )}
@@ -246,23 +246,23 @@ const PetCard: React.FC<{
                                             {activeSection === 'tag' && (
                                                 <div className="grid grid-cols-2 gap-6">
                                                     <div>
-                                                        <label className="text-sm font-medium text-gray-600">Tag ID</label>
-                                                        <p className="text-gray-900 font-mono mt-1">{pet.tag.tagId}</p>
+                                                        <label className="text-sm font-medium text-gray-400">Tag ID</label>
+                                                        <p className="text-gray-300 font-mono mt-1">{pet.tag.tagId}</p>
                                                     </div>
                                                     <div>
-                                                        <label className="text-sm font-medium text-gray-600">Status</label>
+                                                        <label className="text-sm font-medium text-gray-400">Status</label>
                                                         <div className="mt-1">
                                                             <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${pet.tag.status === 'active'
-                                                                    ? 'bg-green-100 text-green-800'
-                                                                    : 'bg-gray-100 text-gray-800'
+                                                                ? 'bg-green-500 text-green-800'
+                                                                : 'bg-gray-100 text-gray-800'
                                                                 }`}>
                                                                 {pet.tag.status === 'active' ? 'Active' : 'Inactive'}
                                                             </span>
                                                         </div>
                                                     </div>
                                                     <div className="col-span-2">
-                                                        <label className="text-sm font-medium text-gray-600">Activated Date</label>
-                                                        <p className="text-gray-900 mt-1">{pet.tag.activatedDate}</p>
+                                                        <label className="text-sm font-medium text-gray-400">Activated Date</label>
+                                                        <p className="text-gray-300 mt-1">{pet.tag.activatedDate}</p>
                                                     </div>
                                                 </div>
                                             )}
@@ -270,16 +270,16 @@ const PetCard: React.FC<{
                                             {activeSection === 'other' && (
                                                 <div className="grid grid-cols-2 gap-6">
                                                     <div>
-                                                        <label className="text-sm font-medium text-gray-600">Favorite Food</label>
-                                                        <p className="text-gray-900 mt-1">{pet.other.favoriteFood || 'Not specified'}</p>
+                                                        <label className="text-sm font-medium text-gray-400">Favorite Food</label>
+                                                        <p className="text-gray-300 mt-1">{pet.other.favoriteFood || 'Not specified'}</p>
                                                     </div>
                                                     <div>
-                                                        <label className="text-sm font-medium text-gray-600">Behavior Notes</label>
-                                                        <p className="text-gray-900 mt-1">{pet.other.behavior || 'No notes added'}</p>
+                                                        <label className="text-sm font-medium text-gray-400">Behavior Notes</label>
+                                                        <p className="text-gray-300 mt-1">{pet.other.behavior || 'No notes added'}</p>
                                                     </div>
                                                     <div className="col-span-2">
-                                                        <label className="text-sm font-medium text-gray-600">Special Needs</label>
-                                                        <p className="text-gray-900 mt-1">{pet.other.specialNeeds || 'None'}</p>
+                                                        <label className="text-sm font-medium text-gray-400">Special Needs</label>
+                                                        <p className="text-gray-300 mt-1">{pet.other.specialNeeds || 'None'}</p>
                                                     </div>
                                                 </div>
                                             )}
@@ -352,8 +352,8 @@ const PetProfile: React.FC<{ pet: Pet; onBack: () => void; onEdit: () => void }>
                                 key={section.id}
                                 onClick={() => setActiveSection(section.id)}
                                 className={`px-4 py-2 font-medium text-sm transition-colors relative ${activeSection === section.id
-                                        ? 'text-amber-600'
-                                        : 'text-gray-600 hover:text-gray-900'
+                                    ? 'text-amber-600'
+                                    : 'text-gray-600 hover:text-gray-900'
                                     }`}
                             >
                                 {section.label}
@@ -449,8 +449,8 @@ const PetProfile: React.FC<{ pet: Pet; onBack: () => void; onEdit: () => void }>
                                         <label className="text-sm font-medium text-gray-600">Status</label>
                                         <div className="mt-2">
                                             <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${pet.tag.status === 'active'
-                                                    ? 'bg-green-100 text-green-800'
-                                                    : 'bg-gray-100 text-gray-800'
+                                                ? 'bg-green-100 text-green-800'
+                                                : 'bg-gray-100 text-gray-800'
                                                 }`}>
                                                 {pet.tag.status === 'active' ? 'Active' : 'Inactive'}
                                             </span>
@@ -619,49 +619,29 @@ const CustomerDashboard = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-yellow-50">
-            {/* Header */}
-            {/* <div className="bg-white shadow-sm border-b border-gray-200 pt-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-yellow-400 to-amber-500 rounded-full flex items-center justify-center">
-                <Dog className="w-6 h-6 text-white" />
-              </div>
-              <h1 className="text-2xl font-bold text-gray-900">Pet Dashboard</h1>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600">Welcome, {userProfile.name.split(' ')[0]}!</span>
-              <div className="w-10 h-10 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-full flex items-center justify-center text-white font-semibold">
-                {userProfile.name.split(' ').map(n => n[0]).join('')}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div> */}
-
+        <div className="min-h-screen bg-gradient-to-br bg-primary/60 via-black to-black">
             <div className="flex max-w-7xl mx-auto pt-30">
+
                 {/* Left Sidebar Navigation */}
-                <div className="w-64 h-[800px] bg-gradient-to-b from-amber-400 to-transparent 0 p-6 rounded-xl">
-                    <nav className="space-y-2">
+                <div className="w-64 h-[800px] bg-black p-6 rounded-xl">
+                    <nav className="space-y-5">
                         {tabs.map(tab => {
                             const Icon = tab.icon;
                             return (
-                                    <button
-                                        key={tab.id}
-                                        onClick={() => {
-                                            setActiveTab(tab.id);
-                                            setExpandedPetId(null);
-                                        }}
-                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-semibold text-lg transition-all ${activeTab === tab.id
-                                                ? 'bg-gradient-to-r from-white to-amber-200 text-gray-900 shadow-md scale-110'
-                                                : 'text-gray-600 hover:bg-gradient-to-r from-white/40 to-amber-200/40 hover:scale-105'
-                                            }`}
-                                    >
-                                        <Icon className="w-5 h-5" />
-                                        {tab.label}
-                                    </button>
-                                
+                                <button
+                                    key={tab.id}
+                                    onClick={() => {
+                                        setActiveTab(tab.id);
+                                        setExpandedPetId(null);
+                                    }}
+                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-lg transition-all border-b-1 border-primary ${activeTab === tab.id
+                                        ? 'bg-gradient-to-br from-primary via-black via-60% to-black text-white shadow-md shadow-primary/40 scale-110'
+                                        : 'text-gray-300 hover:bg-gradient-to-br from-primary via-black via-40% to-black hover:scale-105'
+                                        }`}
+                                >
+                                    <Icon className="w-5 h-5" />
+                                    {tab.label}
+                                </button>
                             );
                         })}
                     </nav>
@@ -673,18 +653,12 @@ const CustomerDashboard = () => {
                         <div>
                             <div className="flex items-center justify-between mb-6">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-gray-900">My Pets</h2>
-                                    <p className="text-gray-600 mt-1">Manage your pet's information</p>
+                                    <h2 className="text-4xl font-bold text-white">My Pets</h2>
+                                    <p className="text-gray-400 mt-1">Manage your pet's information</p>
                                 </div>
-                                {/* <button
-                  className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-yellow-400 to-amber-500 text-white rounded-lg hover:from-yellow-500 hover:to-amber-600 transition-all shadow-md hover:shadow-lg"
-                >
-                  <Plus className="w-5 h-5" />
-                  Add Pet
-                </button> */}
                             </div>
 
-                            <div className="space-y-4">
+                            <div className="space-y-8">
                                 {pets.map(pet => (
                                     <PetCard
                                         key={pet.id}
@@ -710,37 +684,37 @@ const CustomerDashboard = () => {
                     {activeTab === 'tags' && (
                         <div>
                             <div className="mb-6">
-                                <h2 className="text-2xl font-bold text-gray-900">My Tags</h2>
-                                <p className="text-gray-600 mt-1">Manage your pet tracking tags</p>
+                                <h2 className="text-4xl font-bold text-white">My Tags</h2>
+                                <p className="text-gray-400 mt-1">Manage your pet tracking tags</p>
                             </div>
 
                             <div className="grid gap-4">
                                 {tags.map(tag => (
-                                    <div key={tag.id} className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+                                    <div key={tag.id} className="bg-gradient-to-br from-primary via-black to-black rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-4">
-                                                <div className="w-12 h-12 bg-gradient-to-r from-yellow-400 to-amber-500 rounded-lg flex items-center justify-center">
+                                                <div className="w-12 h-12 bg-black shadow-md shadow-primary rounded-lg flex items-center justify-center">
                                                     <Tag className="w-6 h-6 text-white" />
                                                 </div>
                                                 <div>
-                                                    <h3 className="font-bold text-gray-900 font-mono">{tag.tagId}</h3>
-                                                    <p className="text-sm text-gray-600">Purchased: {tag.purchaseDate}</p>
+                                                    <h3 className="font-bold text-white font-mono">{tag.tagId}</h3>
+                                                    <p className="text-sm text-gray-400">Purchased: {tag.purchaseDate}</p>
                                                     {tag.petName && (
-                                                        <p className="text-sm text-amber-600 mt-1">Assigned to: {tag.petName}</p>
+                                                        <p className="text-sm text-primary mt-1">Assigned to: {tag.petName}</p>
                                                     )}
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-3">
-                                                <span className={`px-4 py-2 rounded-full text-sm font-medium ${tag.status === 'active'
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : 'bg-gray-100 text-gray-800'
+                                                <span className={`px-4 py-2 rounded-xl text-sm font-medium ${tag.status === 'active'
+                                                    ? 'bg-black text-primary shadow-md shadow-primary '
+                                                    : 'bg-gray-400 text-gray-800'
                                                     }`}>
                                                     {tag.status === 'active' ? 'Active' : 'Inactive'}
                                                 </span>
                                                 {tag.status === 'inactive' && (
                                                     <button
                                                         onClick={() => handleActivateTag(tag.id)}
-                                                        className="px-4 py-2 bg-gradient-to-r from-yellow-400 to-amber-500 text-white rounded-lg hover:from-yellow-500 hover:to-amber-600 transition-all"
+                                                        className="px-4 py-2 bg-gradient-to-br from-primary via-black via-80% to-black shadow-md shadow-primary text-white rounded-lg hover:shadow-lg transition-all"
                                                     >
                                                         Activate
                                                     </button>
@@ -757,124 +731,126 @@ const CustomerDashboard = () => {
                         <div>
                             <div className="flex items-center justify-between mb-6">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-gray-900">My Profile</h2>
-                                    <p className="text-gray-600 mt-1">Manage your account information</p>
+                                    <h2 className="text-4xl font-bold text-white">My Profile</h2>
+                                    <p className="text-gray-400 mt-1">Manage your account information</p>
                                 </div>
                                 <button
                                     onClick={() => setEditingProfile(!editingProfile)}
-                                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-yellow-400 to-amber-500 text-white rounded-lg hover:from-yellow-500 hover:to-amber-600 transition-all shadow-md hover:shadow-lg"
+                                    className="flex items-center gap-2  px-4 py-2 bg-gradient-to-br from-primary via-black via-80% to-black shadow-md shadow-primary text-white rounded-lg hover:shadow-lg transition-all"
                                 >
                                     {editingProfile ? <Save className="w-5 h-5" /> : <Edit2 className="w-5 h-5" />}
                                     {editingProfile ? 'Save Changes' : 'Edit Profile'}
                                 </button>
                             </div>
 
-                            <div className="bg-white rounded-2xl shadow-lg p-8">
+                            <div className="bg-gradient-to-br from-black via-primary/80 via-80% to-black text-white shadow-md shadow-primary/40 rounded-2xl p-8">
                                 <div className="space-y-6">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-                                        {editingProfile ? (
-                                            <input
-                                                type="text"
-                                                value={userProfile.name}
-                                                onChange={(e) => handleProfileChange('name', e.target.value)}
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
-                                            />
-                                        ) : (
-                                            <div className="flex items-center gap-2 text-gray-900">
-                                                <User className="w-5 h-5 text-gray-400" />
-                                                <span>{userProfile.name}</span>
-                                            </div>
-                                        )}
-                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-400 mb-2">Full Name</label>
+                                            {editingProfile ? (
+                                                <input
+                                                    type="text"
+                                                    value={userProfile.name}
+                                                    onChange={(e) => handleProfileChange('name', e.target.value)}
+                                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                                                />
+                                            ) : (
+                                                <div className="flex items-center gap-2 text-white">
+                                                    <User className="w-5 h-5 text-gray-400" />
+                                                    <span>{userProfile.name}</span>
+                                                </div>
+                                            )}
+                                        </div>
 
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                                        {editingProfile ? (
-                                            <input
-                                                type="email"
-                                                value={userProfile.email}
-                                                onChange={(e) => handleProfileChange('email', e.target.value)}
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
-                                            />
-                                        ) : (
-                                            <div className="flex items-center gap-2 text-gray-900">
-                                                <Mail className="w-5 h-5 text-gray-400" />
-                                                <span>{userProfile.email}</span>
-                                            </div>
-                                        )}
-                                    </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-400 mb-2">Email</label>
+                                            {editingProfile ? (
+                                                <input
+                                                    type="email"
+                                                    value={userProfile.email}
+                                                    onChange={(e) => handleProfileChange('email', e.target.value)}
+                                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                                                />
+                                            ) : (
+                                                <div className="flex items-center gap-2 text-white">
+                                                    <Mail className="w-5 h-5 text-gray-400" />
+                                                    <span>{userProfile.email}</span>
+                                                </div>
+                                            )}
+                                        </div>
 
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-                                        {editingProfile ? (
-                                            <input
-                                                type="tel"
-                                                value={userProfile.phone}
-                                                onChange={(e) => handleProfileChange('phone', e.target.value)}
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
-                                            />
-                                        ) : (
-                                            <div className="flex items-center gap-2 text-gray-900">
-                                                <Phone className="w-5 h-5 text-gray-400" />
-                                                <span>{userProfile.phone}</span>
-                                            </div>
-                                        )}
-                                    </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-400 mb-2">Phone</label>
+                                            {editingProfile ? (
+                                                <input
+                                                    type="tel"
+                                                    value={userProfile.phone}
+                                                    onChange={(e) => handleProfileChange('phone', e.target.value)}
+                                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                                                />
+                                            ) : (
+                                                <div className="flex items-center gap-2 text-white">
+                                                    <Phone className="w-5 h-5 text-gray-400" />
+                                                    <span>{userProfile.phone}</span>
+                                                </div>
+                                            )}
+                                        </div>
 
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
-                                        {editingProfile ? (
-                                            <textarea
-                                                value={userProfile.address}
-                                                onChange={(e) => handleProfileChange('address', e.target.value)}
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none resize-none"
-                                                rows={2}
-                                            />
-                                        ) : (
-                                            <div className="flex items-center gap-2 text-gray-900">
-                                                <MapPin className="w-5 h-5 text-gray-400" />
-                                                <span>{userProfile.address}</span>
-                                            </div>
-                                        )}
-                                    </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-400 mb-2">Address</label>
+                                            {editingProfile ? (
+                                                <textarea
+                                                    value={userProfile.address}
+                                                    onChange={(e) => handleProfileChange('address', e.target.value)}
+                                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none resize-none"
+                                                    rows={2}
+                                                />
+                                            ) : (
+                                                <div className="flex items-center gap-2 text-white">
+                                                    <MapPin className="w-5 h-5 text-gray-400" />
+                                                    <span>{userProfile.address}</span>
+                                                </div>
+                                            )}
+                                        </div>
 
-                                    <div className="pt-6 border-t border-gray-200">
-                                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Emergency Contact</h3>
+                                        <div className="pt-6 border-t border-gray-200">
+                                            <h3 className="text-lg font-semibold text-gray-400 mb-4">Emergency Contact</h3>
 
-                                        <div className="space-y-4">
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Contact Name</label>
-                                                {editingProfile ? (
-                                                    <input
-                                                        type="text"
-                                                        value={userProfile.emergencyContact}
-                                                        onChange={(e) => handleProfileChange('emergencyContact', e.target.value)}
-                                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
-                                                    />
-                                                ) : (
-                                                    <div className="flex items-center gap-2 text-gray-900">
-                                                        <User className="w-5 h-5 text-gray-400" />
-                                                        <span>{userProfile.emergencyContact}</span>
-                                                    </div>
-                                                )}
-                                            </div>
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-400 mb-2">Contact Name</label>
+                                                    {editingProfile ? (
+                                                        <input
+                                                            type="text"
+                                                            value={userProfile.emergencyContact}
+                                                            onChange={(e) => handleProfileChange('emergencyContact', e.target.value)}
+                                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                                                        />
+                                                    ) : (
+                                                        <div className="flex items-center gap-2 text-white">
+                                                            <User className="w-5 h-5 text-gray-400" />
+                                                            <span>{userProfile.emergencyContact}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
 
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Contact Phone</label>
-                                                {editingProfile ? (
-                                                    <input
-                                                        type="tel"
-                                                        value={userProfile.emergencyPhone}
-                                                        onChange={(e) => handleProfileChange('emergencyPhone', e.target.value)}
-                                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
-                                                    />
-                                                ) : (
-                                                    <div className="flex items-center gap-2 text-gray-900">
-                                                        <Phone className="w-5 h-5 text-gray-400" />
-                                                        <span>{userProfile.emergencyPhone}</span>
-                                                    </div>
-                                                )}
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-400 mb-2">Contact Phone</label>
+                                                    {editingProfile ? (
+                                                        <input
+                                                            type="tel"
+                                                            value={userProfile.emergencyPhone}
+                                                            onChange={(e) => handleProfileChange('emergencyPhone', e.target.value)}
+                                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                                                        />
+                                                    ) : (
+                                                        <div className="flex items-center gap-2 text-white">
+                                                            <Phone className="w-5 h-5 text-gray-400" />
+                                                            <span>{userProfile.emergencyPhone}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

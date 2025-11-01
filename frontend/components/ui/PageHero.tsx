@@ -8,7 +8,7 @@ export default function HeroHeader({
   children 
 }) {
   return (
-    <section className="relative h-[500px] overflow-hidden">
+    <section className="relative md:h-[60vh] h-[70vh] overflow-hidden">
       {/* Background Image with Overlay */}
       <div className="absolute inset-0">
         <div 
@@ -18,11 +18,11 @@ export default function HeroHeader({
           }}
         />
         {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-white/60 to-white/80" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-slate-900/90" />
       </div>
 
       {/* Content */}
-      <div className="relative z-10 h-full flex flex-col items-center justify-center px-4 pt-40">
+      <div className="relative z-10 h-full flex flex-col items-center justify-center px-4 pt-20">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -33,7 +33,7 @@ export default function HeroHeader({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.6 }}
-            className="text-5xl md:text-6xl font-bold text-slate-900 mb-4"
+            className="text-5xl md:text-6xl font-bold text-white mb-4"
           >
             {title}
           </motion.h1>
@@ -43,7 +43,7 @@ export default function HeroHeader({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3, duration: 0.6 }}
-              className="text-slate-600 text-lg md:text-xl mb-8"
+              className="text-gray-300 text-lg md:text-xl mb-8"
             >
               {subtitle}
             </motion.p>

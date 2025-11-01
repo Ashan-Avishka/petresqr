@@ -122,7 +122,7 @@ export const petsData: Pet[] = [
     location: 'Portland, OR',
     protectedDays: 60,
     story: 'Mittens was reunited with her family after being missing for a week. A kind stranger found her and scanned her tag!',
-    image: 'https://images.unsplash.com/photo-1573865526739-10c1dd85fd4f?w=800&h=800&fit=crop',
+    image: 'https://images.unsplash.com/photo-1625060241508-22488e1e9264?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1074',
     status: 'reunited',
     gender: 'female',
     weight: 5,

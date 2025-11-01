@@ -10,6 +10,7 @@ interface ButtonProps {
   disabled?: boolean;
   type?: 'button' | 'submit' | 'reset';
   animated?: boolean;
+  'aria-label'?: string;
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -21,11 +22,12 @@ const Button: React.FC<ButtonProps> = ({
   disabled = false,
   type = 'button',
   animated = true,
+  'aria-label': ariaLabel,
 }) => {
   const baseStyles = 'font-medium rounded-full transition-all duration-300 focus:outline-none ';
   
   const variants = {
-    primary: 'bg-gradient-to-br from-amber-700 to-amber-500 hover:from-amber-800 hover:to-amber-600 border-none text-white shadow-xl',
+    primary: 'bg-gradient-to-br from-[#FABC3F] to-[#AB6D23] hover:from-[#FABC3F] hover:via-[#AB6D23] hover:to-black border-none text-white shadow-xl hover:shadow-primary/20 transition-all duration-600',
     secondary: 'ring-amber-600 ring-1 text-amber-600',
     outline: 'bg-transparent border-2 border-current hover:bg-white/10 focus:ring-white/50',
     dark: 'bg-gray-900 text-white hover:bg-gray-800 focus:ring-gray-700 shadow-2xl',
@@ -33,7 +35,7 @@ const Button: React.FC<ButtonProps> = ({
   
   const sizes = {
     sm: 'px-4 py-2 text-sm',
-    md: 'px-6 py-3 text-base',
+    md: 'px-6 py-2 text-base',
     lg: 'px-8 py-4 text-lg',
   };
   
@@ -47,6 +49,8 @@ const Button: React.FC<ButtonProps> = ({
       onClick={onClick}
       disabled={disabled}
       className={buttonClasses}
+      aria-label={ariaLabel}
+      suppressHydrationWarning
     >
       {children}
     </button>

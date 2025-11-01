@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Slider from 'react-slick';
 import ProductCard from '../ui/ProductCard';
 import Button from '../ui/Button';
+import { useIsMobile } from '../../hooks/useIsMobile'; // Adjust path as needed
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 
@@ -18,6 +19,12 @@ interface Product {
 const ProductsSliderSection: React.FC = () => {
     const sliderRef = useRef<Slider>(null);
     const [isHovered, setIsHovered] = useState(false);
+    const [isClient, setIsClient] = useState(false);
+    
+    // Use mobile detection hooks
+    const isMobile = useIsMobile(640); // < 640px
+    const isTablet = useIsMobile(1024); // < 1024px
+    const isLaptop = useIsMobile(1280); // < 1280px
 
     // Sample products data - replace with your actual products
     const products: Product[] = [
@@ -59,44 +66,34 @@ const ProductsSliderSection: React.FC = () => {
         },
     ];
 
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
+
     const handleAddToCart = (productId: string) => {
         console.log('Added to cart:', productId);
         // Add your cart logic here
+    };
+
+    // Dynamically determine slides to show based on screen size
+    const getSlidesToShow = () => {
+        if (isMobile) return 1;
+        if (isTablet) return 2;
+        if (isLaptop) return 3;
+        return 4;
     };
 
     const settings = {
         dots: true,
         infinite: true,
         speed: 500,
-        slidesToShow: 4,
+        slidesToShow: getSlidesToShow(),
         slidesToScroll: 1,
         autoplay: true,
         autoplaySpeed: 3000,
         pauseOnHover: true,
         arrows: false,
-        responsive: [
-            {
-                breakpoint: 1280,
-                settings: {
-                    slidesToShow: 3,
-                    slidesToScroll: 1,
-                },
-            },
-            {
-                breakpoint: 1024,
-                settings: {
-                    slidesToShow: 2,
-                    slidesToScroll: 1,
-                },
-            },
-            {
-                breakpoint: 640,
-                settings: {
-                    slidesToShow: 1,
-                    slidesToScroll: 1,
-                },
-            },
-        ],
+        adaptiveHeight: false,
         customPaging: () => (
             <div className="slick-dot-wrapper">
                 <div className="slick-dot-inner" />
@@ -113,21 +110,35 @@ const ProductsSliderSection: React.FC = () => {
         sliderRef.current?.slickNext();
     };
 
+    if (!isClient) {
+        return (
+            <section className="md:py-20 py-10 bg-gradient-to-br from-black via-black/50 to-primary overflow-hidden relative">
+                <div className="max-w-7xl mx-auto px-6 relative z-10">
+                    <div className="text-center mb-12 md:mt-20 mt-15">
+                        <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4">
+                            Get Your Pet's Tag Today
+                        </h2>
+                        <p className="text-lg text-gray-300 max-w-2xl mx-auto">
+                            Choose from our collection of premium QR tags designed to keep your furry friends safe
+                        </p>
+                    </div>
+                </div>
+            </section>
+        );
+    }
+
     return (
-        <section className="py-20 bg-gradient-to-tr from-amber-50 via-amber-100 to-primary overflow-hidden relative">
-            {/* Background decoration */}
-            {/* <div className="absolute top-10 right-0 w-72 h-72 bg-yellow-400 rounded-full blur-3xl" />
-            <div className="absolute bottom-10 left-0 w-96 h-96 bg-amber-200 rounded-full blur-3xl" /> */}
+        <section className="md:py-20 py-10 bg-gradient-to-br from-black via-black/50 to-primary overflow-hidden relative">
 
             <div className="max-w-7xl mx-auto px-6 relative z-10">
                 {/* Section Header */}
-                <div className="text-center mb-12 mt-20">
+                <div className="text-center mb-12 md:mt-20 mt-15">
                     <motion.h2
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.6 }}
-                        className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4"
+                        className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4"
                     >
                         Get Your Pet's Tag Today
                     </motion.h2>
@@ -136,7 +147,7 @@ const ProductsSliderSection: React.FC = () => {
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.6, delay: 0.2 }}
-                        className="text-lg text-gray-600 max-w-2xl mx-auto"
+                        className="text-lg text-gray-300 max-w-2xl mx-auto"
                     >
                         Choose from our collection of premium QR tags designed to keep your furry friends safe
                     </motion.p>
@@ -212,6 +223,7 @@ const ProductsSliderSection: React.FC = () => {
                         viewport={{ once: true }}
                         transition={{ duration: 0.6, delay: 0.3 }}
                         className="px-4"
+                        key={`${isMobile}-${isTablet}-${isLaptop}`}
                     >
                         <Slider ref={sliderRef} {...settings}>
                             {products.map((product) => (
@@ -235,7 +247,7 @@ const ProductsSliderSection: React.FC = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.6, delay: 0.5 }}
-                    className="text-center mt-20"
+                    className="text-center md:mt-20 mt-10"
                 >
                     <Button
                         variant="primary"
