@@ -10,6 +10,23 @@ import { processImage } from '../middleware/upload';
 import { v4 as uuidv4 } from 'uuid';
 
 export class PetController {
+  constructor() {
+    this.getPets = this.getPets.bind(this);
+    this.getPetById = this.getPetById.bind(this);
+    this.createPet = this.createPet.bind(this);
+    this.updatePet = this.updatePet.bind(this);
+    this.deletePet = this.deletePet.bind(this);
+    this.uploadPhoto = this.uploadPhoto.bind(this);
+    this.getPetByTag = this.getPetByTag.bind(this);
+  }
+
+  private getTagPopulation(): any {
+    return {
+      path: 'tagId',
+      select: 'qrCode status activatedAt deactivatedAt createdAt',
+    };
+  }
+
   async getPets(req: AuthRequest, res: Response): Promise<void> {
     try {
       const { page, limit, sortBy, sortOrder } = getPaginationOptions(req.query);
@@ -20,14 +37,14 @@ export class PetController {
           .sort({ [sortBy!]: sortOrder === 'asc' ? 1 : -1 })
           .skip(skip)
           .limit(limit)
-          .populate('tagId', 'qrCode status')
-          .lean(),
+          .populate(this.getTagPopulation()),
         Pet.countDocuments({ ownerId: req.userId, isActive: true })
       ]);
 
       const pagination = createPaginationResult(page, limit, total);
+      const petsJson = pets.map(pet => pet.toJSON());
 
-      sendSuccess(res, pets, 200, pagination);
+      sendSuccess(res, petsJson, 200, pagination);
     } catch (error) {
       console.error('Get pets error:', error);
       sendError(res, 'Failed to fetch pets', 500, 'FETCH_PETS_ERROR');
@@ -40,14 +57,14 @@ export class PetController {
         _id: req.params.id,
         ownerId: req.userId,
         isActive: true
-      }).populate('tagId', 'qrCode status activatedAt');
+      }).populate(this.getTagPopulation());
 
       if (!pet) {
         sendError(res, 'Pet not found', 404, 'PET_NOT_FOUND');
         return;
       }
 
-      sendSuccess(res, pet);
+      sendSuccess(res, pet.toJSON());
     } catch (error) {
       console.error('Get pet error:', error);
       sendError(res, 'Failed to fetch pet', 500, 'FETCH_PET_ERROR');
@@ -56,7 +73,20 @@ export class PetController {
 
   async createPet(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const { name, breed, age, dateOfBirth, medicalConditions } = req.body;
+      const {
+        name,
+        type,
+        breed,
+        age,
+        weight,
+        gender,
+        color,
+        dateOfBirth,
+        bio,
+        medical,
+        other,
+        tagId
+      } = req.body;
       
       let photoUrl: string | undefined;
       let photoKey: string | undefined;
@@ -68,20 +98,76 @@ export class PetController {
         photoUrl = await uploadToS3(processedImage, photoKey, 'image/jpeg');
       }
 
+      // Validate tag if provided
+      if (tagId) {
+        const tag = await Tag.findOne({ 
+          _id: tagId,
+          userId: req.userId,
+          status: 'available'
+        });
+        
+        if (!tag) {
+          sendError(res, 'Invalid or unavailable tag', 400, 'INVALID_TAG');
+          return;
+        }
+
+        const existingPetWithTag = await Pet.findOne({ 
+          tagId: tagId, 
+          isActive: true 
+        });
+        
+        if (existingPetWithTag) {
+          sendError(res, 'Tag is already assigned to another pet', 400, 'TAG_ALREADY_ASSIGNED');
+          return;
+        }
+      }
+
       const pet = new Pet({
         name,
+        type: type || 'dog',
         breed,
         age,
+        weight: weight || 0,
+        gender,
+        color: color || '',
         dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
-        medicalConditions,
+        bio: {
+          description: bio?.description || '',
+          microchipId: bio?.microchipId || '',
+        },
+        medical: {
+          allergies: medical?.allergies || '',
+          medications: medical?.medications || '',
+          conditions: medical?.conditions || '',
+          vetName: medical?.vetName || '',
+          vetPhone: medical?.vetPhone || '',
+        },
+        other: {
+          favoriteFood: other?.favoriteFood || '',
+          behavior: other?.behavior || '',
+          specialNeeds: other?.specialNeeds || '',
+        },
         photoUrl,
         photoKey,
         ownerId: req.userId,
+        tagId: tagId || null,
+        status: tagId ? 'active' : 'inactive',
       });
 
       await pet.save();
 
-      sendSuccess(res, pet.toJSON(), 201);
+      if (tagId) {
+        await Tag.findByIdAndUpdate(tagId, { 
+          status: 'active',
+          activatedAt: new Date(),
+          petId: pet._id
+        });
+      }
+
+      const populatedPet = await Pet.findById(pet._id)
+        .populate(this.getTagPopulation());
+
+      sendSuccess(res, populatedPet?.toJSON(), 201);
     } catch (error) {
       console.error('Create pet error:', error);
       sendError(res, 'Failed to create pet', 500, 'CREATE_PET_ERROR');
@@ -90,7 +176,20 @@ export class PetController {
 
   async updatePet(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const { name, breed, age, dateOfBirth, medicalConditions } = req.body;
+      const {
+        name,
+        type,
+        breed,
+        age,
+        weight,
+        gender,
+        color,
+        dateOfBirth,
+        bio,
+        medical,
+        other,
+        tagId
+      } = req.body;
       
       const pet = await Pet.findOne({
         _id: req.params.id,
@@ -103,9 +202,61 @@ export class PetController {
         return;
       }
 
+      // Handle tag assignment/update
+      if (tagId !== undefined) {
+        if (tagId === null || tagId === '') {
+          if (pet.tagId) {
+            await Tag.findByIdAndUpdate(pet.tagId, { 
+              status: 'available',
+              deactivatedAt: new Date(),
+              petId: null
+            });
+          }
+          pet.tagId = null;
+          pet.status = 'inactive';
+        } else if (tagId !== pet.tagId?.toString()) {
+          const newTag = await Tag.findOne({ 
+            _id: tagId,
+            userId: req.userId,
+            status: 'available' 
+          });
+          
+          if (!newTag) {
+            sendError(res, 'Invalid or unavailable tag', 400, 'INVALID_TAG');
+            return;
+          }
+
+          const existingPetWithTag = await Pet.findOne({ 
+            tagId: tagId, 
+            isActive: true,
+            _id: { $ne: pet._id }
+          });
+          
+          if (existingPetWithTag) {
+            sendError(res, 'Tag is already assigned to another pet', 400, 'TAG_ALREADY_ASSIGNED');
+            return;
+          }
+
+          if (pet.tagId) {
+            await Tag.findByIdAndUpdate(pet.tagId, { 
+              status: 'available',
+              deactivatedAt: new Date(),
+              petId: null
+            });
+          }
+
+          pet.tagId = tagId;
+          pet.status = 'active';
+          await Tag.findByIdAndUpdate(tagId, { 
+            status: 'active',
+            activatedAt: new Date(),
+            petId: pet._id
+          });
+        }
+      }
+
       // Handle photo update
       if (req.file) {
-        // Delete old photo if exists
         if (pet.photoKey) {
           try {
             await deleteFromS3(pet.photoKey);
@@ -114,7 +265,6 @@ export class PetController {
           }
         }
 
-        // Upload new photo
         const processedImage = await processImage(req.file.buffer);
         const photoKey = `pets/${uuidv4()}-${Date.now()}.jpg`;
         const photoUrl = await uploadToS3(processedImage, photoKey, 'image/jpeg');
@@ -123,16 +273,44 @@ export class PetController {
         pet.photoKey = photoKey;
       }
 
-      // Update other fields
+      // Update basic fields
       if (name !== undefined) pet.name = name;
+      if (type !== undefined) pet.type = type;
       if (breed !== undefined) pet.breed = breed;
       if (age !== undefined) pet.age = age;
+      if (weight !== undefined) pet.weight = weight;
+      if (gender !== undefined) pet.gender = gender;
+      if (color !== undefined) pet.color = color;
       if (dateOfBirth !== undefined) pet.dateOfBirth = new Date(dateOfBirth);
-      if (medicalConditions !== undefined) pet.medicalConditions = medicalConditions;
+
+      // Update bio
+      if (bio) {
+        if (bio.description !== undefined) pet.bio.description = bio.description;
+        if (bio.microchipId !== undefined) pet.bio.microchipId = bio.microchipId;
+      }
+
+      // Update medical
+      if (medical) {
+        if (medical.allergies !== undefined) pet.medical.allergies = medical.allergies;
+        if (medical.medications !== undefined) pet.medical.medications = medical.medications;
+        if (medical.conditions !== undefined) pet.medical.conditions = medical.conditions;
+        if (medical.vetName !== undefined) pet.medical.vetName = medical.vetName;
+        if (medical.vetPhone !== undefined) pet.medical.vetPhone = medical.vetPhone;
+      }
+
+      // Update other
+      if (other) {
+        if (other.favoriteFood !== undefined) pet.other.favoriteFood = other.favoriteFood;
+        if (other.behavior !== undefined) pet.other.behavior = other.behavior;
+        if (other.specialNeeds !== undefined) pet.other.specialNeeds = other.specialNeeds;
+      }
 
       await pet.save();
 
-      sendSuccess(res, pet.toJSON());
+      const updatedPet = await Pet.findById(pet._id)
+        .populate(this.getTagPopulation());
+
+      sendSuccess(res, updatedPet?.toJSON());
     } catch (error) {
       console.error('Update pet error:', error);
       sendError(res, 'Failed to update pet', 500, 'UPDATE_PET_ERROR');
@@ -152,20 +330,17 @@ export class PetController {
         return;
       }
 
-      // Check if pet has active tag
       if (pet.tagId) {
-        const tag = await Tag.findById(pet.tagId);
-        if (tag && tag.status === 'active') {
-          sendError(res, 'Cannot delete pet with active tag', 400, 'ACTIVE_TAG_EXISTS');
-          return;
-        }
+        await Tag.findByIdAndUpdate(pet.tagId, { 
+          status: 'available',
+          deactivatedAt: new Date(),
+          petId: null
+        });
       }
 
-      // Soft delete
       pet.isActive = false;
       await pet.save();
 
-      // Delete photo from S3
       if (pet.photoKey) {
         try {
           await deleteFromS3(pet.photoKey);
@@ -199,7 +374,6 @@ export class PetController {
         return;
       }
 
-      // Delete old photo if exists
       if (pet.photoKey) {
         try {
           await deleteFromS3(pet.photoKey);
@@ -208,7 +382,6 @@ export class PetController {
         }
       }
 
-      // Process and upload new photo
       const processedImage = await processImage(req.file.buffer);
       const photoKey = `pets/${uuidv4()}-${Date.now()}.jpg`;
       const photoUrl = await uploadToS3(processedImage, photoKey, 'image/jpeg');
@@ -217,13 +390,58 @@ export class PetController {
       pet.photoKey = photoKey;
       await pet.save();
 
+      const updatedPet = await Pet.findById(pet._id)
+        .populate(this.getTagPopulation());
+
       sendSuccess(res, {
-        photoUrl: pet.photoUrl,
+        ...updatedPet?.toJSON(),
         message: 'Photo uploaded successfully'
       });
     } catch (error) {
       console.error('Upload photo error:', error);
       sendError(res, 'Failed to upload photo', 500, 'UPLOAD_PHOTO_ERROR');
+    }
+  }
+
+  async getPetByTag(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const { qrCode } = req.params;
+
+      const tag = await Tag.findOne({ qrCode, status: 'active' });
+      if (!tag) {
+        sendError(res, 'Tag not found or inactive', 404, 'TAG_NOT_FOUND');
+        return;
+      }
+
+      const pet = await Pet.findOne({
+        tagId: tag._id,
+        isActive: true
+      }).populate(this.getTagPopulation());
+
+      if (!pet) {
+        sendError(res, 'Pet not found for this tag', 404, 'PET_NOT_FOUND');
+        return;
+      }
+
+      // Return limited info for public access
+      const publicPetInfo = {
+        name: pet.name,
+        breed: pet.breed,
+        photoUrl: pet.photoUrl,
+        medical: {
+          conditions: pet.medical.conditions,
+          allergies: pet.medical.allergies,
+        },
+        tag: {
+          qrCode: tag.qrCode,
+          status: tag.status
+        }
+      };
+
+      sendSuccess(res, publicPetInfo);
+    } catch (error) {
+      console.error('Get pet by tag error:', error);
+      sendError(res, 'Failed to fetch pet by tag', 500, 'FETCH_PET_BY_TAG_ERROR');
     }
   }
 }

@@ -1,5 +1,3 @@
-// src/models/Tag.ts
-
 /**
  * @swagger
  * components:
@@ -7,12 +5,16 @@
  *     Tag:
  *       type: object
  *       required:
+ *         - userId
  *         - petId
  *         - qrCode
  *       properties:
  *         id:
  *           type: string
  *           description: The auto-generated ID of the tag
+ *         userId:
+ *           type: string
+ *           description: ID of the user who owns this tag
  *         petId:
  *           type: string
  *           description: ID of the pet associated with this tag
@@ -45,6 +47,7 @@
  *           description: When the tag was last updated
  *       example:
  *         id: 507f191e810c19729de860ea
+ *         userId: 507f1f77bcf86cd799439012
  *         petId: 507f1f77bcf86cd799439011
  *         qrCode: "QR123456789"
  *         status: active
@@ -57,6 +60,7 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface ITag extends Document {
+  userId: mongoose.Types.ObjectId;
   petId: mongoose.Types.ObjectId;
   qrCode: string;
   status: 'active' | 'inactive' | 'pending';
@@ -68,10 +72,17 @@ export interface ITag extends Document {
 }
 
 const tagSchema = new Schema<ITag>({
+  userId: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    index: true,
+  },
   petId: {
     type: Schema.Types.ObjectId,
     ref: 'Pet',
-    required: true,
+    required: false,     // <-- FIXED
+    default: null,
     index: true,
   },
   qrCode: {
@@ -110,6 +121,7 @@ const tagSchema = new Schema<ITag>({
 
 // Indexes
 tagSchema.index({ qrCode: 1 });
+tagSchema.index({ userId: 1, status: 1 });
 tagSchema.index({ petId: 1, status: 1 });
 tagSchema.index({ status: 1, createdAt: -1 });
 

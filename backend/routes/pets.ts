@@ -9,7 +9,33 @@ import { upload } from '../middleware/upload';
 const router = Router();
 const petController = new PetController();
 
-// All pet routes require authentication
+// Public route - Get pet by tag QR code (no auth required)
+/**
+ * @swagger
+ * /pets/tag/{qrCode}:
+ *   get:
+ *     summary: Get pet information by tag QR code (public)
+ *     tags: [Pets]
+ *     parameters:
+ *       - in: path
+ *         name: qrCode
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: QR code of the tag
+ *     responses:
+ *       200:
+ *         description: Public pet information
+ *       404:
+ *         description: Tag or pet not found
+ */
+router.get('/tag/:qrCode',
+  [param('qrCode').trim().notEmpty()],
+  handleValidationErrors,
+  petController.getPetByTag
+);
+
+// All other pet routes require authentication
 router.use(authenticateToken);
 
 // Get all pets for authenticated user
@@ -107,6 +133,9 @@ router.get('/:id',
  *               medicalConditions:
  *                 type: string
  *                 maxLength: 500
+ *               tagId:
+ *                 type: string
+ *                 description: MongoDB ID of the tag to assign
  *               photo:
  *                 type: string
  *                 format: binary
@@ -130,6 +159,7 @@ router.post('/',
     body('age').isInt({ min: 0, max: 30 }),
     body('dateOfBirth').optional().isISO8601(),
     body('medicalConditions').optional().isLength({ max: 500 }),
+    body('tagId').optional().isMongoId().withMessage('Invalid tag ID'),
   ],
   handleValidationErrors,
   petController.createPet
@@ -176,6 +206,9 @@ router.post('/',
  *               medicalConditions:
  *                 type: string
  *                 maxLength: 500
+ *               tagId:
+ *                 type: string
+ *                 description: MongoDB ID of the tag (or null to remove tag)
  *               photo:
  *                 type: string
  *                 format: binary
@@ -202,6 +235,12 @@ router.put('/:id',
     body('age').optional().isInt({ min: 0, max: 30 }),
     body('dateOfBirth').optional().isISO8601(),
     body('medicalConditions').optional().isLength({ max: 500 }),
+    body('tagId').optional({ nullable: true }).custom((value) => {
+      // Allow null, empty string, or valid MongoId
+      if (value === null || value === '') return true;
+      if (typeof value === 'string' && value.match(/^[0-9a-fA-F]{24}$/)) return true;
+      throw new Error('Invalid tag ID');
+    }),
   ],
   handleValidationErrors,
   petController.updatePet

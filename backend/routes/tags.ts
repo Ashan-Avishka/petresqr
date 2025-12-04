@@ -1,4 +1,4 @@
-// src/routes/tags.ts
+// Updated routes/tags.ts
 import { Router } from 'express';
 import { body, param } from 'express-validator';
 import { TagController } from '../controllers/TagController';
@@ -7,6 +7,41 @@ import { authenticateToken } from '../middleware/auth';
 
 const router = Router();
 const tagController = new TagController();
+
+// Get all tags for authenticated user
+/**
+ * @swagger
+ * /tags:
+ *   get:
+ *     summary: Get all tags for the authenticated user
+ *     tags: [Tags]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of user's tags
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 tags:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Tag'
+ *                 totalTags:
+ *                   type: integer
+ *                 activeCount:
+ *                   type: integer
+ *                 pendingCount:
+ *                   type: integer
+ *       401:
+ *         description: Unauthorized
+ */
+router.get('/',
+  authenticateToken,
+  tagController.getUserTags.bind(tagController)
+);
 
 // Purchase tag (requires authentication)
 /**
@@ -87,7 +122,7 @@ router.post('/purchase',
     body('shippingAddress.country').optional().trim().isLength({ min: 1, max: 100 }),
   ],
   handleValidationErrors,
-  tagController.purchaseTag
+  tagController.purchaseTag.bind(tagController)
 );
 
 // Activate tag
@@ -140,7 +175,7 @@ router.post('/activate',
     body('petId').isMongoId(),
   ],
   handleValidationErrors,
-  tagController.activateTag
+  tagController.activateTag.bind(tagController)
 );
 
 // Get QR code image
@@ -150,6 +185,8 @@ router.post('/activate',
  *   get:
  *     summary: Get QR code image for a tag
  *     tags: [Tags]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: tagId
@@ -167,15 +204,18 @@ router.post('/activate',
  *               format: binary
  *       400:
  *         description: Invalid tag ID format
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Not authorized to access this tag
  *       404:
  *         description: Tag not found
- *       410:
- *         description: Tag is inactive
  */
 router.get('/:tagId/qr',
+  authenticateToken,
   [param('tagId').isMongoId()],
   handleValidationErrors,
-  tagController.getQRCode
+  tagController.getQRCode.bind(tagController)
 );
 
 export default router;

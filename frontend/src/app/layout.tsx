@@ -1,4 +1,3 @@
-// app/layout.tsx
 "use client";
 
 import { useState, createContext, useContext } from 'react';
@@ -6,6 +5,8 @@ import "./globals.css";
 import Navbar from "../../components/ui/Navbar";
 import Footer from "../../components/ui/Footer";
 import AuthModal from "../../components/Models/AuthModel";
+import { AuthProvider } from '../../contexts/AuthContext';
+import { UserProvider } from '../../contexts/UserContext';
 
 // Create context for auth modal
 const AuthModalContext = createContext({
@@ -15,28 +16,33 @@ const AuthModalContext = createContext({
 
 export const useAuthModal = () => useContext(AuthModalContext);
 
-export default function RootLayout({ children }) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   return (
     <html lang="en">
       <body className="flex flex-col min-h-screen">
-        <AuthModalContext.Provider 
-          value={{
-            openAuthModal: () => setIsAuthModalOpen(true),
-            closeAuthModal: () => setIsAuthModalOpen(false),
-          }}
-        >
-          <Navbar />
-          <main className="flex-grow">{children}</main>
-          <Footer />
-          
-          {/* Single AuthModal instance for entire app */}
-          <AuthModal 
-            isOpen={isAuthModalOpen} 
-            onClose={() => setIsAuthModalOpen(false)} 
-          />
-        </AuthModalContext.Provider>
+        {/* Wrap the app in AuthProvider */}
+        <AuthProvider>
+          <UserProvider>
+          <AuthModalContext.Provider
+            value={{
+              openAuthModal: () => setIsAuthModalOpen(true),
+              closeAuthModal: () => setIsAuthModalOpen(false),
+            }}
+          >
+            <Navbar />
+            <main className="flex-grow">{children}</main>
+            <Footer />
+
+            {/* Single AuthModal instance for entire app */}
+            <AuthModal
+              isOpen={isAuthModalOpen}
+              onClose={() => setIsAuthModalOpen(false)}
+            />
+          </AuthModalContext.Provider>
+          </UserProvider>
+        </AuthProvider>
       </body>
     </html>
   );

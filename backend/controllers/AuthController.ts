@@ -9,7 +9,7 @@ export class AuthController {
   // Register with email/password
   async registerWithEmail(req: Request, res: Response): Promise<void> {
     try {
-      const { email, password, firstName, lastName, phone } = req.body;
+      const { email, password, firstName, lastName, phone, address } = req.body;
 
       // Check if user already exists in database
       const existingUser = await User.findOne({ email });
@@ -25,13 +25,14 @@ export class AuthController {
         displayName: `${firstName} ${lastName}`,
       });
 
-      // Create user in database
+      // Create user in database with address
       const user = new User({
         firebaseUid: firebaseUser.uid,
         email,
         firstName,
         lastName,
         phone,
+        address, // Save address here
         authProvider: 'email',
       });
 
@@ -53,6 +54,8 @@ export class AuthController {
         sendError(res, 'Email already exists', 409, 'EMAIL_EXISTS');
       } else if (error.code === 'auth/weak-password') {
         sendError(res, 'Password is too weak', 400, 'WEAK_PASSWORD');
+      } else if (error.code === 'auth/invalid-email') {
+        sendError(res, 'Invalid email format', 400, 'INVALID_EMAIL');
       } else {
         sendError(res, 'Registration failed', 500, 'REGISTRATION_ERROR');
       }
@@ -88,6 +91,7 @@ export class AuthController {
           email,
           firstName: firstName || 'User',
           lastName: lastName || '',
+          address:  '',
           authProvider: 'google',
           emailVerified,
         });
@@ -97,7 +101,7 @@ export class AuthController {
 
       sendSuccess(res, {
         user: user.toJSON(),
-        idToken: firebaseToken, // Return the same token for client use
+        idToken: firebaseToken,
         isNewUser,
         message: isNewUser ? 'User registered and logged in' : 'Login successful'
       });
@@ -105,95 +109,126 @@ export class AuthController {
       console.error('Google auth error:', error);
       if (error.code === 'auth/id-token-expired') {
         sendError(res, 'Token expired', 401, 'TOKEN_EXPIRED');
+      } else if (error.code === 'auth/argument-error') {
+        sendError(res, 'Invalid token format', 401, 'INVALID_TOKEN');
       } else {
         sendError(res, 'Google authentication failed', 500, 'GOOGLE_AUTH_ERROR');
       }
     }
   }
 
-  // Login with email/password - FOR SWAGGER TESTING
-  async loginWithEmail(req: Request, res: Response): Promise<void> {
-    try {
-      const { email, password, firebaseToken } = req.body;
-      
-      // If firebaseToken is provided, verify it (client already authenticated with Firebase)
-      if (firebaseToken) {
-        try {
-          const decodedToken = await admin.auth().verifyIdToken(firebaseToken);
-          
-          // Find user in database
-          const user = await User.findOne({ 
-            firebaseUid: decodedToken.uid,
-            isActive: true 
-          });
+  // Login with email/password - PROPER IMPLEMENTATION
+// Add this improved loginWithEmail method to your AuthController.ts
 
-          if (!user) {
-            sendError(res, 'User not found', 404, 'USER_NOT_FOUND');
-            return;
-          }
+// Add this improved loginWithEmail method to your AuthController.ts
 
-          sendSuccess(res, {
-            user: user.toJSON(),
-            idToken: firebaseToken,
-            message: 'Login successful'
-          });
-          return;
-        } catch (firebaseError: any) {
-          console.error('Firebase token verification error:', firebaseError);
-          sendError(res, 'Invalid token', 401, 'INVALID_TOKEN');
-          return;
-        }
-      }
-
-      // For Swagger testing: Generate ID token directly
-      if (email && password) {
-        // Find user in database
-        const user = await User.findOne({ email, isActive: true });
-        if (!user) {
-          sendError(res, 'Invalid email or password', 401, 'INVALID_CREDENTIALS');
-          return;
-        }
-
-        try {
-          // Get Firebase user and verify password exists (basic check)
-          const firebaseUser = await admin.auth().getUserByEmail(email);
-          
-          // Generate a custom token and then convert it to ID token
-          const customToken = await admin.auth().createCustomToken(firebaseUser.uid);
-          
-          // For testing purposes, we'll create a session cookie/token
-          // Note: In production, you should verify the password properly
-          const additionalClaims = {
-            userId: user._id.toString(),
-            email: user.email,
-            role: user.role || 'user'
-          };
-          
-          const testToken = await admin.auth().createCustomToken(firebaseUser.uid, additionalClaims);
-          
-          sendSuccess(res, {
-            user: user.toJSON(),
-            customToken: testToken,
-            idToken: testToken, // For swagger testing, use custom token as ID token
-            message: 'Login successful - Use customToken as Bearer token in Swagger'
-          });
-        } catch (firebaseError: any) {
-          console.error('Firebase user lookup error:', firebaseError);
-          sendError(res, 'Invalid email or password', 401, 'INVALID_CREDENTIALS');
-        }
-      } else {
-        sendError(res, 'Email and password are required', 400, 'MISSING_CREDENTIALS');
-      }
-    } catch (error) {
-      console.error('Email login error:', error);
-      sendError(res, 'Login failed', 500, 'LOGIN_ERROR');
+async loginWithEmail(req: Request, res: Response): Promise<void> {
+  try {
+    const { email, firebaseToken } = req.body;
+    
+    console.log('=== LOGIN ATTEMPT ===');
+    console.log('Email:', email);
+    console.log('Token received:', firebaseToken ? 'Yes' : 'No');
+    console.log('Token length:', firebaseToken ? firebaseToken.length : 0);
+    console.log('Token preview:', firebaseToken ? firebaseToken.substring(0, 50) + '...' : 'N/A');
+    
+    if (!firebaseToken) {
+      sendError(res, 'Firebase ID token is required. Please authenticate with Firebase client SDK first.', 400, 'MISSING_TOKEN');
+      return;
     }
+
+    try {
+      // Verify the Firebase ID token
+      console.log('Verifying token with Firebase...');
+      const decodedToken = await admin.auth().verifyIdToken(firebaseToken);
+      console.log('Token verified successfully!');
+      console.log('Decoded token UID:', decodedToken.uid);
+      console.log('Decoded token email:', decodedToken.email);
+      
+      // Verify email matches
+      if (decodedToken.email !== email) {
+        console.log('Email mismatch!');
+        sendError(res, 'Email mismatch', 401, 'EMAIL_MISMATCH');
+        return;
+      }
+
+      // Find user in database
+      const user = await User.findOne({ 
+        firebaseUid: decodedToken.uid,
+        email: email,
+        isActive: true 
+      });
+
+      if (!user) {
+        console.log('User not found in database');
+        console.log('Searched for firebaseUid:', decodedToken.uid);
+        console.log('Searched for email:', email);
+        
+        // Debug: Check if user exists with different criteria
+        const userByUid = await User.findOne({ firebaseUid: decodedToken.uid });
+        const userByEmail = await User.findOne({ email: email });
+        
+        console.log('User by UID only:', userByUid ? 'Found' : 'Not found');
+        console.log('User by email only:', userByEmail ? 'Found' : 'Not found');
+        
+        if (userByUid) {
+          console.log('User details:', JSON.stringify({
+            firebaseUid: userByUid.firebaseUid,
+            email: userByUid.email,
+            isActive: userByUid.isActive,
+            authProvider: userByUid.authProvider
+          }));
+        }
+        
+        sendError(res, 'User not found', 404, 'USER_NOT_FOUND');
+        return;
+      }
+
+      console.log('User found in database:', user._id);
+
+      // Verify this is an email/password user
+      if (user.authProvider !== 'email') {
+        console.log('Wrong auth provider:', user.authProvider);
+        sendError(res, `This account uses ${user.authProvider} authentication. Please sign in with ${user.authProvider}.`, 401, 'WRONG_AUTH_METHOD');
+        return;
+      }
+
+      console.log('Login successful!');
+      sendSuccess(res, {
+        user: user.toJSON(),
+        idToken: firebaseToken,
+        message: 'Login successful'
+      });
+    } catch (firebaseError: any) {
+      console.error('Firebase token verification error:', firebaseError);
+      console.error('Error code:', firebaseError.code);
+      console.error('Error message:', firebaseError.message);
+      
+      if (firebaseError.code === 'auth/id-token-expired') {
+        sendError(res, 'Token expired. Please sign in again.', 401, 'TOKEN_EXPIRED');
+      } else if (firebaseError.code === 'auth/argument-error') {
+        sendError(res, 'Invalid token format', 401, 'INVALID_TOKEN');
+      } else if (firebaseError.code === 'auth/invalid-argument') {
+        sendError(res, 'Invalid token format. Make sure you are sending an ID token, not a custom token.', 401, 'INVALID_TOKEN');
+      } else {
+        sendError(res, 'Invalid credentials', 401, 'INVALID_CREDENTIALS');
+      }
+    }
+  } catch (error) {
+    console.error('Email login error:', error);
+    sendError(res, 'Login failed', 500, 'LOGIN_ERROR');
   }
+}
 
   // Verify token and get user (for protected routes)
   async verifyToken(req: Request, res: Response): Promise<void> {
     try {
       const { firebaseToken } = req.body;
+
+      if (!firebaseToken) {
+        sendError(res, 'Firebase token is required', 400, 'MISSING_TOKEN');
+        return;
+      }
 
       // Verify Firebase token
       const decodedToken = await admin.auth().verifyIdToken(firebaseToken);
@@ -216,7 +251,14 @@ export class AuthController {
       });
     } catch (error: any) {
       console.error('Token verification error:', error);
-      sendError(res, 'Invalid token', 401, 'INVALID_TOKEN');
+      
+      if (error.code === 'auth/id-token-expired') {
+        sendError(res, 'Token expired', 401, 'TOKEN_EXPIRED');
+      } else if (error.code === 'auth/argument-error') {
+        sendError(res, 'Invalid token format', 401, 'INVALID_TOKEN');
+      } else {
+        sendError(res, 'Invalid token', 401, 'INVALID_TOKEN');
+      }
     }
   }
 
@@ -242,7 +284,7 @@ export class AuthController {
       const user = await User.findOne({ email, isActive: true });
       
       if (!user) {
-        // Don't reveal whether user exists or not
+        // Don't reveal whether user exists or not (security best practice)
         sendSuccess(res, { 
           message: 'If an account with that email exists, a password reset link has been sent.' 
         });
@@ -262,7 +304,7 @@ export class AuthController {
         url: process.env.PASSWORD_RESET_URL || 'http://localhost:3000/reset-password',
       });
 
-      // Here you would typically send an email with the reset link
+      // TODO: Send email with reset link using your email service
       // For now, we'll just return success
       
       sendSuccess(res, { 
@@ -300,9 +342,11 @@ export class AuthController {
       }
 
       // Update Firebase user display name
-      await admin.auth().updateUser(user.firebaseUid, {
-        displayName: `${firstName} ${lastName}`
-      });
+      if (user.firebaseUid) {
+        await admin.auth().updateUser(user.firebaseUid, {
+          displayName: `${firstName} ${lastName}`
+        });
+      }
 
       sendSuccess(res, {
         user: user.toJSON(),
@@ -341,7 +385,7 @@ export class AuthController {
       sendSuccess(res, {
         token: customToken,
         user: user.toJSON(),
-        message: 'Test token generated. Use this token as Bearer token in Swagger Authorization.'
+        message: 'Test token generated. Exchange this custom token for an ID token using Firebase client SDK, then use the ID token as Bearer token in Swagger Authorization.'
       });
     } catch (error) {
       console.error('Test token generation error:', error);

@@ -1,172 +1,188 @@
 // src/models/Pet.ts
-
-/**
- * @swagger
- * components:
- *   schemas:
- *     Pet:
- *       type: object
- *       required:
- *         - name
- *         - breed
- *         - age
- *         - ownerId
- *       properties:
- *         id:
- *           type: string
- *           description: The auto-generated ID of the pet
- *         name:
- *           type: string
- *           maxLength: 50
- *           description: The name of the pet
- *         breed:
- *           type: string
- *           maxLength: 50
- *           description: The breed of the pet
- *         age:
- *           type: number
- *           minimum: 0
- *           maximum: 30
- *           description: The age of the pet in years
- *         dateOfBirth:
- *           type: string
- *           format: date
- *           description: The pet's date of birth
- *         medicalConditions:
- *           type: string
- *           maxLength: 500
- *           description: Any medical conditions the pet has
- *         photoUrl:
- *           type: string
- *           description: URL to the pet's photo
- *         status:
- *           type: string
- *           enum: [active, inactive, pending]
- *           default: inactive
- *           description: The current status of the pet
- *         tagId:
- *           type: string
- *           description: ID of the associated tag
- *         ownerId:
- *           type: string
- *           description: ID of the pet's owner
- *         isActive:
- *           type: boolean
- *           default: true
- *           description: Whether the pet is active
- *         createdAt:
- *           type: string
- *           format: date-time
- *           description: When the pet was created
- *         updatedAt:
- *           type: string
- *           format: date-time
- *           description: When the pet was last updated
- *       example:
- *         id: 507f1f77bcf86cd799439011
- *         name: Max
- *         breed: Golden Retriever
- *         age: 5
- *         dateOfBirth: "2018-05-15"
- *         medicalConditions: Allergic to chicken
- *         photoUrl: https://example.com/pet-photos/max.jpg
- *         status: active
- *         tagId: 507f191e810c19729de860ea
- *         ownerId: 507f1f77bcf86cd799439012
- *         isActive: true
- *         createdAt: "2023-01-01T00:00:00.000Z"
- *         updatedAt: "2023-01-01T00:00:00.000Z"
- */
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IPet extends Document {
   name: string;
+  type: 'dog' | 'cat' | 'other';
   breed: string;
   age: number;
+  weight: number;
+  gender: 'male' | 'female';
+  color: string;
   dateOfBirth?: Date;
-  medicalConditions?: string;
+  
+  // Bio information
+  bio: {
+    description?: string;
+    microchipId?: string;
+  };
+  
+  // Medical information
+  medical: {
+    allergies?: string;
+    medications?: string;
+    conditions?: string;
+    vetName?: string;
+    vetPhone?: string;
+  };
+  
+  // Other information
+  other: {
+    favoriteFood?: string;
+    behavior?: string;
+    specialNeeds?: string;
+  };
+  
+  // Photo
   photoUrl?: string;
-  photoKey?: string; // S3 key for deletion
-  status: 'active' | 'inactive' | 'pending';
-  tagId?: mongoose.Types.ObjectId;
+  photoKey?: string;
+  
+  // References
   ownerId: mongoose.Types.ObjectId;
+  tagId?: mongoose.Types.ObjectId | null;
+  
+  // Status
+  status: 'active' | 'inactive';
   isActive: boolean;
+  
   createdAt: Date;
   updatedAt: Date;
 }
 
-const petSchema = new Schema<IPet>({
-  name: {
-    type: String,
-    required: true,
-    trim: true,
-    maxlength: 50,
-  },
-  breed: {
-    type: String,
-    required: true,
-    trim: true,
-    maxlength: 50,
-  },
-  age: {
-    type: Number,
-    required: true,
-    min: 0,
-    max: 30,
-  },
-  dateOfBirth: {
-    type: Date,
-  },
-  medicalConditions: {
-    type: String,
-    trim: true,
-    maxlength: 500,
-  },
-  photoUrl: {
-    type: String,
-    trim: true,
-  },
-  photoKey: {
-    type: String,
-    trim: true,
-  },
-  status: {
-    type: String,
-    enum: ['active', 'inactive', 'pending'],
-    default: 'inactive',
-  },
-  tagId: {
-    type: Schema.Types.ObjectId,
-    ref: 'Tag',
-    sparse: true,
-  },
-  ownerId: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-    index: true,
-  },
-  isActive: {
-    type: Boolean,
-    default: true,
-  },
-}, {
-  timestamps: true,
-  toJSON: {
-    transform: (doc, ret) => {
-      ret.id = ret._id;
-      delete ret._id;
-      delete ret.__v;
-      delete ret.photoKey;
-      return ret;
+const petSchema = new Schema<IPet>(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    type: {
+      type: String,
+      enum: ['dog', 'cat', 'other'],
+      default: 'dog',
+    },
+    breed: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    age: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    weight: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    gender: {
+      type: String,
+      enum: ['male', 'female'],
+      required: true,
+    },
+    color: {
+      type: String,
+      default: '',
+    },
+    dateOfBirth: {
+      type: Date,
+    },
+    
+    // Bio section
+    bio: {
+      description: String,
+      microchipId: String,
+    },
+    
+    // Medical section
+    medical: {
+      allergies: String,
+      medications: String,
+      conditions: String,
+      vetName: String,
+      vetPhone: String,
+    },
+    
+    // Other information
+    other: {
+      favoriteFood: String,
+      behavior: String,
+      specialNeeds: String,
+    },
+    
+    photoUrl: String,
+    photoKey: String,
+    
+    ownerId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
+    },
+    tagId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Tag',
+      default: null,
+    },
+    status: {
+      type: String,
+      enum: ['active', 'inactive'],
+      default: 'inactive',
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
     },
   },
-});
+  {
+    timestamps: true,
+  }
+);
 
 // Indexes
 petSchema.index({ ownerId: 1, isActive: 1 });
+petSchema.index({ tagId: 1 });
 petSchema.index({ status: 1 });
-petSchema.index({ createdAt: -1 });
-petSchema.index({ name: 'text', breed: 'text' });
+
+// Transform output to include tag info properly
+petSchema.set('toJSON', {
+  transform: function (doc, ret) {
+    // Format dates
+    if (ret.dateOfBirth) {
+      ret.dateOfBirth = ret.dateOfBirth.toISOString().split('T')[0];
+    }
+    
+    // Build tag object from populated tagId
+    if (ret.tagId && typeof ret.tagId === 'object') {
+      ret.tag = {
+        tagId: ret.tagId.qrCode || '',
+        activatedDate: ret.tagId.activatedAt 
+          ? ret.tagId.activatedAt.toISOString().split('T')[0] 
+          : '',
+        status: ret.tagId.status || 'inactive',
+      };
+    } else {
+      ret.tag = {
+        tagId: '',
+        activatedDate: '',
+        status: 'inactive',
+      };
+    }
+    
+    // Rename _id to id and photoUrl to image for frontend compatibility
+    ret.id = ret._id;
+    ret.image = ret.photoUrl || 'https://via.placeholder.com/400x300?text=No+Image';
+    
+    // Clean up fields
+    delete ret._id;
+    delete ret.__v;
+    delete ret.photoKey;
+    delete ret.tagId;
+    delete ret.isActive;
+    
+    return ret;
+  },
+});
 
 export const Pet = mongoose.model<IPet>('Pet', petSchema);
