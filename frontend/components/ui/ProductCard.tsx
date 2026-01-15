@@ -134,11 +134,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
         )}
 
         {/* Discount Badge */}
-        {discountPercentage > 0 && (
+        {/* {discountPercentage > 0 && (
           <div className="absolute top-3 left-3 px-2 md:px-3 py-1 rounded-full bg-red-500 text-white text-xs md:text-sm font-medium" style={{ marginTop: badge ? '2.5rem' : '0' }}>
             -{discountPercentage}%
           </div>
-        )}
+        )} */}
 
         {/* Out of Stock Overlay */}
         {!inStock && (

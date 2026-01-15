@@ -6,7 +6,8 @@ import Link from 'next/link';
 import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import HeroHeader from '../../../components/ui/PageHero';
 import ProductCard from '../../../components/ui/ProductCard';
-import { getAllTags, Tag } from '../../../lib/tags';
+import { productAPI } from '../../../api/product-api';
+import type { Product, PetCategory } from '../../../api/product-types';
 
 type FilterType = 'all' | 'dogs' | 'cats' | 'others';
 
@@ -14,8 +15,9 @@ export default function TagsGalleryPage() {
     const [activeTab, setActiveTab] = useState<FilterType>('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const [tags, setTags] = useState<Tag[]>([]);
+    const [tags, setTags] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     const tabs: { id: FilterType; label: string }[] = [
         { id: 'all', label: 'All' },
@@ -25,51 +27,59 @@ export default function TagsGalleryPage() {
     ];
     const itemsPerPage = 6;
 
-    // Load tags data on mount
+    // Load tags data on mount and when filters change
     useEffect(() => {
         const loadTags = async () => {
             try {
-                const tagsData = await getAllTags();
-                setTags(tagsData);
-            } catch (error) {
-                console.error('Error loading tags:', error);
+                setLoading(true);
+                setError(null);
+
+                // Build query parameters
+                const params: any = {
+                    category: 'tag', // Only fetch tags
+                    page: currentPage,
+                    limit: itemsPerPage,
+                    sortBy: 'createdAt',
+                    sortOrder: 'desc' as const
+                };
+
+                // Add pet category filter if not 'all'
+                if (activeTab !== 'all') {
+                    params.petCategory = activeTab as PetCategory;
+                }
+
+                // Add search query if provided
+                if (searchQuery.trim()) {
+                    params.search = searchQuery.trim();
+                }
+
+                const response = await productAPI.getProducts(params);
+
+                if (response.ok && response.data) {
+                    setTags(response.data);
+                } else {
+                    setError('Failed to load tags');
+                    setTags([]);
+                }
+            } catch (err) {
+                console.error('Error loading tags:', err);
+                setError('An error occurred while loading tags');
+                setTags([]);
             } finally {
                 setLoading(false);
             }
         };
+
         loadTags();
-    }, []);
-
-    // Filter tags by tab and search query
-    const filteredTags = useMemo(() => {
-        let filtered = tags;
-
-        // Filter by category tab
-        if (activeTab !== 'all') {
-            filtered = filtered.filter(tag => tag.category === activeTab);
-        }
-
-        // Filter by search query
-        if (searchQuery.trim()) {
-            filtered = filtered.filter(tag =>
-                tag.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                tag.description.toLowerCase().includes(searchQuery.toLowerCase())
-            );
-        }
-
-        return filtered;
-    }, [activeTab, searchQuery, tags]);
-
-    // Calculate pagination
-    const totalPages = Math.ceil(filteredTags.length / itemsPerPage);
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const currentTags = filteredTags.slice(startIndex, endIndex);
+    }, [activeTab, searchQuery, currentPage]);
 
     // Reset to page 1 when filters change
-    React.useEffect(() => {
+    useEffect(() => {
         setCurrentPage(1);
     }, [activeTab, searchQuery]);
+
+    // Calculate total pages (simplified for now - you can add total count from pagination)
+    const totalPages = Math.max(1, Math.ceil(tags.length / itemsPerPage));
 
     // Generate page numbers to show
     const getPageNumbers = () => {
@@ -152,31 +162,50 @@ export default function TagsGalleryPage() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 md:py-20 py-10 md:pb-40 pb-20">
                 {/* Results count */}
                 <div className="mb-6 text-gray-300 text-center">
-                    Showing {filteredTags.length > 0 ? startIndex + 1 : 0}-{Math.min(endIndex, filteredTags.length)} of {filteredTags.length} {filteredTags.length === 1 ? 'tag' : 'tags'}
+                    Showing {tags.length} {tags.length === 1 ? 'tag' : 'tags'}
                 </div>
 
-                {currentTags.length > 0 ? (
+                {error && (
+                    <div className="text-center py-8">
+                        <p className="text-red-400 mb-4">{error}</p>
+                        <button
+                            onClick={() => window.location.reload()}
+                            className="px-6 py-2 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors"
+                        >
+                            Retry
+                        </button>
+                    </div>
+                )}
+
+                {!error && tags.length > 0 ? (
                     <>
                         {/* Grid: 2 columns on mobile, 3 on lg */}
                         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
-                            {currentTags.map((tag, index) => (
-                                <Link key={tag.id} href={`/tags/${tag.slug}`}>
-                                    <ProductCard
-                                        id={tag.id}
-                                        name={tag.name}
-                                        price={tag.price}
-                                        originalPrice={tag.originalPrice}
-                                        image={tag.image}
-                                        description={tag.description}
-                                        rating={tag.rating}
-                                        reviews={tag.reviews}
-                                        badge={tag.badge}
-                                        inStock={tag.inStock}
-                                        onAddToCart={handleAddToCart}
-                                        index={index}
-                                    />
-                                </Link>
-                            ))}
+                            {tags.map((tag, index) => {
+                                const primaryImage = tag.images?.find(img => img.isPrimary)?.url || tag.images?.[0]?.url || '../../public/images/tag-img.png';
+                                const discountPercentage = tag.compareAtPrice
+                                    ? Math.round(((tag.compareAtPrice - tag.price) / tag.compareAtPrice) * 100)
+                                    : undefined;
+
+                                return (
+                                    <Link key={tag._id} href={`/tags/${tag.slug}`}>
+                                        <ProductCard
+                                            id={tag._id}
+                                            name={tag.name}
+                                            price={tag.price}
+                                            originalPrice={tag.compareAtPrice}
+                                            image={primaryImage}
+                                            description={tag.description || ''}
+                                            rating={tag.rating || 0}
+                                            reviews={tag.reviews || 0}
+                                            badge={tag.badge}
+                                            inStock={tag.availability === 'in_stock' && (tag.stock || 0) > 0}
+                                            onAddToCart={handleAddToCart}
+                                            index={index}
+                                        />
+                                    </Link>
+                                );
+                            })}
                         </div>
 
                         {/* Pagination */}
@@ -217,7 +246,7 @@ export default function TagsGalleryPage() {
                             </div>
                         )}
                     </>
-                ) : (
+                ) : !error && (
                     <div className="text-center py-16">
                         <p className="text-slate-400 text-lg">No tags found matching your criteria.</p>
                         <button

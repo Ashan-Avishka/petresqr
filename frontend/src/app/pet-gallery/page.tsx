@@ -3,28 +3,41 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import { Heart, MapPin, Calendar, Share2, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Heart, MapPin, Calendar, Share2, Search, ChevronLeft, ChevronRight, Dog, Cat } from 'lucide-react';
 import HeroHeader from '../../../components/ui/PageHero';
-import { getAllPets } from '../../../lib/pets';
+import { petAPI } from '../../../api/pet-api';
+import type { Pet } from '../../../api/pet-types';
 
-type FilterType = 'all' | 'dogs' | 'cats' | 'reunited' | 'featured';
+type FilterType = 'all' | 'dogs' | 'cats' | 'reunited' | 'adopted' | 'lost' | 'found';
 
 const PetGalleryPage = () => {
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [pets, setPets] = useState<any[]>([]);
+  const [pets, setPets] = useState<Pet[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const itemsPerPage = 6;
 
   // Load pets data on mount
   useEffect(() => {
     const loadPets = async () => {
       try {
-        const petsData = await getAllPets();
-        setPets(petsData);
-      } catch (error) {
-        console.error('Error loading pets:', error);
+        setLoading(true);
+        setError(null);
+        const response = await petAPI.getGalleryPets();
+        
+        if (response.success && response.data) {
+          const petsData = Array.isArray(response.data) 
+            ? response.data 
+            : response.data.data || [];
+          setPets(petsData);
+        } else {
+          setError(response.error?.message || 'Failed to load pets');
+        }
+      } catch (err: any) {
+        console.error('Error loading pets:', err);
+        setError('Failed to load pets');
       } finally {
         setLoading(false);
       }
@@ -36,28 +49,33 @@ const PetGalleryPage = () => {
     { id: 'all' as FilterType, label: 'All' },
     { id: 'dogs' as FilterType, label: 'Dogs' },
     { id: 'cats' as FilterType, label: 'Cats' },
-    { id: 'reunited' as FilterType, label: 'Reunions' },
-    { id: 'featured' as FilterType, label: 'Featured' }
+    { id: 'reunited' as FilterType, label: 'Reunited' },
+    { id: 'adopted' as FilterType, label: 'Adopted' },
+    { id: 'lost' as FilterType, label: 'Lost' },
+    { id: 'found' as FilterType, label: 'Found' }
   ];
 
   const filteredPets = useMemo(() => {
     let filtered = pets;
 
+    // Filter by pet type
     if (activeFilter === 'dogs') {
       filtered = filtered.filter(pet => pet.type === 'dog');
     } else if (activeFilter === 'cats') {
       filtered = filtered.filter(pet => pet.type === 'cat');
-    } else if (activeFilter === 'reunited') {
-      filtered = filtered.filter(pet => pet.status === 'reunited');
-    } else if (activeFilter === 'featured') {
-      filtered = filtered.filter(pet => pet.status === 'featured');
+    } 
+    // Filter by story status
+    else if (['reunited', 'adopted', 'lost', 'found'].includes(activeFilter)) {
+      filtered = filtered.filter(pet => pet.story?.status === activeFilter);
     }
 
+    // Search filter
     if (searchQuery.trim()) {
       filtered = filtered.filter(pet =>
         pet.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         pet.breed.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        pet.location.toLowerCase().includes(searchQuery.toLowerCase())
+        pet.story?.location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        pet.bio?.description?.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
@@ -71,17 +89,27 @@ const PetGalleryPage = () => {
   const currentPets = filteredPets.slice(startIndex, endIndex);
 
   // Reset to page 1 when filters change
-  React.useEffect(() => {
+  useEffect(() => {
     setCurrentPage(1);
   }, [activeFilter, searchQuery]);
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status?: string) => {
     const badges = {
       reunited: { label: 'Reunited!', color: 'bg-green-500' },
-      featured: { label: 'Featured', color: 'bg-primary' },
+      adopted: { label: 'Adopted', color: 'bg-purple-500' },
+      lost: { label: 'Lost', color: 'bg-red-500' },
+      found: { label: 'Found', color: 'bg-yellow-500' },
       protected: { label: 'Protected', color: 'bg-blue-500' }
     };
     return badges[status as keyof typeof badges] || badges.protected;
+  };
+
+  const calculateProtectedDays = (createdAt: string) => {
+    const created = new Date(createdAt);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - created.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
   };
 
   if (loading) {
@@ -92,13 +120,29 @@ const PetGalleryPage = () => {
     );
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary via-black to-black flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-400 text-xl mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-6 py-2 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary via-black to-black">
       {/* Header */}
       <HeroHeader
         backgroundImage="./images/page-hero6.png"
-        title="Lorem ipsum dolor"
-        subtitle="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+        title="Pet Gallery"
+        subtitle="Discover amazing pets and their inspiring stories. Every pet here is protected and loved."
       >
         {/* Combined Filters and Search - Responsive */}
         <div className="md:max-w-4xl max-w-[350px] -mt-10 mx-auto bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl md:rounded-full shadow-lg p-2 flex md:flex-row flex-col md:items-center gap-2">
@@ -148,7 +192,9 @@ const PetGalleryPage = () => {
           <>
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
               {currentPets.map((pet, index) => {
-                const badge = getStatusBadge(pet.status);
+                const badge = getStatusBadge(pet.story?.status);
+                const protectedDays = calculateProtectedDays(pet.createdAt);
+                
                 return (
                   <div
                     key={pet.id}
@@ -157,16 +203,23 @@ const PetGalleryPage = () => {
                       animation: `fadeInUp 0.5s ease ${index * 0.1}s forwards`
                     }}
                   >
-                    <Link href={`/pet-gallery/${pet.slug}`}>
+                    <Link href={`/pet-gallery/${pet.id}`}>
                       <div className="bg-gray-400/40 backdrop-blur-3xl rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 cursor-pointer group">
                         <div className="relative h-48 md:h-64">
                           <img
-                            src={pet.image}
+                            src={pet.image || '/api/placeholder/400/300'}
                             alt={`${pet.name} - ${pet.breed}`}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />
                           <div className={`absolute top-4 left-4 px-3 py-1 rounded-full text-white text-xs md:text-sm font-medium ${badge.color}`}>
                             {badge.label}
+                          </div>
+                          <div className="absolute top-4 right-4">
+                            {pet.type === 'dog' ? (
+                              <Dog className="w-6 h-6 text-white drop-shadow-lg" />
+                            ) : (
+                              <Cat className="w-6 h-6 text-white drop-shadow-lg" />
+                            )}
                           </div>
                         </div>
 
@@ -176,30 +229,48 @@ const PetGalleryPage = () => {
                               <h3 className="text-xl md:text-2xl font-bold text-primary mb-1">{pet.name}</h3>
                               <p className="text-gray-300 text-sm md:text-base">{pet.breed}</p>
                             </div>
-                            <button className="hidden md:block p-2 hover:bg-gray-300 rounded-full transition-colors">
+                            <button 
+                              onClick={(e) => {
+                                e.preventDefault();
+                                // Add favorite logic here
+                              }}
+                              className="hidden md:block p-2 hover:bg-gray-300 rounded-full transition-colors"
+                            >
                               <Heart className="w-4 h-4 md:w-5 md:h-5 text-gray-400 hover:text-red-500 transition-colors" />
                             </button>
                           </div>
 
                           {/* Desktop only: Additional details */}
                           <div className="hidden md:block">
-                            <div className="flex items-center gap-2 text-xs md:text-sm text-gray-300 mb-2 md:mb-3">
-                              <MapPin className="w-3 h-3 md:w-4 md:h-4" />
-                              <span>{pet.location}</span>
-                            </div>
+                            {pet.story?.location && (
+                              <div className="flex items-center gap-2 text-xs md:text-sm text-gray-300 mb-2 md:mb-3">
+                                <MapPin className="w-3 h-3 md:w-4 md:h-4" />
+                                <span>{pet.story.location}</span>
+                              </div>
+                            )}
 
                             <div className="flex items-center gap-2 text-xs md:text-sm text-gray-300 mb-3 md:mb-4">
                               <Calendar className="w-3 h-3 md:w-4 md:h-4" />
-                              <span>Protected for {pet.protectedDays} days</span>
+                              <span>Protected for {protectedDays} {protectedDays === 1 ? 'day' : 'days'}</span>
                             </div>
 
-                            <p className="text-gray-400 text-xs md:text-sm mb-3 md:mb-4 line-clamp-2">{pet.story}</p>
+                            {pet.story?.content && (
+                              <p className="text-gray-400 text-xs md:text-sm mb-3 md:mb-4 line-clamp-2">
+                                {pet.story.content}
+                              </p>
+                            )}
 
                             <div className="flex items-center justify-between pt-3 md:pt-4 border-t border-gray-100">
                               <span className="text-gray-400 font-medium text-xs md:text-sm group-hover:text-primary">
                                 Read Story →
                               </span>
-                              <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                              <button 
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  // Add share logic here
+                                }}
+                                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                              >
                                 <Share2 className="w-3 h-3 md:w-4 md:h-4 text-gray-400" />
                               </button>
                             </div>
@@ -242,7 +313,7 @@ const PetGalleryPage = () => {
                           onClick={() => setCurrentPage(pageNum)}
                           className={`w-8 h-8 rounded-full font-medium transition-all ${
                             currentPage === pageNum
-                              ? ' text-white shadow-md shadow-primary'
+                              ? 'bg-primary text-white shadow-md shadow-primary'
                               : 'text-gray-300 hover:bg-white/10'
                           }`}
                         >

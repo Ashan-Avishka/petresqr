@@ -7,6 +7,7 @@ import Footer from "../../components/ui/Footer";
 import AuthModal from "../../components/Models/AuthModel";
 import { AuthProvider } from '../../contexts/AuthContext';
 import { UserProvider } from '../../contexts/UserContext';
+import { CartProvider } from '../../contexts/CartContext';
 
 // Create context for auth modal
 const AuthModalContext = createContext({
@@ -25,6 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Wrap the app in AuthProvider */}
         <AuthProvider>
           <UserProvider>
+            <CartProvider>
           <AuthModalContext.Provider
             value={{
               openAuthModal: () => setIsAuthModalOpen(true),
@@ -41,6 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               onClose={() => setIsAuthModalOpen(false)}
             />
           </AuthModalContext.Provider>
+            </CartProvider>
           </UserProvider>
         </AuthProvider>
       </body>

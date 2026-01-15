@@ -11,7 +11,9 @@
     "test:watch": "jest --watch",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
-    "seed": "tsx backend/scripts/seedDatabase.ts"
+    "seed": "tsx backend/scripts/seedDatabase.ts",
+    "seed:orders": "tsx backend/scripts/seedOrders.ts",
+    "seed:products": "tsx backend/scripts/seedProducts.ts"
   },
   "keywords": [
     "pet",
@@ -41,10 +43,10 @@
     "mongoose": "^8.0.3",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
-    "nodemailer": "^6.9.7",
+    "nodemailer": "^6.10.1",
     "qrcode": "^1.5.3",
     "sharp": "^0.33.1",
-    "square": "^43.0.1",
+    "square": "^43.2.1",
     "twilio": "^4.19.3",
     "uuid": "^9.0.1",
     "winston": "^3.17.0"

@@ -1,12 +1,98 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { QrCode, MapPin, } from 'lucide-react';
+import { QrCode, MapPin, ScanLine } from 'lucide-react';
 import HeroHeader from '../../../components/ui/PageHero';
 import FundingCTA from '../../../components/home/FundingSection';
+import QRScanner from '../../../components/Models/QRScanner';
+import PetProfileModal from '../../../components/Models/PetProfile';
+import { foundAPI } from '../../../api/found-api';
 
 export default function LostPetPage() {
+    const [mounted, setMounted] = useState(false);
+    const [showScanner, setShowScanner] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [manualCode, setManualCode] = useState('');
+    const [petProfile, setPetProfile] = useState<{
+        name: string;
+        breed: string;
+        age: string;
+        photoUrl: string;
+        medical: {
+            conditions: string;
+            allergies: string;
+        };
+        tag: {
+            qrCode: string;
+            status: string;
+        };
+        owner: {
+            name: string;
+            email: string;
+            phone: string;
+        };
+    } | null>(null);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    const handleQRIconClick = () => {
+        setShowScanner(true);
+    };
+
+    const handleScan = async (tagId: string) => {
+        setLoading(true);
+        try {
+            const response = await foundAPI.getPetByTag(tagId);
+
+            if (response.success && response.data) {
+                const transformedData = {
+                    name: response.data.pet.name,
+                    breed: response.data.pet.breed,
+                    age: response.data.pet.age.toString(),
+                    photoUrl: response.data.pet.photoUrl,
+                    medical: {
+                        conditions: response.data.pet.medical.conditions,
+                        allergies: response.data.pet.medical.allergies
+                    },
+                    tag: {
+                        qrCode: response.data.tag.qrCode,
+                        status: response.data.tag.status
+                    },
+                    owner: {
+                        name: response.data.owner.name,
+                        email: response.data.owner.email,
+                        phone: response.data.owner.phone
+                    }
+                };
+                setPetProfile(transformedData);
+            } else {
+                alert(response.error?.message || 'Tag not found or not assigned to any pet');
+            }
+        } catch (error) {
+            console.error('Error finding pet:', error);
+            alert('Failed to process QR code. Please try again.');
+        } finally {
+            setLoading(false);
+            setShowScanner(false);
+        }
+    };
+
+    const handleManualSubmit = () => {
+        if (manualCode.trim()) {
+            handleScan(manualCode.trim());
+        }
+    };
+
+    const handleFoundPet = () => {
+        if (manualCode.trim()) {
+            handleManualSubmit();
+        } else {
+            setShowScanner(true);
+        }
+    };
 
     const steps = [
         {
@@ -50,6 +136,20 @@ export default function LostPetPage() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br bg-primary via-black to-black">
+            {/* QR Scanner Modal */}
+            <QRScanner
+                isOpen={showScanner}
+                onClose={() => setShowScanner(false)}
+                onScan={handleScan}
+            />
+
+            {/* Pet Profile Modal */}
+            <PetProfileModal
+                isOpen={petProfile !== null}
+                onClose={() => setPetProfile(null)}
+                pet={petProfile}
+            />
+
             {/* Hero Header */}
             <HeroHeader
                 backgroundImage="./images/page-hero8.png"
@@ -169,7 +269,8 @@ export default function LostPetPage() {
                                 whileInView={{ scale: 1, rotate: 0 }}
                                 viewport={{ once: true }}
                                 transition={{ duration: 0.6, delay: 0.4, type: "spring" }}
-                                className="bg-black p-2 rounded-xl shadow-lg shadow-primary"
+                                className="bg-black p-2 rounded-xl shadow-lg shadow-primary cursor-pointer"
+                                onClick={handleQRIconClick}
                             >
                                 <QrCode className="w-16 h-16 sm:w-20 sm:h-20 lg:w-22 lg:h-22 text-primary" />
                             </motion.div>
@@ -187,23 +288,46 @@ export default function LostPetPage() {
                             transition={{ duration: 0.8, delay: 0.8 }}
                             className="flex items-center gap-3 sm:gap-4 bg-white/90 backdrop-blur-sm rounded-full p-2 shadow-xl max-w-2xl border border-amber-200/50"
                         >
-                            <div className="flex items-center gap-3 flex-1 px-2 sm:px-4 min-w-0">
-                                {/* <QrCode className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 flex-shrink-0" /> */}
-                                <input
-                                    type="text"
-                                    placeholder="Scan QR or Enter code"
-                                    className="flex-1 bg-transparent outline-none text-sm sm:text-base text-gray-700 placeholder-gray-400 min-w-0"
-                                />
+                            <div className="flex items-center gap-3 flex-1 px-3 sm:px-4 min-w-0">
+                                <button
+                                    onClick={handleQRIconClick}
+                                    className="flex-shrink-0 hover:scale-110 transition-transform cursor-pointer"
+                                    disabled={loading}
+                                >
+                                    <QrCode className="w-6 h-6 sm:w-8 sm:h-8 text-gray-500 hover:text-amber-600" />
+                                </button>
+                                {mounted ? (
+                                    <input
+                                        type="text"
+                                        placeholder="Scan QR or Enter code"
+                                        value={manualCode}
+                                        onChange={(e) => setManualCode(e.target.value)}
+                                        className="flex-1 bg-transparent outline-none text-sm sm:text-base text-gray-700 placeholder-gray-500 min-w-0"
+                                    />
+                                ) : (
+                                    <div className="w-full pl-10 pr-4 py-3 rounded-lg bg-slate-100 border border-slate-200 h-12" />
+                                )}
                             </div>
                             <motion.button
                                 whileHover={{ scale: 1.05, boxShadow: "0 0 40px rgba(251, 191, 36, 0.8), 0 20px 40px rgba(0, 0, 0, 0.3)" }}
                                 whileTap={{ scale: 0.95 }}
                                 className="px-4 sm:px-6 py-2 sm:py-2 bg-gradient-to-tl from-primary to-black text-white text-sm sm:text-base rounded-full shadow-md shadow-black transition-all flex items-center justify-center gap-2 whitespace-nowrap flex-shrink-0"
-                            // onClick={handleFoundPet}
+                                onClick={handleFoundPet}
+                                disabled={loading}
                             >
-                                <MapPin className="w-4 h-4" />
-                                <span className="hidden sm:inline">Find Now</span>
-                                <span className="sm:hidden">Find</span>
+                                {manualCode.trim() ? (
+                                    <>
+                                        <MapPin className="w-4 h-4" />
+                                        <span className="hidden sm:inline">Find Now</span>
+                                        <span className="sm:hidden">Find</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <ScanLine className="w-4 h-4" />
+                                        <span className="hidden sm:inline">Scan Now</span>
+                                        <span className="sm:hidden">Scan</span>
+                                    </>
+                                )}
                             </motion.button>
                         </motion.div>
                     </motion.div>

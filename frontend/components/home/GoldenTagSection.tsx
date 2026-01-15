@@ -1,10 +1,13 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { ShoppingBag, Sparkles } from 'lucide-react';
+import { ShoppingBag, Sparkles, Trophy } from 'lucide-react';
 import HydrationSafeButton from '../ui/HydrationSafeButton';
+import { useRouter } from 'next/navigation'; // or 'next/router' for pages directory
 
 export default function GoldenTagPromo() {
+    const router = useRouter();
+
     return (
         <section className="relative md:bg-gradient-to-r bg-gradient-to-tr from-primary md:via-primary/50 via-black to-black  overflow-hidden">
             {/* Floating decorative elements */}
@@ -88,19 +91,36 @@ export default function GoldenTagPromo() {
                             transition={{ delay: 0.4 }}
                             className="text-gray-200 text-lg leading-relaxed max-w-xl"
                         >
-                            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cursus imperdiet sed id elementum. Quam vel aliquam sit vulputate. Faucibus nec gravida ipsum pulvinar vel non.
+                            Every quarter, one lucky customer wins our exclusive 24K gold-plated QR tag! 
+                            Simply purchase any of our smart QR pet tags and you're automatically entered. 
+                            Keep your pet safe with cutting-edge technology while having a chance to win this premium luxury accessory.
                         </motion.p>
 
-                        <HydrationSafeButton
-                        icon={ShoppingBag}
-                        whileHover={{ 
-                            scale: 1.05, 
-                            boxShadow: "0 0 20px rgba(251, 191, 36, 0.8), 0 20px 40px rgba(0, 0, 0, 0.3)" 
-                        }}
-                        className="text-lg md:shadow-xl"
-                        >
-                        Shop Now
-                        </HydrationSafeButton>
+                        <div className="flex flex-wrap gap-4">
+                            <HydrationSafeButton
+                                icon={ShoppingBag}
+                                whileHover={{ 
+                                    scale: 1.05, 
+                                    boxShadow: "0 0 20px rgba(251, 191, 36, 0.8), 0 20px 40px rgba(0, 0, 0, 0.3)" 
+                                }}
+                                className="text-lg md:shadow-xl"
+                            >
+                                Shop Now
+                            </HydrationSafeButton>
+
+                            <motion.button
+                                onClick={() => router.push('/golden-tag-winners')}
+                                whileHover={{ 
+                                    scale: 1.05,
+                                    backgroundColor: "rgba(251, 191, 36, 0.1)"
+                                }}
+                                whileTap={{ scale: 0.95 }}
+                                className="inline-flex items-center gap-2 px-6 py-3 rounded-full border-2 border-primary text-white shadow-md shadow-primary font-semibold text-lg hover:bg-primary/10 transition-colors"
+                            >
+                                <Trophy size={20} />
+                                View Winners
+                            </motion.button>
+                        </div>
                     </motion.div>
 
                     {/* Right Content - Golden Tag */}
@@ -174,7 +194,7 @@ export default function GoldenTagPromo() {
 
                                 {/* Dog bone tag */}
                                 <div className="relative mt-12">
-                                    <img src="/images/tag-img.png" alt="" className='w-80 -mt-15' />
+                                    <img src="/images/tag-img.png" alt="24K Golden Tag" className='w-80 -mt-15' />
                                 </div>
                             </motion.div>
                         </div>

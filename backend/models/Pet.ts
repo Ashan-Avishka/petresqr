@@ -33,6 +33,13 @@ export interface IPet extends Document {
     specialNeeds?: string;
   };
   
+  // Story information
+  story: {
+    content?: string;
+    location?: string;
+    status: 'protected' | 'reunited' | 'adopted' | 'lost' | 'found';
+  };
+  
   // Photo
   photoUrl?: string;
   photoKey?: string;
@@ -44,6 +51,7 @@ export interface IPet extends Document {
   // Status
   status: 'active' | 'inactive';
   isActive: boolean;
+  gallery: boolean;
   
   createdAt: Date;
   updatedAt: Date;
@@ -111,6 +119,23 @@ const petSchema = new Schema<IPet>(
       specialNeeds: String,
     },
     
+    // Story section
+    story: {
+      content: {
+        type: String,
+        default: '',
+      },
+      location: {
+        type: String,
+        default: '',
+      },
+      status: {
+        type: String,
+        enum: ['protected', 'reunited', 'adopted', 'lost', 'found'],
+        default: 'protected',
+      },
+    },
+    
     photoUrl: String,
     photoKey: String,
     
@@ -134,6 +159,10 @@ const petSchema = new Schema<IPet>(
       type: Boolean,
       default: true,
     },
+    gallery: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
@@ -144,6 +173,8 @@ const petSchema = new Schema<IPet>(
 petSchema.index({ ownerId: 1, isActive: 1 });
 petSchema.index({ tagId: 1 });
 petSchema.index({ status: 1 });
+petSchema.index({ gallery: 1 });
+petSchema.index({ 'story.status': 1 });
 
 // Transform output to include tag info properly
 petSchema.set('toJSON', {
@@ -167,6 +198,15 @@ petSchema.set('toJSON', {
         tagId: '',
         activatedDate: '',
         status: 'inactive',
+      };
+    }
+    
+    // Ensure story object exists with defaults
+    if (!ret.story) {
+      ret.story = {
+        content: '',
+        location: '',
+        status: 'protected',
       };
     }
     

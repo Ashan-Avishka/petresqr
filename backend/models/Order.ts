@@ -29,14 +29,47 @@
  *           default: USA
  *           description: Country
  * 
+ *     OrderItem:
+ *       type: object
+ *       required:
+ *         - productId
+ *         - name
+ *         - price
+ *         - quantity
+ *       properties:
+ *         productId:
+ *           type: string
+ *           description: ID of the product
+ *         name:
+ *           type: string
+ *           description: Product name at time of order
+ *         price:
+ *           type: number
+ *           description: Product price at time of order
+ *         quantity:
+ *           type: number
+ *           minimum: 1
+ *           description: Quantity ordered
+ *         image:
+ *           type: string
+ *           description: Product image URL
+ *         sku:
+ *           type: string
+ *           description: Product SKU
+ *         size:
+ *           type: string
+ *           description: Selected size variant
+ *         color:
+ *           type: string
+ *           description: Selected color variant
+ * 
  *     Order:
  *       type: object
  *       required:
  *         - userId
- *         - petId
  *         - status
  *         - total
- *         - quantity
+ *         - items
  *         - shippingAddress
  *       properties:
  *         id:
@@ -47,15 +80,32 @@
  *           description: ID of the user who placed the order
  *         petId:
  *           type: string
- *           description: ID of the pet associated with the order
+ *           description: ID of the pet associated with the order (optional)
  *         tagId:
  *           type: string
  *           description: ID of the tag being ordered
+ *         items:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/OrderItem'
+ *           description: Items in the order
  *         status:
  *           type: string
  *           enum: [pending, paid, processing, shipped, delivered, cancelled]
  *           default: pending
  *           description: Current status of the order
+ *         subtotal:
+ *           type: number
+ *           minimum: 0
+ *           description: Subtotal before tax and shipping
+ *         tax:
+ *           type: number
+ *           minimum: 0
+ *           description: Tax amount
+ *         shipping:
+ *           type: number
+ *           minimum: 0
+ *           description: Shipping cost
  *         total:
  *           type: number
  *           minimum: 0
@@ -64,11 +114,6 @@
  *           type: string
  *           default: USD
  *           description: Currency of the payment
- *         quantity:
- *           type: number
- *           minimum: 1
- *           default: 1
- *           description: Quantity of items ordered
  *         shippingAddress:
  *           $ref: '#/components/schemas/ShippingAddress'
  *         trackingNumber:
@@ -112,10 +157,18 @@
  *         userId: 507f1f77bcf86cd799439012
  *         petId: 507f1f77bcf86cd799439011
  *         tagId: 507f191e810c19729de860ea
+ *         items:
+ *           - productId: 507f191e810c19729de860eb
+ *             name: Smart Pet Tag - Premium
+ *             price: 29.99
+ *             quantity: 2
+ *             sku: TAG-PREM-001
  *         status: shipped
- *         total: 29.99
+ *         subtotal: 59.98
+ *         tax: 4.80
+ *         shipping: 10.00
+ *         total: 74.78
  *         currency: USD
- *         quantity: 1
  *         shippingAddress:
  *           street: "123 Main St"
  *           city: "Anytown"
@@ -141,14 +194,28 @@ export interface IShippingAddress {
   country: string;
 }
 
+export interface IOrderItem {
+  productId: mongoose.Types.ObjectId;
+  name: string;
+  price: number;
+  quantity: number;
+  image?: string;
+  sku?: string;
+  size?: string;
+  color?: string;
+}
+
 export interface IOrder extends Document {
   userId: mongoose.Types.ObjectId;
-  petId: mongoose.Types.ObjectId;
+  petId?: mongoose.Types.ObjectId;
   tagId?: mongoose.Types.ObjectId;
+  items: IOrderItem[];
   status: 'pending' | 'paid' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  subtotal: number;
+  tax: number;
+  shipping: number;
   total: number;
   currency: string;
-  quantity: number;
   shippingAddress: IShippingAddress;
   trackingNumber?: string;
   squareOrderId?: string;
@@ -170,6 +237,45 @@ const shippingAddressSchema = new Schema<IShippingAddress>({
   country: { type: String, required: true, trim: true, default: 'USA' },
 });
 
+const orderItemSchema = new Schema<IOrderItem>({
+  productId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Product',
+    required: true,
+  },
+  name: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  price: {
+    type: Number,
+    required: true,
+    min: 0,
+  },
+  quantity: {
+    type: Number,
+    required: true,
+    min: 1,
+  },
+  image: {
+    type: String,
+    trim: true,
+  },
+  sku: {
+    type: String,
+    trim: true,
+  },
+  size: {
+    type: String,
+    trim: true,
+  },
+  color: {
+    type: String,
+    trim: true,
+  },
+}, { _id: false });
+
 const orderSchema = new Schema<IOrder>({
   userId: {
     type: Schema.Types.ObjectId,
@@ -180,7 +286,7 @@ const orderSchema = new Schema<IOrder>({
   petId: {
     type: Schema.Types.ObjectId,
     ref: 'Pet',
-    required: true,
+    required: false,
     index: true,
   },
   tagId: {
@@ -188,11 +294,38 @@ const orderSchema = new Schema<IOrder>({
     ref: 'Tag',
     sparse: true,
   },
+  items: {
+    type: [orderItemSchema],
+    required: true,
+    validate: {
+      validator: function(items: IOrderItem[]) {
+        return items && items.length > 0;
+      },
+      message: 'Order must have at least one item',
+    },
+  },
   status: {
     type: String,
     enum: ['pending', 'paid', 'processing', 'shipped', 'delivered', 'cancelled'],
     default: 'pending',
     index: true,
+  },
+  subtotal: {
+    type: Number,
+    required: true,
+    min: 0,
+  },
+  tax: {
+    type: Number,
+    required: true,
+    min: 0,
+    default: 0,
+  },
+  shipping: {
+    type: Number,
+    required: true,
+    min: 0,
+    default: 0,
   },
   total: {
     type: Number,
@@ -202,12 +335,6 @@ const orderSchema = new Schema<IOrder>({
   currency: {
     type: String,
     default: 'USD',
-  },
-  quantity: {
-    type: Number,
-    required: true,
-    min: 1,
-    default: 1,
   },
   shippingAddress: {
     type: shippingAddressSchema,
@@ -250,5 +377,6 @@ orderSchema.index({ userId: 1, status: 1 });
 orderSchema.index({ status: 1, createdAt: -1 });
 orderSchema.index({ squareOrderId: 1 });
 orderSchema.index({ createdAt: -1 });
+orderSchema.index({ 'items.productId': 1 });
 
 export const Order = mongoose.model<IOrder>('Order', orderSchema);

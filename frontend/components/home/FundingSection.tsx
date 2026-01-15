@@ -4,15 +4,25 @@ import React, {useState, useEffect} from 'react';
 import { motion } from 'framer-motion';
 import { Heart, Shield } from 'lucide-react';
 import { useIsMobile } from '../../hooks/useIsMobile';
+import { useRouter } from 'next/navigation'; // or 'next/router' for pages directory
 import HydrationSafeButton from '../ui/HydrationSafeButton';
 
 export default function FundingCTA() {
   const isMobile = useIsMobile(768);
   const [mounted, setMounted] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const handleFundNow = () => {
+    window.open('https://www.gofundme.com/f/Please-Kindly-Help-Launch-Paw-ResQR', '_blank');
+  };
+
+  const handleLearnMore = () => {
+    router.push('/paw-resqr-funding');
+  };
 
   return (
     <section className="relative overflow-hidden pt-20 md:pb-60 pb-20 px-4">
@@ -45,10 +55,10 @@ export default function FundingCTA() {
             transition={{ delay: 0.3 }}
             className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight"
           >
-            Lorem ipsum dolor sit,
+            Help Us Launch Paw ResQR
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-black">
-              consectetur adipiscing
+              A Lifesaving Rescue Hub
             </span>
           </motion.h2>
 
@@ -58,10 +68,9 @@ export default function FundingCTA() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.4 }}
-            className="text-slate-300 text-lg md:text-xl max-w-3xl mx-auto mb-10 leading-relaxed"
+            className="text-slate-300 text-lg md:text-xl max-w-7xl mx-auto mb-10 leading-relaxed"
           >
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-            incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
+            Millions of stray animals in Sri Lanka suffer from hunger, injury, and illness every day. Your support will help us build a sustainable animal shelter with a 24/7 emergency hospital, medical equipment, QR-linked safety collars, rescue transport, and lifelong care for animals in need. Together, we can give these innocent lives the hope and help they deserve.
           </motion.p>
 
           {/* CTA Button */}
@@ -74,6 +83,7 @@ export default function FundingCTA() {
           >
             <HydrationSafeButton
               icon={Heart}
+              onClick={handleFundNow}
               whileHover={{ 
                 scale: 1.05, 
                 boxShadow: "0 0 20px rgba(251, 191, 36, 0.8), 0 20px 40px rgba(0, 0, 0, 0.3)" 
@@ -85,6 +95,7 @@ export default function FundingCTA() {
 
             <HydrationSafeButton
               icon={Shield}
+              onClick={handleLearnMore}
               variant="secondary"
               className="md:px-8 md:py-4 px-5 py-3 md:text-lg"
             >

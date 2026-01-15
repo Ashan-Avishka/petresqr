@@ -1,4 +1,4 @@
-// src/controllers/TagController.ts
+// src/controllers/TagController.ts (UPDATED)
 import { Response } from 'express';
 import { Tag } from '../models/Tag';
 import { Pet } from '../models/Pet';
@@ -12,121 +12,121 @@ import { sendEmail, emailTemplates } from '../utils/email';
 
 export class TagController {
 
-async getUserTags(req: AuthRequest, res: Response): Promise<void> {
-  try {
-    const userId = req.userId;
+  async getUserTags(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.userId;
 
-    // Find all tags directly by userId
-    const tags = await Tag.find({
-      userId: req.userId,
-      isActive: true,
-    })
-      .populate('petId', 'name breed imageUrl')
-      .populate('orderId', 'status total createdAt')
-      .sort({ createdAt: -1 });
+      // Find all tags directly by userId
+      const tags = await Tag.find({
+        userId: req.userId,
+        isActive: true,
+      })
+        .populate('petId', 'name breed imageUrl')
+        .populate('orderId', 'status total createdAt')
+        .sort({ createdAt: -1 });
 
-    // Format response with additional data
-    const formattedTags = tags.map(tag => ({
-      _id: tag._id,
-      qrCode: tag.qrCode,
-      qrCodeUrl: getQRCodeUrl(tag.qrCode),
-      status: tag.status,
-      activatedAt: tag.activatedAt,
-      createdAt: tag.createdAt,
-      pet: tag.petId,
-      order: tag.orderId,
-    }));
+      // Format response with additional data
+      const formattedTags = tags.map(tag => ({
+        _id: tag._id,
+        qrCode: tag.qrCode,
+        qrCodeUrl: getQRCodeUrl(tag.qrCode),
+        status: tag.status,
+        activatedAt: tag.activatedAt,
+        createdAt: tag.createdAt,
+        pet: tag.petId,
+        order: tag.orderId,
+      }));
 
-    sendSuccess(res, {
-      tags: formattedTags,
-      totalTags: tags.length,
-      activeCount: tags.filter(t => t.status === 'active').length,
-      pendingCount: tags.filter(t => t.status === 'pending').length,
-    });
-  } catch (error) {
-    console.error('Get user tags error:', error);
-    sendError(res, 'Failed to retrieve tags', 500, 'GET_TAGS_ERROR');
-  }
-}
-
-async purchaseTag(req: AuthRequest, res: Response): Promise<void> {
-  try {
-    const { petId, quantity = 1, shippingAddress } = req.body;
-
-    // Verify pet ownership
-    const pet = await Pet.findOne({
-      _id: petId,
-      ownerId: req.userId,
-      isActive: true,
-    });
-
-    if (!pet) {
-      sendError(res, 'Pet not found', 404, 'PET_NOT_FOUND');
-      return;
-    }
-
-    // Check if pet already has an active tag
-    const existingTag = await Tag.findOne({
-      petId,
-      status: { $in: ['active', 'pending'] },
-      isActive: true,
-    });
-
-    if (existingTag) {
-      sendError(res, 'Pet already has an active or pending tag', 400, 'TAG_EXISTS');
-      return;
-    }
-
-    // Create order
-    const tagPrice = 15.99;
-    const total = tagPrice * quantity;
-
-    const order = new Order({
-      userId: req.userId,
-      petId,
-      status: 'pending',
-      total,
-      quantity,
-      shippingAddress,
-    });
-
-    await order.save();
-
-    // Create tag(s) with userId
-    const tags = [];
-    for (let i = 0; i < quantity; i++) {
-      const qrCode = generateUniqueQRCode();
-      const tag = new Tag({
-        userId: req.userId, // ADD THIS LINE
-        petId,
-        qrCode,
-        status: 'pending',
-        orderId: order._id,
+      sendSuccess(res, {
+        tags: formattedTags,
+        totalTags: tags.length,
+        activeCount: tags.filter(t => t.status === 'active').length,
+        pendingCount: tags.filter(t => t.status === 'pending').length,
       });
-      
-      await tag.save();
-      tags.push(tag);
+    } catch (error) {
+      console.error('Get user tags error:', error);
+      sendError(res, 'Failed to retrieve tags', 500, 'GET_TAGS_ERROR');
     }
-
-    // Update order with first tag ID
-    order.tagId = tags[0]._id;
-    await order.save();
-
-    const paymentUrl = `${process.env.FRONTEND_URL}/payment/${order._id}`;
-
-    sendSuccess(res, {
-      orderId: order._id,
-      tagId: tags[0]._id,
-      total,
-      quantity,
-      paymentUrl,
-      qrCode: tags[0].qrCode,
-    }, 201);
-  } catch (error) {
-    console.error('Purchase tag error:', error);
-    sendError(res, 'Failed to create tag order', 500, 'PURCHASE_ERROR');
   }
-}
+
+  async purchaseTag(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const { petId, quantity = 1, shippingAddress } = req.body;
+
+      // Verify pet ownership
+      const pet = await Pet.findOne({
+        _id: petId,
+        ownerId: req.userId,
+        isActive: true,
+      });
+
+      if (!pet) {
+        sendError(res, 'Pet not found', 404, 'PET_NOT_FOUND');
+        return;
+      }
+
+      // Check if pet already has an active tag
+      const existingTag = await Tag.findOne({
+        petId,
+        status: { $in: ['active', 'pending'] },
+        isActive: true,
+      });
+
+      if (existingTag) {
+        sendError(res, 'Pet already has an active or pending tag', 400, 'TAG_EXISTS');
+        return;
+      }
+
+      // Create order
+      const tagPrice = 15.99;
+      const total = tagPrice * quantity;
+
+      const order = new Order({
+        userId: req.userId,
+        petId,
+        status: 'pending',
+        total,
+        quantity,
+        shippingAddress,
+      });
+
+      await order.save();
+
+      // Create tag(s) with userId
+      const tags = [];
+      for (let i = 0; i < quantity; i++) {
+        const qrCode = generateUniqueQRCode();
+        const tag = new Tag({
+          userId: req.userId, // Include userId
+          petId,
+          qrCode,
+          status: 'pending',
+          orderId: order._id,
+        });
+        
+        await tag.save();
+        tags.push(tag);
+      }
+
+      // Update order with first tag ID
+      order.tagId = tags[0]._id;
+      await order.save();
+
+      const paymentUrl = `${process.env.FRONTEND_URL}/payment/${order._id}`;
+
+      sendSuccess(res, {
+        orderId: order._id,
+        tagId: tags[0]._id,
+        total,
+        quantity,
+        paymentUrl,
+        qrCode: tags[0].qrCode,
+      }, 201);
+    } catch (error) {
+      console.error('Purchase tag error:', error);
+      sendError(res, 'Failed to create tag order', 500, 'PURCHASE_ERROR');
+    }
+  }
 
   async activateTag(req: AuthRequest, res: Response): Promise<void> {
     try {

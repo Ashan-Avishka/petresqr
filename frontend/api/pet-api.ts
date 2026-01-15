@@ -10,6 +10,9 @@ import type {
   UpdatePetResponse,
   DeletePetRequest,
   DeletePetResponse,
+  ToggleGalleryRequest,
+  ToggleGalleryResponse,
+  GetGalleryPetsResponse,
 } from './pet-types';
 import type { ApiResponse } from './types';
 
@@ -82,6 +85,61 @@ export const petAPI = {
         error: {
           code: error.response?.data?.code || 'UPDATE_PET_ERROR',
           message: error.response?.data?.message || 'Failed to update pet',
+        },
+      };
+    }
+  },
+
+  /**
+   * Toggle gallery status for a pet
+   */
+  toggleGallery: async (data: ToggleGalleryRequest): Promise<ApiResponse<ToggleGalleryResponse>> => {
+    try {
+      const { petId, gallery } = data;
+      const response = await apiClient.patch(`/pets/${petId}/gallery`, { gallery });
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: {
+          code: error.response?.data?.code || 'TOGGLE_GALLERY_ERROR',
+          message: error.response?.data?.message || 'Failed to toggle gallery status',
+        },
+      };
+    }
+  },
+
+  /**
+   * Get all pets in the public gallery
+   */
+  getGalleryPets: async (): Promise<ApiResponse<GetGalleryPetsResponse>> => {
+    try {
+      const response = await apiClient.get('/pets/gallery');
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: {
+          code: error.response?.data?.code || 'GET_GALLERY_PETS_ERROR',
+          message: error.response?.data?.message || 'Failed to fetch gallery pets',
+        },
+      };
+    }
+  },
+
+  /**
+ * Get a specific pet from gallery (public, no auth required)
+ */
+  getGalleryPet: async (petId: string): Promise<ApiResponse<GetPetResponse>> => {
+    try {
+      const response = await apiClient.get(`/pets/gallery/${petId}`);
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: {
+          code: error.response?.data?.code || 'GET_PET_ERROR',
+          message: error.response?.data?.message || 'Failed to fetch pet',
         },
       };
     }

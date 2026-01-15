@@ -1,15 +1,19 @@
 // src/config/square.ts
-import { Client, Environment } from 'square';
+import { config, validateEnv } from './env';
+import { SquareClient, SquareEnvironment } from "square";
 
-const squareClient = new Client({
-  accessToken: process.env.SQUARE_ACCESS_TOKEN,
-  environment: process.env.NODE_ENV === 'production' 
-    ? Environment.Production 
-    : Environment.Sandbox,
+// Validate required environment variables
+validateEnv(['SQUARE_ACCESS_TOKEN', 'SQUARE_LOCATION_ID']);
+
+const squareClient = new SquareClient({
+  token: config.square.accessToken,
+  environment: config.square.environment === 'production' 
+    ? SquareEnvironment.Production 
+    : SquareEnvironment.Sandbox,
 });
 
-export const paymentsApi = squareClient.paymentsApi;
-export const ordersApi = squareClient.ordersApi;
-export const customersApi = squareClient.customersApi;
+export const paymentsApi = squareClient.payments;
+export const ordersApi = squareClient.orders;
+export const customersApi = squareClient.customers;
 
 export { squareClient };

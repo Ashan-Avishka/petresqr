@@ -6,15 +6,17 @@ import morgan from 'morgan';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
+import path from 'path';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import { connectDatabase } from './config/database';
 import { initializeFirebase } from './config/firebase';
+import { initializeTwilio } from './config/twilio'; 
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import routes from './routes';
 
 // Load environment variables
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -157,6 +159,10 @@ async function startServer() {
     // Initialize Firebase
     await initializeFirebase();
     console.log('✅ Firebase initialized');
+
+    // Initialize Twilio
+    const twilioStatus = initializeTwilio();
+    console.log(twilioStatus);
 
     // Start server
     app.listen(PORT, () => {

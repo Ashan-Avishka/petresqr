@@ -2,6 +2,7 @@
 import { Response } from 'express';
 import { Pet } from '../models/Pet';
 import { Tag } from '../models/Tag';
+import { User } from '../models/User';
 import { sendSuccess, sendError } from '../utils/response';
 import { AuthRequest } from '../middleware/auth';
 import { getPaginationOptions, createPaginationResult } from '../utils/pagination';
@@ -17,7 +18,9 @@ export class PetController {
     this.updatePet = this.updatePet.bind(this);
     this.deletePet = this.deletePet.bind(this);
     this.uploadPhoto = this.uploadPhoto.bind(this);
-    this.getPetByTag = this.getPetByTag.bind(this);
+    this.toggleGallery = this.toggleGallery.bind(this);
+    this.getGalleryPets = this.getGalleryPets.bind(this);
+    this.getGalleryPetById = this.getGalleryPetById.bind(this);
   }
 
   private getTagPopulation(): any {
@@ -85,9 +88,10 @@ export class PetController {
         bio,
         medical,
         other,
-        tagId
+        tagId,
+        gallery
       } = req.body;
-      
+
       let photoUrl: string | undefined;
       let photoKey: string | undefined;
 
@@ -100,22 +104,22 @@ export class PetController {
 
       // Validate tag if provided
       if (tagId) {
-        const tag = await Tag.findOne({ 
+        const tag = await Tag.findOne({
           _id: tagId,
           userId: req.userId,
           status: 'available'
         });
-        
+
         if (!tag) {
           sendError(res, 'Invalid or unavailable tag', 400, 'INVALID_TAG');
           return;
         }
 
-        const existingPetWithTag = await Pet.findOne({ 
-          tagId: tagId, 
-          isActive: true 
+        const existingPetWithTag = await Pet.findOne({
+          tagId: tagId,
+          isActive: true
         });
-        
+
         if (existingPetWithTag) {
           sendError(res, 'Tag is already assigned to another pet', 400, 'TAG_ALREADY_ASSIGNED');
           return;
@@ -147,17 +151,23 @@ export class PetController {
           behavior: other?.behavior || '',
           specialNeeds: other?.specialNeeds || '',
         },
+        story: {
+          content: '',
+          location: '',
+          status: 'protected',
+        },
         photoUrl,
         photoKey,
         ownerId: req.userId,
         tagId: tagId || null,
         status: tagId ? 'active' : 'inactive',
+        gallery: gallery === true || gallery === 'true' ? true : false, // Default to false
       });
 
       await pet.save();
 
       if (tagId) {
-        await Tag.findByIdAndUpdate(tagId, { 
+        await Tag.findByIdAndUpdate(tagId, {
           status: 'active',
           activatedAt: new Date(),
           petId: pet._id
@@ -188,9 +198,11 @@ export class PetController {
         bio,
         medical,
         other,
-        tagId
+        story,
+        tagId,
+        gallery
       } = req.body;
-      
+
       const pet = await Pet.findOne({
         _id: req.params.id,
         ownerId: req.userId,
@@ -206,7 +218,7 @@ export class PetController {
       if (tagId !== undefined) {
         if (tagId === null || tagId === '') {
           if (pet.tagId) {
-            await Tag.findByIdAndUpdate(pet.tagId, { 
+            await Tag.findByIdAndUpdate(pet.tagId, {
               status: 'available',
               deactivatedAt: new Date(),
               petId: null
@@ -215,30 +227,30 @@ export class PetController {
           pet.tagId = null;
           pet.status = 'inactive';
         } else if (tagId !== pet.tagId?.toString()) {
-          const newTag = await Tag.findOne({ 
+          const newTag = await Tag.findOne({
             _id: tagId,
             userId: req.userId,
-            status: 'available' 
+            status: 'available'
           });
-          
+
           if (!newTag) {
             sendError(res, 'Invalid or unavailable tag', 400, 'INVALID_TAG');
             return;
           }
 
-          const existingPetWithTag = await Pet.findOne({ 
-            tagId: tagId, 
+          const existingPetWithTag = await Pet.findOne({
+            tagId: tagId,
             isActive: true,
             _id: { $ne: pet._id }
           });
-          
+
           if (existingPetWithTag) {
             sendError(res, 'Tag is already assigned to another pet', 400, 'TAG_ALREADY_ASSIGNED');
             return;
           }
 
           if (pet.tagId) {
-            await Tag.findByIdAndUpdate(pet.tagId, { 
+            await Tag.findByIdAndUpdate(pet.tagId, {
               status: 'available',
               deactivatedAt: new Date(),
               petId: null
@@ -247,7 +259,7 @@ export class PetController {
 
           pet.tagId = tagId;
           pet.status = 'active';
-          await Tag.findByIdAndUpdate(tagId, { 
+          await Tag.findByIdAndUpdate(tagId, {
             status: 'active',
             activatedAt: new Date(),
             petId: pet._id
@@ -268,7 +280,7 @@ export class PetController {
         const processedImage = await processImage(req.file.buffer);
         const photoKey = `pets/${uuidv4()}-${Date.now()}.jpg`;
         const photoUrl = await uploadToS3(processedImage, photoKey, 'image/jpeg');
-        
+
         pet.photoUrl = photoUrl;
         pet.photoKey = photoKey;
       }
@@ -282,6 +294,7 @@ export class PetController {
       if (gender !== undefined) pet.gender = gender;
       if (color !== undefined) pet.color = color;
       if (dateOfBirth !== undefined) pet.dateOfBirth = new Date(dateOfBirth);
+      if (gallery !== undefined) pet.gallery = gallery === true || gallery === 'true';
 
       // Update bio
       if (bio) {
@@ -303,6 +316,13 @@ export class PetController {
         if (other.favoriteFood !== undefined) pet.other.favoriteFood = other.favoriteFood;
         if (other.behavior !== undefined) pet.other.behavior = other.behavior;
         if (other.specialNeeds !== undefined) pet.other.specialNeeds = other.specialNeeds;
+      }
+
+      // Update story
+      if (story) {
+        if (story.content !== undefined) pet.story.content = story.content;
+        if (story.location !== undefined) pet.story.location = story.location;
+        if (story.status !== undefined) pet.story.status = story.status;
       }
 
       await pet.save();
@@ -331,7 +351,7 @@ export class PetController {
       }
 
       if (pet.tagId) {
-        await Tag.findByIdAndUpdate(pet.tagId, { 
+        await Tag.findByIdAndUpdate(pet.tagId, {
           status: 'available',
           deactivatedAt: new Date(),
           petId: null
@@ -403,45 +423,138 @@ export class PetController {
     }
   }
 
-  async getPetByTag(req: AuthRequest, res: Response): Promise<void> {
+  async toggleGallery(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const { qrCode } = req.params;
+      const { gallery } = req.body;
 
-      const tag = await Tag.findOne({ qrCode, status: 'active' });
-      if (!tag) {
-        sendError(res, 'Tag not found or inactive', 404, 'TAG_NOT_FOUND');
-        return;
-      }
+      console.log('Toggle gallery request:', {
+        petId: req.params.id,
+        gallery,
+        galleryType: typeof gallery
+      });
 
       const pet = await Pet.findOne({
-        tagId: tag._id,
+        _id: req.params.id,
+        ownerId: req.userId,
         isActive: true
-      }).populate(this.getTagPopulation());
+      });
 
       if (!pet) {
-        sendError(res, 'Pet not found for this tag', 404, 'PET_NOT_FOUND');
+        sendError(res, 'Pet not found', 404, 'PET_NOT_FOUND');
         return;
       }
 
-      // Return limited info for public access
-      const publicPetInfo = {
+      console.log('Pet before update:', {
+        id: pet._id,
+        currentGallery: pet.gallery
+      });
+
+      // Explicitly set the gallery value
+      const newGalleryValue = gallery === true || gallery === 'true' || gallery === '1';
+      pet.gallery = newGalleryValue;
+
+      console.log('Setting gallery to:', newGalleryValue);
+
+      // Mark the field as modified (important for nested fields)
+      pet.markModified('gallery');
+
+      const savedPet = await pet.save();
+
+      console.log('Pet after save:', {
+        id: savedPet._id,
+        gallery: savedPet.gallery,
+        savedGallery: savedPet.toObject().gallery
+      });
+
+      const updatedPet = await Pet.findById(pet._id)
+        .populate(this.getTagPopulation());
+
+      console.log('Final pet from DB:', {
+        id: updatedPet?._id,
+        gallery: updatedPet?.gallery
+      });
+
+      sendSuccess(res, updatedPet?.toJSON());
+    } catch (error) {
+      console.error('Toggle gallery error:', error);
+      sendError(res, 'Failed to toggle gallery', 500, 'TOGGLE_GALLERY_ERROR');
+    }
+  }
+
+  async getGalleryPets(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const { page, limit, sortBy, sortOrder } = getPaginationOptions(req.query);
+      const skip = (page - 1) * limit;
+
+      const [pets, total] = await Promise.all([
+        Pet.find({ gallery: true, isActive: true })
+          .sort({ [sortBy!]: sortOrder === 'asc' ? 1 : -1 })
+          .skip(skip)
+          .limit(limit)
+          .populate(this.getTagPopulation())
+          .populate('ownerId', 'firstName lastName email phone'),
+        Pet.countDocuments({ gallery: true, isActive: true })
+      ]);
+
+      const pagination = createPaginationResult(page, limit, total);
+      const petsJson = pets.map(pet => pet.toJSON());
+
+      sendSuccess(res, petsJson, 200, pagination);
+    } catch (error) {
+      console.error('Get gallery pets error:', error);
+      sendError(res, 'Failed to fetch gallery pets', 500, 'FETCH_GALLERY_PETS_ERROR');
+    }
+  }
+
+  async getGalleryPetById(req: Request, res: Response): Promise<void> {
+    try {
+      const pet = await Pet.findOne({
+        _id: req.params.id,
+        gallery: true,
+        isActive: true
+      })
+        .select('name type breed age weight gender color dateOfBirth photoUrl bio story createdAt')
+        .populate('ownerId', 'firstName lastName');
+
+      if (!pet) {
+        sendError(res, 'Pet not found in gallery', 404, 'PET_NOT_FOUND');
+        return;
+      }
+
+      // Transform the pet data to only include public information
+      const publicPetData = {
+        id: pet._id,
         name: pet.name,
+        type: pet.type,
         breed: pet.breed,
-        photoUrl: pet.photoUrl,
-        medical: {
-          conditions: pet.medical.conditions,
-          allergies: pet.medical.allergies,
+        age: pet.age,
+        weight: pet.weight,
+        gender: pet.gender,
+        color: pet.color,
+        dateOfBirth: pet.dateOfBirth,
+        image: pet.photoUrl,
+        bio: {
+          description: pet.bio?.description || '',
+          personality: pet.bio?.personality || '',
+          medicalNotes: pet.bio?.medicalNotes || '',
         },
-        tag: {
-          qrCode: tag.qrCode,
-          status: tag.status
-        }
+        story: {
+          content: pet.story?.content || '',
+          location: pet.story?.location || '',
+          status: pet.story?.status || 'protected',
+          date: pet.story?.date || pet.createdAt,
+        },
+        createdAt: pet.createdAt,
+        owner: pet.ownerId ? {
+          firstName: (pet.ownerId as any).firstName || '',
+          lastName: (pet.ownerId as any).lastName || '',
+        } : null
       };
 
-      sendSuccess(res, publicPetInfo);
+      sendSuccess(res, publicPetData);
     } catch (error) {
-      console.error('Get pet by tag error:', error);
-      sendError(res, 'Failed to fetch pet by tag', 500, 'FETCH_PET_BY_TAG_ERROR');
+      console.error('Get gallery pet error:', error);
+      sendError(res, 'Failed to fetch pet', 500, 'FETCH_PET_ERROR');
     }
   }
 }

@@ -9,30 +9,91 @@ import { upload } from '../middleware/upload';
 const router = Router();
 const petController = new PetController();
 
-// Public route - Get pet by tag QR code (no auth required)
+// Public route - Get gallery pets (no authentication required)
 /**
  * @swagger
- * /pets/tag/{qrCode}:
+ * /pets/gallery:
  *   get:
- *     summary: Get pet information by tag QR code (public)
+ *     summary: Get all pets in the public gallery
+ *     tags: [Pets]
+ *     responses:
+ *       200:
+ *         description: List of gallery pets
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Pet'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     total:
+ *                       type: integer
+ *                     pages:
+ *                       type: integer
+ */
+router.get('/gallery', petController.getGalleryPets);
+
+/**
+ * @swagger
+ * /pets/gallery/{id}:
+ *   get:
+ *     summary: Get a specific pet from the public gallery
  *     tags: [Pets]
  *     parameters:
  *       - in: path
- *         name: qrCode
+ *         name: id
  *         schema:
  *           type: string
  *         required: true
- *         description: QR code of the tag
+ *         description: MongoDB ID of the pet
  *     responses:
  *       200:
- *         description: Public pet information
+ *         description: Pet data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                 name:
+ *                   type: string
+ *                 type:
+ *                   type: string
+ *                 breed:
+ *                   type: string
+ *                 age:
+ *                   type: string
+ *                 weight:
+ *                   type: number
+ *                 gender:
+ *                   type: string
+ *                 color:
+ *                   type: string
+ *                 image:
+ *                   type: string
+ *                 bio:
+ *                   type: object
+ *                 story:
+ *                   type: object
+ *                 createdAt:
+ *                   type: string
  *       404:
- *         description: Tag or pet not found
+ *         description: Pet not found
  */
-router.get('/tag/:qrCode',
-  [param('qrCode').trim().notEmpty()],
+router.get('/gallery/:id',
+  [param('id').isMongoId()],
   handleValidationErrors,
-  petController.getPetByTag
+  petController.getGalleryPetById
 );
 
 // All other pet routes require authentication
@@ -136,6 +197,21 @@ router.get('/:id',
  *               tagId:
  *                 type: string
  *                 description: MongoDB ID of the tag to assign
+ *               gallery:
+ *                 type: boolean
+ *                 description: Whether to display pet in public gallery
+ *               story:
+ *                 type: object
+ *                 properties:
+ *                   content:
+ *                     type: string
+ *                     maxLength: 2000
+ *                   location:
+ *                     type: string
+ *                     maxLength: 200
+ *                   status:
+ *                     type: string
+ *                     enum: [protected, reunited, adopted, lost, found]
  *               photo:
  *                 type: string
  *                 format: binary
@@ -160,6 +236,10 @@ router.post('/',
     body('dateOfBirth').optional().isISO8601(),
     body('medicalConditions').optional().isLength({ max: 500 }),
     body('tagId').optional().isMongoId().withMessage('Invalid tag ID'),
+    body('gallery').optional().isBoolean().withMessage('Gallery must be a boolean'),
+    body('story.content').optional().isString().isLength({ max: 2000 }).withMessage('Story content too long'),
+    body('story.location').optional().isString().isLength({ max: 200 }).withMessage('Location too long'),
+    body('story.status').optional().isIn(['protected', 'reunited', 'adopted', 'lost', 'found']).withMessage('Invalid story status'),
   ],
   handleValidationErrors,
   petController.createPet
@@ -209,6 +289,21 @@ router.post('/',
  *               tagId:
  *                 type: string
  *                 description: MongoDB ID of the tag (or null to remove tag)
+ *               gallery:
+ *                 type: boolean
+ *                 description: Whether to display pet in public gallery
+ *               story:
+ *                 type: object
+ *                 properties:
+ *                   content:
+ *                     type: string
+ *                     maxLength: 2000
+ *                   location:
+ *                     type: string
+ *                     maxLength: 200
+ *                   status:
+ *                     type: string
+ *                     enum: [protected, reunited, adopted, lost, found]
  *               photo:
  *                 type: string
  *                 format: binary
@@ -236,14 +331,68 @@ router.put('/:id',
     body('dateOfBirth').optional().isISO8601(),
     body('medicalConditions').optional().isLength({ max: 500 }),
     body('tagId').optional({ nullable: true }).custom((value) => {
-      // Allow null, empty string, or valid MongoId
       if (value === null || value === '') return true;
       if (typeof value === 'string' && value.match(/^[0-9a-fA-F]{24}$/)) return true;
       throw new Error('Invalid tag ID');
     }),
+    body('gallery').optional().isBoolean().withMessage('Gallery must be a boolean'),
+    body('story.content').optional().isString().isLength({ max: 2000 }).withMessage('Story content too long'),
+    body('story.location').optional().isString().isLength({ max: 200 }).withMessage('Location too long'),
+    body('story.status').optional().isIn(['protected', 'reunited', 'adopted', 'lost', 'found']).withMessage('Invalid story status'),
   ],
   handleValidationErrors,
   petController.updatePet
+);
+
+// Toggle gallery status
+/**
+ * @swagger
+ * /pets/{id}/gallery:
+ *   patch:
+ *     summary: Toggle pet's gallery visibility
+ *     tags: [Pets]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: MongoDB ID of the pet
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - gallery
+ *             properties:
+ *               gallery:
+ *                 type: boolean
+ *                 description: Whether to show pet in public gallery
+ *     responses:
+ *       200:
+ *         description: Gallery status updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Pet'
+ *       400:
+ *         description: Invalid input data
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Pet not found
+ */
+router.patch('/:id/gallery',
+  [
+    param('id').isMongoId(),
+    body('gallery').isBoolean().withMessage('Gallery must be a boolean'),
+  ],
+  handleValidationErrors,
+  petController.toggleGallery
 );
 
 // Delete pet
@@ -263,8 +412,15 @@ router.put('/:id',
  *         required: true
  *         description: MongoDB ID of the pet to delete
  *     responses:
- *       204:
+ *       200:
  *         description: Pet deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  *       401:
  *         description: Unauthorized
  *       404:
@@ -298,6 +454,8 @@ router.delete('/:id',
  *         multipart/form-data:
  *           schema:
  *             type: object
+ *             required:
+ *               - photo
  *             properties:
  *               photo:
  *                 type: string

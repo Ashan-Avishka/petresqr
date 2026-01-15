@@ -192,19 +192,19 @@ export default function PetGallery() {
           {!isMobile && (
             <div className="flex justify-center gap-2 mt-6">
               {galleryImagesSets.map((_, index) => (
-                <Button
+                <button
                   key={index}
                   onClick={() => handleSetClick(index)}
-                  className="relative h-1.5 w-12 bg-gray-300 rounded-full overflow-hidden"
+                  className="relative h-2 w-12 bg-gray-500 rounded-full overflow-hidden"
                   aria-label={`View gallery set ${index + 1}`}
                 >
                   <div
-                    className="absolute inset-0 bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-100 ease-linear"
+                    className="absolute inset-0 bg-gradient-to-r from-primary to-yellow-600 transition-all duration-100 ease-linear"
                     style={{
                       width: currentSetIndex === index ? `${progress}%` : '0%',
                     }}
                   />
-                </Button>
+                </button>
               ))}
             </div>
           )}

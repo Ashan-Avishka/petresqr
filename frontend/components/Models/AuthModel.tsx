@@ -7,6 +7,7 @@ import Button from '../ui/Button';
 import { authAPI } from '../../api';
 import type { User } from '../../api/types';
 import { signInWithEmail, registerWithEmail, signInWithGoogle } from '../../config/firebase-client';
+import { useAuthContext } from '../../contexts/AuthContext';
 
 interface AuthModalProps {
     isOpen: boolean;
@@ -21,6 +22,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
     const [rememberMe, setRememberMe] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const { login } = useAuthContext();
     
     const [formData, setFormData] = useState({
         email: '',
@@ -101,10 +103,17 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
 
             if (response.success && response.data) {
                 console.log('Login successful:', response.data);
+                
+                // Update AuthContext FIRST
+                login(response.data.user, firebaseToken);
+                
+                // Call the callback if provided
                 onAuthSuccess?.(response.data.user);
+                
+                // Close modal
                 onClose();
                 
-                // Redirect to profile page
+                // Then redirect
                 router.push('/profile');
             } else {
                 setError(response.error?.message || 'Login failed');
@@ -153,10 +162,16 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
                     });
                     
                     if (loginResponse.success && loginResponse.data) {
+                        // Update AuthContext FIRST
+                        login(loginResponse.data.user, firebaseIdToken);
+                        
+                        // Call the callback if provided
                         onAuthSuccess?.(loginResponse.data.user);
+                        
+                        // Close modal
                         onClose();
                         
-                        // Redirect to profile page
+                        // Then redirect
                         router.push('/profile');
                     } else {
                         alert('Registration successful! Please sign in with your credentials.');
@@ -188,10 +203,17 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
             
             if (response.success && response.data) {
                 console.log('Google sign-in successful:', response.data);
+                
+                // Update AuthContext FIRST
+                login(response.data.user, firebaseToken);
+                
+                // Call the callback if provided
                 onAuthSuccess?.(response.data.user);
+                
+                // Close modal
                 onClose();
                 
-                // Redirect to profile page
+                // Then redirect
                 router.push('/profile');
             } else {
                 setError(response.error?.message || 'Google sign-in failed');

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Dog, Cat, Edit2, Trash2 } from 'lucide-react';
+import { Dog, Cat, Edit2, Trash2, Eye, EyeOff } from 'lucide-react';
 import type { Pet } from '../../api/pet-types';
 
 interface PetCardProps {
@@ -9,18 +8,21 @@ interface PetCardProps {
     onEdit: () => void;
     onDelete: (id: string) => void;
     onSave?: (id: string, data: any) => Promise<void>;
+    onToggleGallery?: (id: string, gallery: boolean) => Promise<void>;
 }
 
-const PetCard: React.FC<PetCardProps> = ({ pet, onEdit, onDelete, onSave }) => {
+const PetCard: React.FC<PetCardProps> = ({ pet, onEdit, onDelete, onSave, onToggleGallery }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const [activeSection, setActiveSection] = useState('bio');
     const [isEditing, setIsEditing] = useState(false);
     const [editedData, setEditedData] = useState(pet);
     const [isSaving, setIsSaving] = useState(false);
+    const [isTogglingGallery, setIsTogglingGallery] = useState(false);
 
     const petSections = [
         { id: 'bio', label: 'Bio' },
         { id: 'medical', label: 'Medical' },
+        { id: 'story', label: 'Story' },
         { id: 'tag', label: 'Tag' },
         { id: 'other', label: 'Other' }
     ];
@@ -47,6 +49,19 @@ const PetCard: React.FC<PetCardProps> = ({ pet, onEdit, onDelete, onSave }) => {
             console.error('Failed to save:', error);
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const handleToggleGallery = async () => {
+        if (!onToggleGallery) return;
+        
+        setIsTogglingGallery(true);
+        try {
+            await onToggleGallery(pet.id, !pet.gallery);
+        } catch (error) {
+            console.error('Failed to toggle gallery:', error);
+        } finally {
+            setIsTogglingGallery(false);
         }
     };
 
@@ -106,6 +121,11 @@ const PetCard: React.FC<PetCardProps> = ({ pet, onEdit, onDelete, onSave }) => {
                             }`}>
                                 {displayData.tag.status === 'active' ? 'Active' : 'Inactive'}
                             </span>
+                            {pet.gallery && (
+                                <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-900 text-green-300 shadow-sm shadow-green-500">
+                                    In Gallery
+                                </span>
+                            )}
                         </div>
                         <div className="flex items-center gap-6 text-sm text-gray-300">
                             {isEditing ? (
@@ -149,23 +169,39 @@ const PetCard: React.FC<PetCardProps> = ({ pet, onEdit, onDelete, onSave }) => {
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
+                        {/* Gallery Toggle Button */}
+                        <button
+                            onClick={handleToggleGallery}
+                            disabled={isTogglingGallery}
+                            className={`p-2 rounded-lg transition-all disabled:opacity-50 ${
+                                pet.gallery
+                                    ? 'hover:bg-gray-800 text-green-300'
+                                    : 'hover:bg-gray-800 text-gray-400'
+                            }`}
+                            title={pet.gallery ? 'Remove from gallery' : 'Add to gallery'}
+                        >
+                            {pet.gallery ? (
+                                <Eye className="w-5 h-5" />
+                            ) : (
+                                <EyeOff className="w-5 h-5" />
+                            )}
+                        </button>
+
                         {isEditing ? (
                             <>
                                 <button
                                     onClick={handleSave}
                                     disabled={isSaving}
-                                    className="p-2 hover:bg-green-900 rounded-lg transition-colors disabled:opacity-50"
+                                    className="p-2 hover:bg-green-900 rounded-lg transition-colors disabled:opacity-50 text-green-400"
                                 >
                                     save
-                                    {/* <Save className="w-5 h-5 text-green-400" /> */}
                                 </button>
                                 <button
                                     onClick={handleCancel}
                                     disabled={isSaving}
-                                    className="p-2 hover:bg-gray-800 rounded-lg transition-colors disabled:opacity-50"
+                                    className="p-2 hover:bg-gray-800 rounded-lg transition-colors disabled:opacity-50 text-gray-400"
                                 >
                                     close
-                                    {/* <X className="w-5 h-5 text-gray-400" /> */}
                                 </button>
                             </>
                         ) : (
@@ -394,6 +430,66 @@ const PetCard: React.FC<PetCardProps> = ({ pet, onEdit, onDelete, onSave }) => {
                                                         />
                                                     ) : (
                                                         <p className="text-gray-300 mt-1">{displayData.medical.vetPhone || 'Not set'}</p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {activeSection === 'story' && (
+                                            <div className="grid grid-cols-1 gap-6">
+                                                <div>
+                                                    <label className="text-sm font-medium text-gray-400">Story Status</label>
+                                                    {isEditing ? (
+                                                        <select
+                                                            value={displayData.story.status}
+                                                            onChange={(e) => updateField('story', 'status', e.target.value)}
+                                                            className="w-full bg-gray-800 text-gray-300 rounded px-3 py-2 mt-1 border border-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                                                        >
+                                                            <option value="protected">Protected</option>
+                                                            <option value="reunited">Reunited</option>
+                                                            <option value="adopted">Adopted</option>
+                                                            <option value="lost">Lost</option>
+                                                            <option value="found">Found</option>
+                                                        </select>
+                                                    ) : (
+                                                        <div className="mt-1">
+                                                            <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium capitalize ${
+                                                                displayData.story.status === 'protected' ? 'bg-blue-900 text-blue-300' :
+                                                                displayData.story.status === 'reunited' ? 'bg-green-900 text-green-300' :
+                                                                displayData.story.status === 'adopted' ? 'bg-purple-900 text-purple-300' :
+                                                                displayData.story.status === 'lost' ? 'bg-red-900 text-red-300' :
+                                                                'bg-yellow-900 text-yellow-300'
+                                                            }`}>
+                                                                {displayData.story.status}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <label className="text-sm font-medium text-gray-400">Location</label>
+                                                    {isEditing ? (
+                                                        <input
+                                                            type="text"
+                                                            value={displayData.story.location}
+                                                            onChange={(e) => updateField('story', 'location', e.target.value)}
+                                                            className="w-full bg-gray-800 text-gray-300 rounded px-3 py-2 mt-1 border border-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                                                            placeholder="e.g., New York, NY"
+                                                        />
+                                                    ) : (
+                                                        <p className="text-gray-300 mt-1">{displayData.story.location || 'Not specified'}</p>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <label className="text-sm font-medium text-gray-400">Story Content</label>
+                                                    {isEditing ? (
+                                                        <textarea
+                                                            value={displayData.story.content}
+                                                            onChange={(e) => updateField('story', 'content', e.target.value)}
+                                                            className="w-full bg-gray-800 text-gray-300 rounded px-3 py-2 mt-1 border border-primary focus:outline-none focus:ring-2 focus:ring-primary min-h-[120px]"
+                                                            placeholder="Share your pet's story..."
+                                                        />
+                                                    ) : (
+                                                        <p className="text-gray-300 mt-1 whitespace-pre-wrap">{displayData.story.content || 'No story added yet'}</p>
                                                     )}
                                                 </div>
                                             </div>

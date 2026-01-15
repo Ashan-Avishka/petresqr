@@ -3,8 +3,10 @@ import { useAuthContext } from './AuthContext';
 import { petAPI } from '../api/pet-api';
 import { tagAPI } from '../api/tag-api';
 import { userAPI } from '../api/user-api';
+import { orderAPI } from '../api/order-api';
 import type { Pet } from '../api/pet-types';
 import type { Tag as TagType } from '../api/tag-types';
+import type { Order } from '../api/order-types';
 
 export interface UserProfile {
     firstName: string;
@@ -18,13 +20,17 @@ interface UserContextType {
     userProfile: UserProfile;
     pets: Pet[];
     tags: TagType[];
+    orders: Order[];
     loading: boolean;
     error: string | null;
     updateUserProfile: (updates: Partial<UserProfile>) => void;
     saveUserProfile: () => Promise<boolean>;
+    createPet: (formData: FormData) => Promise<boolean>;
     updatePet: (id: string, data: Pet) => Promise<boolean>;
     deletePet: (id: string) => Promise<boolean>;
+    togglePetGallery: (id: string, gallery: boolean) => Promise<boolean>;
     activateTag: (tagId: string) => Promise<boolean>;
+    cancelOrder: (orderId: string) => Promise<boolean>;
     refreshUserData: () => Promise<void>;
 }
 
@@ -37,6 +43,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const [pets, setPets] = useState<Pet[]>([]);
     const [tags, setTags] = useState<TagType[]>([]);
+    const [orders, setOrders] = useState<Order[]>([]);
     const [userProfile, setUserProfile] = useState<UserProfile>({
         firstName: '',
         lastName: '',
@@ -72,13 +79,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             // Load pets
             const petsResponse = await petAPI.getPets();
-            console.log('Pets Response:', petsResponse); // Debug log
+            console.log('Pets Response:', petsResponse);
             if (petsResponse.success && petsResponse.data) {
-                // Check if data has a 'pets' property or is an array directly
                 const petsData = Array.isArray(petsResponse.data) 
                     ? petsResponse.data 
                     : petsResponse.data.pets || [];
-                console.log('Loaded pets:', petsData); // Debug log
+                console.log('Loaded pets:', petsData);
                 setPets(petsData);
             }
 
@@ -86,6 +92,13 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const tagsResponse = await tagAPI.getTags();
             if (tagsResponse.success && tagsResponse.data) {
                 setTags(tagsResponse.data.tags);
+            }
+
+            // Load orders
+            const ordersResponse = await orderAPI.getOrders({ limit: 100 });
+            console.log('Orders Response:', ordersResponse);
+            if (ordersResponse.ok && ordersResponse.data) {
+                setOrders(ordersResponse.data || []);
             }
         } catch (err: any) {
             console.error('Error loading user data:', err);
@@ -125,23 +138,44 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
+    const createPet = async (formData: FormData): Promise<boolean> => {
+    try {
+        setError(null);
+        const response = await petAPI.createPet(formData);
+        
+        if (response.success && response.data) {
+            // Add the new pet to local state
+            setPets(prev => [...prev, response.data!.pet]);
+            
+            // Refresh tags to update their assignment status
+            await loadUserData();
+            return true;
+        } else {
+            setError(response.error?.message || 'Failed to create pet');
+            return false;
+        }
+    } catch (err: any) {
+        console.error('Error creating pet:', err);
+        setError(err.message || 'Failed to create pet');
+        return false;
+    }
+};
+
     const updatePet = async (id: string, data: Pet): Promise<boolean> => {
         try {
             setError(null);
-            console.log('Updating pet:', id, data); // Debug log
+            console.log('Updating pet:', id, data);
             const response = await petAPI.updatePet({ petId: id, ...data });
-            console.log('Update response:', response); // Debug log
+            console.log('Update response:', response);
             
             if (response.success && response.data) {
-                // Update the pet in local state
                 setPets(prev => prev.map(pet => {
-                    // Check both _id and id properties
                     const petId = pet.id;
                     const matchId = petId === id;
-                    console.log(`Comparing pet ${petId} with ${id}: ${matchId}`); // Debug log
+                    console.log(`Comparing pet ${petId} with ${id}: ${matchId}`);
                     return matchId ? response.data!.pet : pet;
                 }));
-                console.log('Pet updated successfully'); // Debug log
+                console.log('Pet updated successfully');
                 return true;
             } else {
                 setError(response.error?.message || 'Failed to update pet');
@@ -157,7 +191,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const deletePet = async (id: string): Promise<boolean> => {
         const response = await petAPI.deletePet({ petId: id });
         if (response.success) {
-            // Check both _id and id properties
             setPets(prev => prev.filter(p => {
                 const petId = p._id || p.id;
                 return petId !== id;
@@ -165,6 +198,35 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             return true;
         } else {
             setError(response.error?.message || 'Failed to delete pet');
+            return false;
+        }
+    };
+
+    const togglePetGallery = async (id: string, gallery: boolean): Promise<boolean> => {
+        try {
+            setError(null);
+            console.log('Toggling gallery for pet:', id, gallery);
+            const response = await petAPI.toggleGallery({ petId: id, gallery });
+            console.log('Toggle gallery response:', response);
+            
+            if (response.success && response.data) {
+                // Update the pet in local state
+                setPets(prev => prev.map(pet => {
+                    const petId = pet.id || pet._id;
+                    if (petId === id) {
+                        return { ...pet, gallery };
+                    }
+                    return pet;
+                }));
+                console.log('Gallery status toggled successfully');
+                return true;
+            } else {
+                setError(response.error?.message || 'Failed to toggle gallery status');
+                return false;
+            }
+        } catch (err: any) {
+            console.error('Error toggling gallery:', err);
+            setError(err.message || 'Failed to toggle gallery status');
             return false;
         }
     };
@@ -182,6 +244,28 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
+    const cancelOrder = async (orderId: string): Promise<boolean> => {
+        try {
+            setError(null);
+            const response = await orderAPI.cancelOrder(orderId);
+            
+            if (response.ok && response.data) {
+                // Update the order in local state
+                setOrders(prev => prev.map(order =>
+                    order._id === orderId ? response.data!.order : order
+                ));
+                return true;
+            } else {
+                setError(response.error?.message || 'Failed to cancel order');
+                return false;
+            }
+        } catch (err: any) {
+            console.error('Error cancelling order:', err);
+            setError(err.message || 'Failed to cancel order');
+            return false;
+        }
+    };
+
     const refreshUserData = async () => {
         await loadUserData();
     };
@@ -190,13 +274,17 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         userProfile,
         pets,
         tags,
+        orders,
         loading,
         error,
         updateUserProfile,
         saveUserProfile,
+        createPet,
         updatePet,
         deletePet,
+        togglePetGallery,
         activateTag,
+        cancelOrder,
         refreshUserData
     };
 
