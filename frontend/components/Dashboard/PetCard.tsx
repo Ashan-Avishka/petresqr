@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Dog, Cat, Edit2, Trash2, Eye, EyeOff } from 'lucide-react';
+import { Dog, Cat, Edit2, Trash2, Eye, EyeOff, ChevronUp, ChevronDown } from 'lucide-react';
 import type { Pet } from '../../api/pet-types';
+import { getImageUrl } from '../../api/config';
 
 interface PetCardProps {
     pet: Pet;
@@ -83,19 +84,27 @@ const PetCard: React.FC<PetCardProps> = ({ pet, onEdit, onDelete, onSave, onTogg
     };
 
     const displayData = isEditing ? editedData : pet;
+    
+    // Get the full image URL
+    const imageUrl = getImageUrl(displayData.image);
 
     return (
         <motion.div
             layout
             key={pet.id}
-            className="bg-gradient-to-br from-primary via-black to-black rounded-xl hover:shadow-lg transition-shadow overflow-hidden"
+            className="bg-gradient-to-br from-primary via-black to-black rounded-xl hover:shadow-lg transition-shadow overflow-hidden cursor-pointer"
+            onClick={() => !isEditing && setIsExpanded(!isExpanded)}
         >
             <div className="p-6">
                 <div className="flex items-center gap-4">
                     <img
-                        src={displayData.image || '/api/placeholder/80/80'}
+                        src={imageUrl}
                         alt={displayData.name}
                         className="w-20 h-20 rounded-lg object-cover shadow-lg shadow-black"
+                        onError={(e) => {
+                            // Fallback if image fails to load
+                            e.currentTarget.src = 'https://via.placeholder.com/400x300?text=No+Imagexx';
+                        }}
                     />
                     <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
@@ -168,7 +177,7 @@ const PetCard: React.FC<PetCardProps> = ({ pet, onEdit, onDelete, onSave, onTogg
                             )}
                         </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                         {/* Gallery Toggle Button */}
                         <button
                             onClick={handleToggleGallery}
@@ -219,13 +228,14 @@ const PetCard: React.FC<PetCardProps> = ({ pet, onEdit, onDelete, onSave, onTogg
                                     <Trash2 className="w-5 h-5 text-red-600" />
                                 </button>
                                 <button
-                                    onClick={() => {
-                                        setIsExpanded(!isExpanded);
-                                        if (!isExpanded) setActiveSection('bio');
-                                    }}
-                                    className="w-35 px-4 py-2 bg-gradient-to-br from-primary via-black via-80% to-black shadow-md shadow-primary text-white rounded-lg hover:shadow-lg transition-all"
+                                    onClick={() => setIsExpanded(!isExpanded)}
+                                    className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
                                 >
-                                    {isExpanded ? 'Show Less' : 'View Details'}
+                                    {isExpanded ? (
+                                        <ChevronUp className="w-6 h-6 text-gray-400" />
+                                    ) : (
+                                        <ChevronDown className="w-6 h-6 text-gray-400" />
+                                    )}
                                 </button>
                             </>
                         )}
@@ -247,7 +257,10 @@ const PetCard: React.FC<PetCardProps> = ({ pet, onEdit, onDelete, onSave, onTogg
                                     {petSections.map(section => (
                                         <button
                                             key={section.id}
-                                            onClick={() => setActiveSection(section.id)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setActiveSection(section.id);
+                                            }}
                                             className={`px-4 py-2 font-medium text-sm transition-colors relative ${
                                                 activeSection === section.id
                                                     ? 'text-white'

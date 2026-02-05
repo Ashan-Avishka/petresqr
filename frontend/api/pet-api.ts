@@ -56,11 +56,12 @@ export const petAPI = {
   /**
    * Create a new pet
    */
-  createPet: async (data: CreatePetRequest): Promise<ApiResponse<CreatePetResponse>> => {
+  createPet: async (data: CreatePetRequest | FormData): Promise<ApiResponse<CreatePetResponse>> => {
     try {
       const response = await apiClient.post('/pets', data);
       return { success: true, data: response.data };
     } catch (error: any) {
+      console.error('Create pet API error:', error.response?.data || error);
       return {
         success: false,
         error: {

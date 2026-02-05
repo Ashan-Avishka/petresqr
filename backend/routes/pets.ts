@@ -61,32 +61,7 @@ router.get('/gallery', petController.getGalleryPets);
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 id:
- *                   type: string
- *                 name:
- *                   type: string
- *                 type:
- *                   type: string
- *                 breed:
- *                   type: string
- *                 age:
- *                   type: string
- *                 weight:
- *                   type: number
- *                 gender:
- *                   type: string
- *                 color:
- *                   type: string
- *                 image:
- *                   type: string
- *                 bio:
- *                   type: object
- *                 story:
- *                   type: object
- *                 createdAt:
- *                   type: string
+ *               $ref: '#/components/schemas/Pet'
  *       404:
  *         description: Pet not found
  */
@@ -175,46 +150,107 @@ router.get('/:id',
  *               - name
  *               - breed
  *               - age
+ *               - gender
  *             properties:
  *               name:
  *                 type: string
  *                 minLength: 1
  *                 maxLength: 50
+ *                 description: Pet's name
+ *               type:
+ *                 type: string
+ *                 enum: [dog, cat, other]
+ *                 default: dog
+ *                 description: Type of pet
  *               breed:
  *                 type: string
  *                 minLength: 1
  *                 maxLength: 50
+ *                 description: Pet's breed
  *               age:
  *                 type: integer
  *                 minimum: 0
  *                 maximum: 30
+ *                 description: Pet's age in years
+ *               weight:
+ *                 type: number
+ *                 minimum: 0
+ *                 description: Pet's weight
+ *               gender:
+ *                 type: string
+ *                 enum: [male, female]
+ *                 description: Pet's gender
+ *               color:
+ *                 type: string
+ *                 description: Pet's color/markings
  *               dateOfBirth:
  *                 type: string
  *                 format: date
- *               medicalConditions:
+ *                 description: Pet's date of birth
+ *               bio.description:
+ *                 type: string
+ *                 maxLength: 1000
+ *                 description: General description of the pet
+ *               bio.microchipId:
+ *                 type: string
+ *                 maxLength: 50
+ *                 description: Microchip ID number
+ *               medical.allergies:
  *                 type: string
  *                 maxLength: 500
+ *                 description: Known allergies
+ *               medical.medications:
+ *                 type: string
+ *                 maxLength: 500
+ *                 description: Current medications
+ *               medical.conditions:
+ *                 type: string
+ *                 maxLength: 500
+ *                 description: Medical conditions
+ *               medical.vetName:
+ *                 type: string
+ *                 maxLength: 100
+ *                 description: Veterinarian name
+ *               medical.vetPhone:
+ *                 type: string
+ *                 maxLength: 20
+ *                 description: Veterinarian phone number
+ *               other.favoriteFood:
+ *                 type: string
+ *                 maxLength: 200
+ *                 description: Pet's favorite food
+ *               other.behavior:
+ *                 type: string
+ *                 maxLength: 500
+ *                 description: Behavioral notes
+ *               other.specialNeeds:
+ *                 type: string
+ *                 maxLength: 500
+ *                 description: Special needs or requirements
+ *               story.content:
+ *                 type: string
+ *                 maxLength: 2000
+ *                 description: Pet's story or background
+ *               story.location:
+ *                 type: string
+ *                 maxLength: 200
+ *                 description: Location related to the story
+ *               story.status:
+ *                 type: string
+ *                 enum: [protected, reunited, adopted, lost, found]
+ *                 default: protected
+ *                 description: Current status of the pet
  *               tagId:
  *                 type: string
  *                 description: MongoDB ID of the tag to assign
  *               gallery:
  *                 type: boolean
+ *                 default: false
  *                 description: Whether to display pet in public gallery
- *               story:
- *                 type: object
- *                 properties:
- *                   content:
- *                     type: string
- *                     maxLength: 2000
- *                   location:
- *                     type: string
- *                     maxLength: 200
- *                   status:
- *                     type: string
- *                     enum: [protected, reunited, adopted, lost, found]
  *               photo:
  *                 type: string
  *                 format: binary
+ *                 description: Pet's photo
  *     responses:
  *       201:
  *         description: Pet created successfully
@@ -230,16 +266,38 @@ router.get('/:id',
 router.post('/',
   upload.single('photo'),
   [
-    body('name').trim().isLength({ min: 1, max: 50 }),
-    body('breed').trim().isLength({ min: 1, max: 50 }),
-    body('age').isInt({ min: 0, max: 30 }),
-    body('dateOfBirth').optional().isISO8601(),
-    body('medicalConditions').optional().isLength({ max: 500 }),
-    body('tagId').optional().isMongoId().withMessage('Invalid tag ID'),
-    body('gallery').optional().isBoolean().withMessage('Gallery must be a boolean'),
+    body('name').trim().isLength({ min: 1, max: 50 }).withMessage('Name is required and must be 1-50 characters'),
+    body('type').optional().isIn(['dog', 'cat', 'other']).withMessage('Type must be dog, cat, or other'),
+    body('breed').trim().isLength({ min: 1, max: 50 }).withMessage('Breed is required and must be 1-50 characters'),
+    body('age').isInt({ min: 0, max: 30 }).withMessage('Age must be between 0 and 30'),
+    body('weight').optional().isFloat({ min: 0 }).withMessage('Weight must be a positive number'),
+    body('gender').isIn(['male', 'female']).withMessage('Gender must be male or female'),
+    body('color').optional().isString().isLength({ max: 100 }).withMessage('Color too long'),
+    body('dateOfBirth').optional().isISO8601().withMessage('Invalid date format'),
+    
+    // Bio validations
+    body('bio.description').optional().isString().isLength({ max: 1000 }).withMessage('Bio description too long'),
+    body('bio.microchipId').optional().isString().isLength({ max: 50 }).withMessage('Microchip ID too long'),
+    
+    // Medical validations
+    body('medical.allergies').optional().isString().isLength({ max: 500 }).withMessage('Allergies text too long'),
+    body('medical.medications').optional().isString().isLength({ max: 500 }).withMessage('Medications text too long'),
+    body('medical.conditions').optional().isString().isLength({ max: 500 }).withMessage('Conditions text too long'),
+    body('medical.vetName').optional().isString().isLength({ max: 100 }).withMessage('Vet name too long'),
+    body('medical.vetPhone').optional().isString().isLength({ max: 20 }).withMessage('Vet phone too long'),
+    
+    // Other validations
+    body('other.favoriteFood').optional().isString().isLength({ max: 200 }).withMessage('Favorite food too long'),
+    body('other.behavior').optional().isString().isLength({ max: 500 }).withMessage('Behavior text too long'),
+    body('other.specialNeeds').optional().isString().isLength({ max: 500 }).withMessage('Special needs too long'),
+    
+    // Story validations
     body('story.content').optional().isString().isLength({ max: 2000 }).withMessage('Story content too long'),
     body('story.location').optional().isString().isLength({ max: 200 }).withMessage('Location too long'),
     body('story.status').optional().isIn(['protected', 'reunited', 'adopted', 'lost', 'found']).withMessage('Invalid story status'),
+    
+    body('tagId').optional().isMongoId().withMessage('Invalid tag ID'),
+    body('gallery').optional().isBoolean().withMessage('Gallery must be a boolean'),
   ],
   handleValidationErrors,
   petController.createPet
@@ -272,6 +330,9 @@ router.post('/',
  *                 type: string
  *                 minLength: 1
  *                 maxLength: 50
+ *               type:
+ *                 type: string
+ *                 enum: [dog, cat, other]
  *               breed:
  *                 type: string
  *                 minLength: 1
@@ -280,30 +341,61 @@ router.post('/',
  *                 type: integer
  *                 minimum: 0
  *                 maximum: 30
+ *               weight:
+ *                 type: number
+ *                 minimum: 0
+ *               gender:
+ *                 type: string
+ *                 enum: [male, female]
+ *               color:
+ *                 type: string
  *               dateOfBirth:
  *                 type: string
  *                 format: date
- *               medicalConditions:
+ *               bio.description:
+ *                 type: string
+ *                 maxLength: 1000
+ *               bio.microchipId:
+ *                 type: string
+ *                 maxLength: 50
+ *               medical.allergies:
  *                 type: string
  *                 maxLength: 500
+ *               medical.medications:
+ *                 type: string
+ *                 maxLength: 500
+ *               medical.conditions:
+ *                 type: string
+ *                 maxLength: 500
+ *               medical.vetName:
+ *                 type: string
+ *                 maxLength: 100
+ *               medical.vetPhone:
+ *                 type: string
+ *                 maxLength: 20
+ *               other.favoriteFood:
+ *                 type: string
+ *                 maxLength: 200
+ *               other.behavior:
+ *                 type: string
+ *                 maxLength: 500
+ *               other.specialNeeds:
+ *                 type: string
+ *                 maxLength: 500
+ *               story.content:
+ *                 type: string
+ *                 maxLength: 2000
+ *               story.location:
+ *                 type: string
+ *                 maxLength: 200
+ *               story.status:
+ *                 type: string
+ *                 enum: [protected, reunited, adopted, lost, found]
  *               tagId:
  *                 type: string
  *                 description: MongoDB ID of the tag (or null to remove tag)
  *               gallery:
  *                 type: boolean
- *                 description: Whether to display pet in public gallery
- *               story:
- *                 type: object
- *                 properties:
- *                   content:
- *                     type: string
- *                     maxLength: 2000
- *                   location:
- *                     type: string
- *                     maxLength: 200
- *                   status:
- *                     type: string
- *                     enum: [protected, reunited, adopted, lost, found]
  *               photo:
  *                 type: string
  *                 format: binary
@@ -326,19 +418,41 @@ router.put('/:id',
   [
     param('id').isMongoId(),
     body('name').optional().trim().isLength({ min: 1, max: 50 }),
+    body('type').optional().isIn(['dog', 'cat', 'other']),
     body('breed').optional().trim().isLength({ min: 1, max: 50 }),
     body('age').optional().isInt({ min: 0, max: 30 }),
+    body('weight').optional().isFloat({ min: 0 }),
+    body('gender').optional().isIn(['male', 'female']),
+    body('color').optional().isString().isLength({ max: 100 }),
     body('dateOfBirth').optional().isISO8601(),
-    body('medicalConditions').optional().isLength({ max: 500 }),
+    
+    // Bio validations
+    body('bio.description').optional().isString().isLength({ max: 1000 }),
+    body('bio.microchipId').optional().isString().isLength({ max: 50 }),
+    
+    // Medical validations
+    body('medical.allergies').optional().isString().isLength({ max: 500 }),
+    body('medical.medications').optional().isString().isLength({ max: 500 }),
+    body('medical.conditions').optional().isString().isLength({ max: 500 }),
+    body('medical.vetName').optional().isString().isLength({ max: 100 }),
+    body('medical.vetPhone').optional().isString().isLength({ max: 20 }),
+    
+    // Other validations
+    body('other.favoriteFood').optional().isString().isLength({ max: 200 }),
+    body('other.behavior').optional().isString().isLength({ max: 500 }),
+    body('other.specialNeeds').optional().isString().isLength({ max: 500 }),
+    
+    // Story validations
+    body('story.content').optional().isString().isLength({ max: 2000 }),
+    body('story.location').optional().isString().isLength({ max: 200 }),
+    body('story.status').optional().isIn(['protected', 'reunited', 'adopted', 'lost', 'found']),
+    
     body('tagId').optional({ nullable: true }).custom((value) => {
       if (value === null || value === '') return true;
       if (typeof value === 'string' && value.match(/^[0-9a-fA-F]{24}$/)) return true;
       throw new Error('Invalid tag ID');
     }),
     body('gallery').optional().isBoolean().withMessage('Gallery must be a boolean'),
-    body('story.content').optional().isString().isLength({ max: 2000 }).withMessage('Story content too long'),
-    body('story.location').optional().isString().isLength({ max: 200 }).withMessage('Location too long'),
-    body('story.status').optional().isIn(['protected', 'reunited', 'adopted', 'lost', 'found']).withMessage('Invalid story status'),
   ],
   handleValidationErrors,
   petController.updatePet

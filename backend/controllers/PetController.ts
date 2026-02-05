@@ -2,13 +2,10 @@
 import { Response } from 'express';
 import { Pet } from '../models/Pet';
 import { Tag } from '../models/Tag';
-import { User } from '../models/User';
 import { sendSuccess, sendError } from '../utils/response';
 import { AuthRequest } from '../middleware/auth';
 import { getPaginationOptions, createPaginationResult } from '../utils/pagination';
-import { uploadToS3, deleteFromS3 } from '../config/aws';
-import { processImage } from '../middleware/upload';
-import { v4 as uuidv4 } from 'uuid';
+import { processAndSaveImage, deleteImage } from '../middleware/upload';
 
 export class PetController {
   constructor() {
@@ -85,21 +82,27 @@ export class PetController {
         gender,
         color,
         dateOfBirth,
-        bio,
-        medical,
-        other,
         tagId,
         gallery
       } = req.body;
 
+      console.log('Create pet request body:', req.body);
+
       let photoUrl: string | undefined;
-      let photoKey: string | undefined;
+      let photoFilename: string | undefined;
 
       // Handle photo upload
       if (req.file) {
-        const processedImage = await processImage(req.file.buffer);
-        photoKey = `pets/${uuidv4()}-${Date.now()}.jpg`;
-        photoUrl = await uploadToS3(processedImage, photoKey, 'image/jpeg');
+        try {
+          const imageData = await processAndSaveImage(req.file.buffer);
+          photoUrl = imageData.url;
+          photoFilename = imageData.filename;
+          console.log('Photo saved:', imageData);
+        } catch (error) {
+          console.error('Image processing error:', error);
+          sendError(res, 'Failed to process image', 500, 'IMAGE_PROCESSING_ERROR');
+          return;
+        }
       }
 
       // Validate tag if provided
@@ -107,7 +110,7 @@ export class PetController {
         const tag = await Tag.findOne({
           _id: tagId,
           userId: req.userId,
-          status: 'available'
+          status: 'active'
         });
 
         if (!tag) {
@@ -115,6 +118,13 @@ export class PetController {
           return;
         }
 
+        // Check if tag is already assigned to a pet
+        if (tag.petId) {
+          sendError(res, 'Tag is already assigned to another pet', 400, 'TAG_ALREADY_ASSIGNED');
+          return;
+        }
+
+        // Also check if any other pet is using this tag
         const existingPetWithTag = await Pet.findOne({
           tagId: tagId,
           isActive: true
@@ -136,32 +146,32 @@ export class PetController {
         color: color || '',
         dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
         bio: {
-          description: bio?.description || '',
-          microchipId: bio?.microchipId || '',
+          description: req.body['bio.description'] || '',
+          microchipId: req.body['bio.microchipId'] || '',
         },
         medical: {
-          allergies: medical?.allergies || '',
-          medications: medical?.medications || '',
-          conditions: medical?.conditions || '',
-          vetName: medical?.vetName || '',
-          vetPhone: medical?.vetPhone || '',
+          allergies: req.body['medical.allergies'] || '',
+          medications: req.body['medical.medications'] || '',
+          conditions: req.body['medical.conditions'] || '',
+          vetName: req.body['medical.vetName'] || '',
+          vetPhone: req.body['medical.vetPhone'] || '',
         },
         other: {
-          favoriteFood: other?.favoriteFood || '',
-          behavior: other?.behavior || '',
-          specialNeeds: other?.specialNeeds || '',
+          favoriteFood: req.body['other.favoriteFood'] || '',
+          behavior: req.body['other.behavior'] || '',
+          specialNeeds: req.body['other.specialNeeds'] || '',
         },
         story: {
-          content: '',
-          location: '',
-          status: 'protected',
+          content: req.body['story.content'] || '',
+          location: req.body['story.location'] || '',
+          status: req.body['story.status'] || 'protected',
         },
         photoUrl,
-        photoKey,
+        photoKey: photoFilename,
         ownerId: req.userId,
         tagId: tagId || null,
         status: tagId ? 'active' : 'inactive',
-        gallery: gallery === true || gallery === 'true' ? true : false, // Default to false
+        gallery: gallery === true || gallery === 'true' ? true : false,
       });
 
       await pet.save();
@@ -195,10 +205,6 @@ export class PetController {
         gender,
         color,
         dateOfBirth,
-        bio,
-        medical,
-        other,
-        story,
         tagId,
         gallery
       } = req.body;
@@ -217,24 +223,30 @@ export class PetController {
       // Handle tag assignment/update
       if (tagId !== undefined) {
         if (tagId === null || tagId === '') {
+          // Removing tag assignment
           if (pet.tagId) {
             await Tag.findByIdAndUpdate(pet.tagId, {
-              status: 'available',
-              deactivatedAt: new Date(),
               petId: null
             });
           }
           pet.tagId = null;
           pet.status = 'inactive';
         } else if (tagId !== pet.tagId?.toString()) {
+          // Assigning new tag
           const newTag = await Tag.findOne({
             _id: tagId,
             userId: req.userId,
-            status: 'available'
+            status: 'active'
           });
 
           if (!newTag) {
             sendError(res, 'Invalid or unavailable tag', 400, 'INVALID_TAG');
+            return;
+          }
+
+          // Check if tag is already assigned
+          if (newTag.petId) {
+            sendError(res, 'Tag is already assigned to another pet', 400, 'TAG_ALREADY_ASSIGNED');
             return;
           }
 
@@ -249,19 +261,17 @@ export class PetController {
             return;
           }
 
+          // Remove old tag assignment
           if (pet.tagId) {
             await Tag.findByIdAndUpdate(pet.tagId, {
-              status: 'available',
-              deactivatedAt: new Date(),
               petId: null
             });
           }
 
+          // Assign new tag
           pet.tagId = tagId;
           pet.status = 'active';
           await Tag.findByIdAndUpdate(tagId, {
-            status: 'active',
-            activatedAt: new Date(),
             petId: pet._id
           });
         }
@@ -269,20 +279,25 @@ export class PetController {
 
       // Handle photo update
       if (req.file) {
+        // Delete old photo if exists
         if (pet.photoKey) {
           try {
-            await deleteFromS3(pet.photoKey);
+            await deleteImage(pet.photoKey);
           } catch (error) {
             console.warn('Failed to delete old photo:', error);
           }
         }
 
-        const processedImage = await processImage(req.file.buffer);
-        const photoKey = `pets/${uuidv4()}-${Date.now()}.jpg`;
-        const photoUrl = await uploadToS3(processedImage, photoKey, 'image/jpeg');
-
-        pet.photoUrl = photoUrl;
-        pet.photoKey = photoKey;
+        // Save new photo
+        try {
+          const imageData = await processAndSaveImage(req.file.buffer);
+          pet.photoUrl = imageData.url;
+          pet.photoKey = imageData.filename;
+        } catch (error) {
+          console.error('Image processing error:', error);
+          sendError(res, 'Failed to process image', 500, 'IMAGE_PROCESSING_ERROR');
+          return;
+        }
       }
 
       // Update basic fields
@@ -296,34 +311,26 @@ export class PetController {
       if (dateOfBirth !== undefined) pet.dateOfBirth = new Date(dateOfBirth);
       if (gallery !== undefined) pet.gallery = gallery === true || gallery === 'true';
 
-      // Update bio
-      if (bio) {
-        if (bio.description !== undefined) pet.bio.description = bio.description;
-        if (bio.microchipId !== undefined) pet.bio.microchipId = bio.microchipId;
-      }
+      // Update bio using bracket notation for FormData keys
+      if (req.body['bio.description'] !== undefined) pet.bio.description = req.body['bio.description'];
+      if (req.body['bio.microchipId'] !== undefined) pet.bio.microchipId = req.body['bio.microchipId'];
 
-      // Update medical
-      if (medical) {
-        if (medical.allergies !== undefined) pet.medical.allergies = medical.allergies;
-        if (medical.medications !== undefined) pet.medical.medications = medical.medications;
-        if (medical.conditions !== undefined) pet.medical.conditions = medical.conditions;
-        if (medical.vetName !== undefined) pet.medical.vetName = medical.vetName;
-        if (medical.vetPhone !== undefined) pet.medical.vetPhone = medical.vetPhone;
-      }
+      // Update medical using bracket notation
+      if (req.body['medical.allergies'] !== undefined) pet.medical.allergies = req.body['medical.allergies'];
+      if (req.body['medical.medications'] !== undefined) pet.medical.medications = req.body['medical.medications'];
+      if (req.body['medical.conditions'] !== undefined) pet.medical.conditions = req.body['medical.conditions'];
+      if (req.body['medical.vetName'] !== undefined) pet.medical.vetName = req.body['medical.vetName'];
+      if (req.body['medical.vetPhone'] !== undefined) pet.medical.vetPhone = req.body['medical.vetPhone'];
 
-      // Update other
-      if (other) {
-        if (other.favoriteFood !== undefined) pet.other.favoriteFood = other.favoriteFood;
-        if (other.behavior !== undefined) pet.other.behavior = other.behavior;
-        if (other.specialNeeds !== undefined) pet.other.specialNeeds = other.specialNeeds;
-      }
+      // Update other using bracket notation
+      if (req.body['other.favoriteFood'] !== undefined) pet.other.favoriteFood = req.body['other.favoriteFood'];
+      if (req.body['other.behavior'] !== undefined) pet.other.behavior = req.body['other.behavior'];
+      if (req.body['other.specialNeeds'] !== undefined) pet.other.specialNeeds = req.body['other.specialNeeds'];
 
-      // Update story
-      if (story) {
-        if (story.content !== undefined) pet.story.content = story.content;
-        if (story.location !== undefined) pet.story.location = story.location;
-        if (story.status !== undefined) pet.story.status = story.status;
-      }
+      // Update story using bracket notation
+      if (req.body['story.content'] !== undefined) pet.story.content = req.body['story.content'];
+      if (req.body['story.location'] !== undefined) pet.story.location = req.body['story.location'];
+      if (req.body['story.status'] !== undefined) pet.story.status = req.body['story.status'];
 
       await pet.save();
 
@@ -361,11 +368,12 @@ export class PetController {
       pet.isActive = false;
       await pet.save();
 
+      // Delete photo file if exists
       if (pet.photoKey) {
         try {
-          await deleteFromS3(pet.photoKey);
+          await deleteImage(pet.photoKey);
         } catch (error) {
-          console.warn('Failed to delete photo from S3:', error);
+          console.warn('Failed to delete photo:', error);
         }
       }
 
@@ -394,20 +402,19 @@ export class PetController {
         return;
       }
 
+      // Delete old photo if exists
       if (pet.photoKey) {
         try {
-          await deleteFromS3(pet.photoKey);
+          await deleteImage(pet.photoKey);
         } catch (error) {
           console.warn('Failed to delete old photo:', error);
         }
       }
 
-      const processedImage = await processImage(req.file.buffer);
-      const photoKey = `pets/${uuidv4()}-${Date.now()}.jpg`;
-      const photoUrl = await uploadToS3(processedImage, photoKey, 'image/jpeg');
-
-      pet.photoUrl = photoUrl;
-      pet.photoKey = photoKey;
+      // Save new photo
+      const imageData = await processAndSaveImage(req.file.buffer);
+      pet.photoUrl = imageData.url;
+      pet.photoKey = imageData.filename;
       await pet.save();
 
       const updatedPet = await Pet.findById(pet._id)
@@ -427,12 +434,6 @@ export class PetController {
     try {
       const { gallery } = req.body;
 
-      console.log('Toggle gallery request:', {
-        petId: req.params.id,
-        gallery,
-        galleryType: typeof gallery
-      });
-
       const pet = await Pet.findOne({
         _id: req.params.id,
         ownerId: req.userId,
@@ -444,35 +445,13 @@ export class PetController {
         return;
       }
 
-      console.log('Pet before update:', {
-        id: pet._id,
-        currentGallery: pet.gallery
-      });
-
-      // Explicitly set the gallery value
-      const newGalleryValue = gallery === true || gallery === 'true' || gallery === '1';
-      pet.gallery = newGalleryValue;
-
-      console.log('Setting gallery to:', newGalleryValue);
-
-      // Mark the field as modified (important for nested fields)
+      pet.gallery = gallery === true || gallery === 'true' || gallery === '1';
       pet.markModified('gallery');
 
-      const savedPet = await pet.save();
-
-      console.log('Pet after save:', {
-        id: savedPet._id,
-        gallery: savedPet.gallery,
-        savedGallery: savedPet.toObject().gallery
-      });
+      await pet.save();
 
       const updatedPet = await Pet.findById(pet._id)
         .populate(this.getTagPopulation());
-
-      console.log('Final pet from DB:', {
-        id: updatedPet?._id,
-        gallery: updatedPet?.gallery
-      });
 
       sendSuccess(res, updatedPet?.toJSON());
     } catch (error) {
@@ -506,7 +485,7 @@ export class PetController {
     }
   }
 
-  async getGalleryPetById(req: Request, res: Response): Promise<void> {
+  async getGalleryPetById(req: AuthRequest, res: Response): Promise<void> {
     try {
       const pet = await Pet.findOne({
         _id: req.params.id,
@@ -521,7 +500,6 @@ export class PetController {
         return;
       }
 
-      // Transform the pet data to only include public information
       const publicPetData = {
         id: pet._id,
         name: pet.name,
@@ -535,14 +513,11 @@ export class PetController {
         image: pet.photoUrl,
         bio: {
           description: pet.bio?.description || '',
-          personality: pet.bio?.personality || '',
-          medicalNotes: pet.bio?.medicalNotes || '',
         },
         story: {
           content: pet.story?.content || '',
           location: pet.story?.location || '',
           status: pet.story?.status || 'protected',
-          date: pet.story?.date || pet.createdAt,
         },
         createdAt: pet.createdAt,
         owner: pet.ownerId ? {

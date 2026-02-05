@@ -81,8 +81,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const petsResponse = await petAPI.getPets();
             console.log('Pets Response:', petsResponse);
             if (petsResponse.success && petsResponse.data) {
-                const petsData = Array.isArray(petsResponse.data) 
-                    ? petsResponse.data 
+                const petsData = Array.isArray(petsResponse.data)
+                    ? petsResponse.data
                     : petsResponse.data.pets || [];
                 console.log('Loaded pets:', petsData);
                 setPets(petsData);
@@ -120,10 +120,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 lastName: userProfile.lastName,
                 phone: userProfile.phone,
                 address: userProfile.address,
-            }); 
+            });
 
             alert(JSON.stringify(response));
-            
+
             if (response.success) {
                 return true;
             } else {
@@ -139,27 +139,40 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const createPet = async (formData: FormData): Promise<boolean> => {
-    try {
-        setError(null);
-        const response = await petAPI.createPet(formData);
-        
-        if (response.success && response.data) {
-            // Add the new pet to local state
-            setPets(prev => [...prev, response.data!.pet]);
-            
-            // Refresh tags to update their assignment status
-            await loadUserData();
-            return true;
-        } else {
-            setError(response.error?.message || 'Failed to create pet');
+        try {
+            setError(null);
+
+            // Debug: Log what we're sending
+            console.log('Creating pet with FormData:');
+            for (let [key, value] of formData.entries()) {
+                console.log(`${key}:`, value);
+            }
+
+            const response = await petAPI.createPet(formData);
+
+            console.log('Create pet response:', response);
+
+            if (response.success && response.data) {
+                // The response structure might be response.data.pet or just response.data
+                const newPet = response.data.pet || response.data;
+                setPets(prev => [...prev, newPet]);
+
+                // Refresh tags to update their assignment status
+                await loadUserData();
+                return true;
+            } else {
+                const errorMsg = response.error?.message || 'Failed to create pet';
+                console.error('Create pet failed:', errorMsg);
+                setError(errorMsg);
+                return false;
+            }
+        } catch (err: any) {
+            console.error('Error creating pet:', err);
+            const errorMsg = err.response?.data?.message || err.message || 'Failed to create pet';
+            setError(errorMsg);
             return false;
         }
-    } catch (err: any) {
-        console.error('Error creating pet:', err);
-        setError(err.message || 'Failed to create pet');
-        return false;
-    }
-};
+    };
 
     const updatePet = async (id: string, data: Pet): Promise<boolean> => {
         try {
@@ -167,7 +180,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.log('Updating pet:', id, data);
             const response = await petAPI.updatePet({ petId: id, ...data });
             console.log('Update response:', response);
-            
+
             if (response.success && response.data) {
                 setPets(prev => prev.map(pet => {
                     const petId = pet.id;
@@ -208,7 +221,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.log('Toggling gallery for pet:', id, gallery);
             const response = await petAPI.toggleGallery({ petId: id, gallery });
             console.log('Toggle gallery response:', response);
-            
+
             if (response.success && response.data) {
                 // Update the pet in local state
                 setPets(prev => prev.map(pet => {
@@ -248,7 +261,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
             setError(null);
             const response = await orderAPI.cancelOrder(orderId);
-            
+
             if (response.ok && response.data) {
                 // Update the order in local state
                 setOrders(prev => prev.map(order =>

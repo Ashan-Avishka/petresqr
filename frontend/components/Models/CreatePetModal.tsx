@@ -123,6 +123,7 @@ const CreatePetModal: React.FC<CreatePetModalProps> = ({ isOpen, onClose, onSubm
     try {
       const submitData = new FormData();
 
+      // Basic pet information
       submitData.append('name', formData.name);
       submitData.append('type', formData.type);
       submitData.append('breed', formData.breed);
@@ -136,31 +137,43 @@ const CreatePetModal: React.FC<CreatePetModalProps> = ({ isOpen, onClose, onSubm
         submitData.append('dateOfBirth', formData.dateOfBirth);
       }
 
-      submitData.append('bio[description]', formData.bio.description);
-      submitData.append('bio[microchipId]', formData.bio.microchipId);
+      // Bio information
+      submitData.append('bio.description', formData.bio.description);
+      submitData.append('bio.microchipId', formData.bio.microchipId);
 
-      submitData.append('medical[allergies]', formData.medical.allergies);
-      submitData.append('medical[medications]', formData.medical.medications);
-      submitData.append('medical[conditions]', formData.medical.conditions);
-      submitData.append('medical[vetName]', formData.medical.vetName);
-      submitData.append('medical[vetPhone]', formData.medical.vetPhone);
+      // Medical information
+      submitData.append('medical.allergies', formData.medical.allergies);
+      submitData.append('medical.medications', formData.medical.medications);
+      submitData.append('medical.conditions', formData.medical.conditions);
+      submitData.append('medical.vetName', formData.medical.vetName);
+      submitData.append('medical.vetPhone', formData.medical.vetPhone);
 
-      submitData.append('other[favoriteFood]', formData.other.favoriteFood);
-      submitData.append('other[behavior]', formData.other.behavior);
-      submitData.append('other[specialNeeds]', formData.other.specialNeeds);
+      // Other information
+      submitData.append('other.favoriteFood', formData.other.favoriteFood);
+      submitData.append('other.behavior', formData.other.behavior);
+      submitData.append('other.specialNeeds', formData.other.specialNeeds);
 
-      // Only include story if enabled
+      // Story information - ALWAYS send these fields
+      submitData.append('story.content', formData.story.content || '');
+      submitData.append('story.location', formData.story.location || '');
+      submitData.append('story.status', formData.story.status || 'protected');
+
+      // Gallery flag
       if (formData.story.enabled) {
         submitData.append('gallery', 'true');
-        submitData.append('story[content]', formData.story.content);
-        submitData.append('story[location]', formData.story.location);
-        submitData.append('story[status]', formData.story.status);
       } else {
         submitData.append('gallery', 'false');
       }
 
+      // Photo
       if (selectedFile) {
         submitData.append('photo', selectedFile);
+      }
+
+      // Debug: Log what we're sending
+      console.log('FormData contents:');
+      for (let [key, value] of submitData.entries()) {
+        console.log(`${key}:`, value);
       }
 
       await onSubmit(submitData);
@@ -408,7 +421,8 @@ const CreatePetModal: React.FC<CreatePetModalProps> = ({ isOpen, onClose, onSubm
                   <X className="w-8 h-8 text-gray-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-white mb-2">No Available Tags</h3>
-                <p className="text-gray-400">You need to purchase tags before adding a pet.</p>
+                <p className="text-gray-400">All your active tags are already assigned to pets.</p>
+                <p className="text-gray-400 mt-2">Purchase new tags or unassign an existing tag to add a new pet.</p>
               </div>
             ) : (
               <div className="grid gap-3">
@@ -672,7 +686,7 @@ const CreatePetModal: React.FC<CreatePetModalProps> = ({ isOpen, onClose, onSubm
             exit={{ opacity: 0, scale: 0.95 }}
             className="fixed inset-0 z-150 flex items-center justify-center p-4"
           >
-            <div className="bg-gradient-to-br from-primary via-black via-30% to-black rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden border border-primary/20">
+            <div className="bg-gradient-to-tl from-primary via-black to-black rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden border border-primary/20">
               <div className="flex items-center justify-between p-6 border-b border-gray-700">
                 <div>
                   <h2 className="text-2xl font-bold text-white">Add New Pet</h2>
@@ -747,7 +761,7 @@ const CreatePetModal: React.FC<CreatePetModalProps> = ({ isOpen, onClose, onSubm
                     type="button"
                     onClick={handleNext}
                     disabled={isSubmitting}
-                    className="px-6 py-2 bg-gradient-to-br from-primary to-black text-white rounded-lg hover:shadow-md shadow-primary shadow-sm transition-all disabled:opacity-50 flex items-center gap-2"
+                    className="px-6 py-2 bg-gradient-to-br from-primary to-black text-white rounded-lg hover:scale-105 shadow-primary shadow-sm transition-all disabled:opacity-50 flex items-center gap-2"
                   >
                     Next
                     <ChevronRight className="w-4 h-4" />
@@ -757,7 +771,7 @@ const CreatePetModal: React.FC<CreatePetModalProps> = ({ isOpen, onClose, onSubm
                     type="button"
                     onClick={handleSubmit}
                     disabled={isSubmitting || availableTags.length === 0}
-                    className="px-6 py-2 bg-gradient-to-br from-primary to-black text-white rounded-lg hover:shadow-md shadow-primary shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="px-6 py-2 bg-gradient-to-br from-primary to-black text-white rounded-lg hover:scale-105 shadow-primary shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
                     {isSubmitting ? 'Creating...' : 'Create Pet'}
                     <Check className="w-4 h-4" />

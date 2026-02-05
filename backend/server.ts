@@ -28,6 +28,24 @@ app.use(cors({
   credentials: true,
 }));
 
+// Body parsing middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(compression());
+
+// Logging
+app.use(morgan('combined'));
+
+app.use('/uploads', (req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  res.setHeader('Cache-Control', 'no-store');
+  next();
+});
+
+// Serve static files from uploads directory - MUST BE BEFORE API ROUTES
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -43,6 +61,14 @@ const qrLimiter = rateLimit({
 });
 app.use('/api/qr/', qrLimiter);
 
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
 
 /**
  * @swagger
@@ -115,24 +141,6 @@ const swaggerOptions = {
   ],
 };
 
-
-// Body parsing middleware
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-app.use(compression());
-
-// Logging
-app.use(morgan('combined'));
-
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
-  });
-});
-
 // Generate Swagger documentation
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
 
@@ -145,7 +153,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs, {
 // API routes
 app.use('/api', routes);
 
-// Error handling
+// Error handling - MUST BE LAST
 app.use(notFoundHandler);
 app.use(errorHandler);
 
@@ -170,6 +178,7 @@ async function startServer() {
       console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
       console.log(`🔗 API Base URL: http://localhost:${PORT}/api`);
       console.log(`📚 API Documentation: http://localhost:${PORT}/api-docs`);
+      console.log(`📁 Static files: http://localhost:${PORT}/uploads`);
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);

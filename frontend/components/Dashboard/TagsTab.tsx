@@ -35,7 +35,7 @@ const TagsTab: React.FC = () => {
                                     <p className="text-sm text-gray-400">
                                         Purchased: {new Date(tag.createdAt).toLocaleDateString()}
                                     </p>
-                                    {tag.pet.name && (
+                                    {tag?.pet?.name && (
                                         <p className="text-sm text-primary mt-1">Assigned to: {tag.pet.name}</p>
                                     )}
                                 </div>

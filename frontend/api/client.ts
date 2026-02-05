@@ -19,16 +19,24 @@ export class ApiClient {
     options?: ApiClientOptions
   ): Promise<{ ok: boolean; data?: T; error?: any }> {
     try {
+      // Check if body is FormData
+      const isFormData = body instanceof FormData;
+
       // Merge auth headers + extra headers
       const headers: Record<string, string> = {
         ...getAuthHeaders(),
         ...(options?.headers || {}),
       };
 
+      // Remove Content-Type for FormData (browser will set it with boundary)
+      if (isFormData) {
+        delete headers['Content-Type'];
+      }
+
       const response = await fetch(`${this.baseURL}${path}`, {
         method,
         headers,
-        body: body ? JSON.stringify(body) : undefined,
+        body: isFormData ? body : (body ? JSON.stringify(body) : undefined),
       });
 
       const result = await response.json();

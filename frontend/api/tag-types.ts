@@ -3,6 +3,7 @@
 export interface Tag {
   _id: string;
   userId: string;
+  petId: string; // Made optional to match backend response
   qrCode: string; // Changed from tagId to qrCode
   qrCodeUrl: string; // Added this field
   status: 'active' | 'inactive' | 'pending'; // Added pending status

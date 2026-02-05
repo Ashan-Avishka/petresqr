@@ -9,8 +9,8 @@ const PetsTab: React.FC = () => {
     const { pets, tags, deletePet, updatePet, togglePetGallery, createPet } = useUserContext();
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-    const availableTags = tags.filter(tag =>
-        tag.status === 'inactive' || (tag.status === 'active' && !tag.petId)
+    const availableTags = tags.filter(tag => 
+        tag.status === 'active' && !tag.petId
     );
 
     const handleDeletePet = async (id: string) => {
@@ -71,7 +71,7 @@ const PetsTab: React.FC = () => {
                 </div>
                 <button
                     onClick={() => setIsCreateModalOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary to-primary/80 text-white rounded-lg hover:shadow-lg hover:shadow-primary/50 transition-all"
+                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-br from-primary via-black to-black text-white rounded-lg shadow-sm hover:shadow-md hover:scale-105 shadow-primary transition-all"
                 >
                     <Plus className="w-5 h-5" />
                     Add New Pet
