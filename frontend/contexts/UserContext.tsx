@@ -30,6 +30,9 @@ interface UserContextType {
     deletePet: (id: string) => Promise<boolean>;
     togglePetGallery: (id: string, gallery: boolean) => Promise<boolean>;
     activateTag: (tagId: string) => Promise<boolean>;
+    deactivateTag: (tagId: string) => Promise<boolean>;
+    assignTag: (tagId: string, petId: string) => Promise<boolean>;
+    unassignTag: (tagId: string) => Promise<boolean>;
     cancelOrder: (orderId: string) => Promise<boolean>;
     refreshUserData: () => Promise<void>;
 }
@@ -52,7 +55,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         address: '',
     });
 
-    // Load user data on mount and when authentication changes
     useEffect(() => {
         if (isAuthenticated && user) {
             loadUserData();
@@ -64,7 +66,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setError(null);
 
         try {
-            // Load user profile
             const profileResponse = await userAPI.getProfile();
             if (profileResponse.success && profileResponse.data) {
                 const userData = profileResponse.data;
@@ -77,26 +78,20 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 });
             }
 
-            // Load pets
             const petsResponse = await petAPI.getPets();
-            console.log('Pets Response:', petsResponse);
             if (petsResponse.success && petsResponse.data) {
                 const petsData = Array.isArray(petsResponse.data)
                     ? petsResponse.data
                     : petsResponse.data.pets || [];
-                console.log('Loaded pets:', petsData);
                 setPets(petsData);
             }
 
-            // Load tags
             const tagsResponse = await tagAPI.getTags();
             if (tagsResponse.success && tagsResponse.data) {
                 setTags(tagsResponse.data.tags);
             }
 
-            // Load orders
             const ordersResponse = await orderAPI.getOrders({ limit: 100 });
-            console.log('Orders Response:', ordersResponse);
             if (ordersResponse.ok && ordersResponse.data) {
                 setOrders(ordersResponse.data || []);
             }
@@ -122,8 +117,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 address: userProfile.address,
             });
 
-            alert(JSON.stringify(response));
-
             if (response.success) {
                 return true;
             } else {
@@ -141,35 +134,18 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const createPet = async (formData: FormData): Promise<boolean> => {
         try {
             setError(null);
-
-            // Debug: Log what we're sending
-            console.log('Creating pet with FormData:');
-            for (let [key, value] of formData.entries()) {
-                console.log(`${key}:`, value);
-            }
-
             const response = await petAPI.createPet(formData);
-
-            console.log('Create pet response:', response);
-
             if (response.success && response.data) {
-                // The response structure might be response.data.pet or just response.data
                 const newPet = response.data.pet || response.data;
                 setPets(prev => [...prev, newPet]);
-
-                // Refresh tags to update their assignment status
                 await loadUserData();
                 return true;
             } else {
-                const errorMsg = response.error?.message || 'Failed to create pet';
-                console.error('Create pet failed:', errorMsg);
-                setError(errorMsg);
+                setError(response.error?.message || 'Failed to create pet');
                 return false;
             }
         } catch (err: any) {
-            console.error('Error creating pet:', err);
-            const errorMsg = err.response?.data?.message || err.message || 'Failed to create pet';
-            setError(errorMsg);
+            setError(err.response?.data?.message || err.message || 'Failed to create pet');
             return false;
         }
     };
@@ -177,25 +153,17 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const updatePet = async (id: string, data: Pet): Promise<boolean> => {
         try {
             setError(null);
-            console.log('Updating pet:', id, data);
             const response = await petAPI.updatePet({ petId: id, ...data });
-            console.log('Update response:', response);
-
             if (response.success && response.data) {
-                setPets(prev => prev.map(pet => {
-                    const petId = pet.id;
-                    const matchId = petId === id;
-                    console.log(`Comparing pet ${petId} with ${id}: ${matchId}`);
-                    return matchId ? response.data!.pet : pet;
-                }));
-                console.log('Pet updated successfully');
+                setPets(prev => prev.map(pet =>
+                    (pet.id === id || pet._id === id) ? response.data!.pet : pet
+                ));
                 return true;
             } else {
                 setError(response.error?.message || 'Failed to update pet');
                 return false;
             }
         } catch (err: any) {
-            console.error('Error updating pet:', err);
             setError(err.message || 'Failed to update pet');
             return false;
         }
@@ -204,10 +172,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const deletePet = async (id: string): Promise<boolean> => {
         const response = await petAPI.deletePet({ petId: id });
         if (response.success) {
-            setPets(prev => prev.filter(p => {
-                const petId = p._id || p.id;
-                return petId !== id;
-            }));
+            setPets(prev => prev.filter(p => (p._id || p.id) !== id));
             return true;
         } else {
             setError(response.error?.message || 'Failed to delete pet');
@@ -218,41 +183,101 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const togglePetGallery = async (id: string, gallery: boolean): Promise<boolean> => {
         try {
             setError(null);
-            console.log('Toggling gallery for pet:', id, gallery);
             const response = await petAPI.toggleGallery({ petId: id, gallery });
-            console.log('Toggle gallery response:', response);
-
             if (response.success && response.data) {
-                // Update the pet in local state
-                setPets(prev => prev.map(pet => {
-                    const petId = pet.id || pet._id;
-                    if (petId === id) {
-                        return { ...pet, gallery };
-                    }
-                    return pet;
-                }));
-                console.log('Gallery status toggled successfully');
+                setPets(prev => prev.map(pet =>
+                    (pet.id === id || pet._id === id) ? { ...pet, gallery } : pet
+                ));
                 return true;
             } else {
                 setError(response.error?.message || 'Failed to toggle gallery status');
                 return false;
             }
         } catch (err: any) {
-            console.error('Error toggling gallery:', err);
             setError(err.message || 'Failed to toggle gallery status');
             return false;
         }
     };
 
+    /**
+     * Activate tag - simplified to only need tagId
+     * Backend handles two flows:
+     * 1. First-time: finds available QRCode and assigns it
+     * 2. Re-activation: sets isActive = true
+     */
     const activateTag = async (tagId: string): Promise<boolean> => {
-        const response = await tagAPI.updateTag({ tagId, status: 'active' });
-        if (response.success && response.data) {
-            setTags(prev => prev.map(tag =>
-                tag._id === tagId ? response.data!.tag : tag
-            ));
-            return true;
-        } else {
-            setError(response.error?.message || 'Failed to activate tag');
+        try {
+            setError(null);
+            const response = await tagAPI.activateTag(tagId);
+            if (response.success) {
+                await loadUserData();
+                return true;
+            } else {
+                setError(response.error?.message || 'Failed to activate tag');
+                return false;
+            }
+        } catch (err: any) {
+            setError(err.message || 'Failed to activate tag');
+            return false;
+        }
+    };
+
+    /**
+     * Deactivate tag - sets isActive = false
+     */
+    const deactivateTag = async (tagId: string): Promise<boolean> => {
+        try {
+            setError(null);
+            const response = await tagAPI.deactivateTag(tagId);
+            if (response.success) {
+                await loadUserData();
+                return true;
+            } else {
+                setError(response.error?.message || 'Failed to deactivate tag');
+                return false;
+            }
+        } catch (err: any) {
+            setError(err.message || 'Failed to deactivate tag');
+            return false;
+        }
+    };
+
+    /**
+     * Assign tag to a pet
+     */
+    const assignTag = async (tagId: string, petId: string): Promise<boolean> => {
+        try {
+            setError(null);
+            const response = await tagAPI.assignTag({ tagId, petId });
+            if (response.success) {
+                await loadUserData();
+                return true;
+            } else {
+                setError(response.error?.message || 'Failed to assign tag');
+                return false;
+            }
+        } catch (err: any) {
+            setError(err.message || 'Failed to assign tag');
+            return false;
+        }
+    };
+
+    /**
+     * Unassign tag from pet — sets pet status to 'inactive'
+     */
+    const unassignTag = async (tagId: string): Promise<boolean> => {
+        try {
+            setError(null);
+            const response = await tagAPI.unassignTag({ tagId });
+            if (response.success) {
+                await loadUserData();
+                return true;
+            } else {
+                setError(response.error?.message || 'Failed to unassign tag');
+                return false;
+            }
+        } catch (err: any) {
+            setError(err.message || 'Failed to unassign tag');
             return false;
         }
     };
@@ -261,9 +286,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
             setError(null);
             const response = await orderAPI.cancelOrder(orderId);
-
             if (response.ok && response.data) {
-                // Update the order in local state
                 setOrders(prev => prev.map(order =>
                     order._id === orderId ? response.data!.order : order
                 ));
@@ -273,7 +296,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 return false;
             }
         } catch (err: any) {
-            console.error('Error cancelling order:', err);
             setError(err.message || 'Failed to cancel order');
             return false;
         }
@@ -297,8 +319,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         deletePet,
         togglePetGallery,
         activateTag,
+        deactivateTag,
+        assignTag,
+        unassignTag,
         cancelOrder,
-        refreshUserData
+        refreshUserData,
     };
 
     return <UserContext.Provider value={value}>{children}</UserContext.Provider>;

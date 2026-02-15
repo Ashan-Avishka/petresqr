@@ -30,7 +30,6 @@ export const userAPI = {
   getProfile: async (): Promise<ApiResponse<GetProfileResponse>> => {
     try {
       const response = await apiClient.get('/users/profile');
-      console.log('Get Profile Response:', response);
       return { success: true, data: response.data };
     } catch (error: any) {
       return {

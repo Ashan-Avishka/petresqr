@@ -13,7 +13,8 @@
     "lint:fix": "eslint src/**/*.ts --fix",
     "seed": "tsx backend/scripts/seedDatabase.ts",
     "seed:orders": "tsx backend/scripts/seedOrders.ts",
-    "seed:products": "tsx backend/scripts/seedProducts.ts"
+    "seed:products": "tsx backend/scripts/seedProducts.ts",
+    "seed:qrcodes": "tsx backend/scripts/seedQrcodes.ts"
   },
   "keywords": [
     "pet",
@@ -49,7 +50,8 @@
     "square": "^43.2.1",
     "twilio": "^4.19.3",
     "uuid": "^9.0.1",
-    "winston": "^3.17.0"
+    "winston": "^3.17.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

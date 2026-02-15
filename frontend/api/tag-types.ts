@@ -3,66 +3,59 @@
 export interface Tag {
   _id: string;
   userId: string;
-  petId: string; // Made optional to match backend response
-  qrCode: string; // Changed from tagId to qrCode
-  qrCodeUrl: string; // Added this field
-  status: 'active' | 'inactive' | 'pending'; // Added pending status
-  purchaseDate?: string; // Made optional to match response
-  assignedTo?: string; // Pet ID
-  petName?: string;
-  activatedAt?: string; // Added this field
+  petId?: string;
+  qrCodeId?: string;       // Reference to QRCode collection
+  qrCode?: string;          // Physical tag ID (e.g., "6P421DZ5")
+  qrCodeUrl?: string;       // URL from QRCode.qrCodeData
+  websiteUrl?: string;      // URL from QRCode.websiteUrl
+  status: 'active' | 'inactive' | 'pending';
+  isActive: boolean;
+  purchaseDate?: string;
+  activatedAt?: string;
   createdAt: string;
   updatedAt: string;
-  // Nested pet object from backend response
+  // Nested objects from backend populate()
   pet?: {
     name: string;
     breed: string;
-    tag: {
-      tagId: string;
-      activatedDate: string;
-      status: string;
-    };
-    id: string;
-    image: string;
+    imageUrl: string;
+    id?: string;
+    _id?: string;
+  };
+  order?: {
+    status: string;
+    total: number;
+    createdAt: string;
   };
 }
 
+// ── Request / Response types ───────────────────────────────────────────────
+
 export interface CreateTagRequest {
-  qrCode: string; // Changed from tagId to qrCode
-  purchaseDate: string;
-  userId: string; // You'll likely need this
-}
-
-export interface UpdateTagRequest {
-  qrCode: string; // Changed from tagId to qrCode
-  status?: 'active' | 'inactive' | 'pending'; // Added pending
-  assignedTo?: string;
-  activatedAt?: string; // Added this field
-}
-
-export interface AssignTagRequest {
-  qrCode: string; // Changed from tagId to qrCode
   petId: string;
-}
-
-export interface UnassignTagRequest {
-  qrCode: string; // Changed from tagId to qrCode
-}
-
-export interface GetTagsResponse {
-  tags: Tag[];
-  total: number;
-  message: string;
-}
-
-export interface GetTagResponse {
-  tag: Tag;
-  message: string;
+  quantity?: number;
+  shippingAddress: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country?: string;
+  };
 }
 
 export interface CreateTagResponse {
-  tag: Tag;
-  message: string;
+  orderId: string;
+  tagId: string;
+  total: number;
+  quantity: number;
+  paymentUrl: string;
+}
+
+export interface UpdateTagRequest {
+  tagId: string;
+  status?: 'active' | 'inactive' | 'pending';
+  isActive?: boolean;
+  activatedAt?: string;
 }
 
 export interface UpdateTagResponse {
@@ -70,32 +63,44 @@ export interface UpdateTagResponse {
   message: string;
 }
 
+export interface ActivateTagResponse {
+  tag: Tag;
+  message: string;
+}
+
+export interface AssignTagRequest {
+  tagId: string;
+  petId: string;
+}
+
 export interface AssignTagResponse {
   tag: Tag;
   pet: {
     _id: string;
     name: string;
-    breed?: string; // Added breed to match backend
-    image?: string; // Added image to match backend
+    breed?: string;
+    imageUrl?: string;
   };
+  message: string;
+}
+
+export interface UnassignTagRequest {
+  tagId: string;
+}
+
+export interface GetTagsResponse {
+  tags: Tag[];
+  totalTags: number;
+  activeCount: number;
+  pendingCount: number;
+  message?: string;
+}
+
+export interface GetTagResponse {
+  tag: Tag;
   message: string;
 }
 
 export interface DeleteTagResponse {
   message: string;
-}
-
-// Additional interfaces for the nested pet structure
-export interface PetTagInfo {
-  tagId: string;
-  activatedDate: string;
-  status: string;
-}
-
-export interface PetData {
-  name: string;
-  breed: string;
-  id: string;
-  image: string;
-  tag: PetTagInfo;
 }

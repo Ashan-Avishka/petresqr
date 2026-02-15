@@ -128,7 +128,7 @@ const PetCard: React.FC<PetCardProps> = ({ pet, onEdit, onDelete, onSave, onTogg
                                     ? 'bg-black text-gray-300'
                                     : 'bg-gray-400 text-gray-100'
                             }`}>
-                                {displayData.tag.status === 'active' ? 'Active' : 'Inactive'}
+                                {displayData.tag.status === 'active' ? 'Active' : 'inactive'}
                             </span>
                             {pet.gallery && (
                                 <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-900 text-green-300 shadow-sm shadow-green-500">
