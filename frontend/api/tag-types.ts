@@ -14,6 +14,8 @@ export interface Tag {
   activatedAt?: string;
   createdAt: string;
   updatedAt: string;
+  productName?: string;
+  productImage?: string | null;
   // Nested objects from backend populate()
   pet?: {
     name: string;

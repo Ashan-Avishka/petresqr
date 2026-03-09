@@ -7,6 +7,7 @@ import { Heart, MapPin, Calendar, Share2, Search, ChevronLeft, ChevronRight, Dog
 import HeroHeader from '../../../components/ui/PageHero';
 import { petAPI } from '../../../api/pet-api';
 import type { Pet } from '../../../api/pet-types';
+import { getImageUrl } from '../../../api';
 
 type FilterType = 'all' | 'dogs' | 'cats' | 'reunited' | 'adopted' | 'lost' | 'found';
 
@@ -207,7 +208,7 @@ const PetGalleryPage = () => {
                       <div className="bg-gray-400/40 backdrop-blur-3xl rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 cursor-pointer group">
                         <div className="relative h-48 md:h-64">
                           <img
-                            src={pet.image || '/api/placeholder/400/300'}
+                            src={getImageUrl(pet.image) || '/api/placeholder/400/300'}
                             alt={`${pet.name} - ${pet.breed}`}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />

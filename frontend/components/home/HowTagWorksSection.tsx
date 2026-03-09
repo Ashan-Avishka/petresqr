@@ -158,7 +158,7 @@ export default function PetQRSteps() {
           playsInline
           preload="metadata"
         >
-          <source src="./videos/pet-bg.mp4" type="video/mp4" />
+          <source src="./videos/pet-bg-2.mp4" type="video/mp4" />
           {/* <source src="/videos/pet-background.webm" type="video/webm" /> */}
         </video>
 
@@ -289,7 +289,7 @@ export default function PetQRSteps() {
         playsInline
         preload="metadata"
       >
-        <source src="./videos/pet-bg.mp4" type="video/mp4" />
+        <source src="./videos/pet-bg-2.mp4" type="video/mp4" />
         <source src="/videos/pet-background.webm" type="video/webm" />
       </video>
 

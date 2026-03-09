@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, MapPin, Phone, Mail, User, HeartPulse, Navigation } from 'lucide-react';
 import Image from 'next/image';
-import { foundAPI } from '../../api/found-api'; // Update import path as needed
+import { foundAPI } from '../../api/found-api'; 
+import { getImageUrl } from '../../api/config';
 
 interface PetProfileModalProps {
   isOpen: boolean;
@@ -222,10 +223,9 @@ const PetProfileModal: React.FC<PetProfileModalProps> = ({ isOpen, onClose, pet 
                 <div className="flex items-center gap-4">
                   {pet.photoUrl && (
                     <div className="relative w-20 h-20 rounded-full overflow-hidden border-4 border-white shadow-lg">
-                      <Image
-                        src={pet.photoUrl}
+                      <img
+                        src={getImageUrl(pet.photoUrl)}
                         alt={pet.name}
-                        fill
                         className="object-cover"
                       />
                     </div>

@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import config from '../../../config/env';
 import { useAuthContext } from '../../../contexts/AuthContext';
+import { getImageUrl } from '../../../api/config';
 
 const SQUARE_APPLICATION_ID = config.square.applicationId;
 const SQUARE_LOCATION_ID = config.square.locationId;
@@ -342,7 +343,7 @@ export default function CartPage() {
                         >
                           <Link href={`/tags/${item.slug}`}>
                             <img
-                              src={item.image}
+                              src={getImageUrl(item.image)}
                               alt={item.name}
                               className="w-full sm:w-24 h-48 sm:h-24 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
                             />
@@ -851,7 +852,7 @@ export default function CartPage() {
                         className="flex gap-3"
                       >
                         <img
-                          src={item.image}
+                          src={getImageUrl(item.image)}
                           alt={item.name}
                           className="w-16 h-16 object-cover rounded-lg"
                         />

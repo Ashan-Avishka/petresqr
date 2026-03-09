@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Calendar, Share2, Loader2, ArrowLeft } from 'lucide-react';
 import { petAPI } from '../../../../api/pet-api';
 import type { Pet } from '../../../../api/pet-types';
+import { getImageUrl } from '../../../../api';
 
 const PetDetailPage = () => {
   const params = useParams();
@@ -137,12 +138,10 @@ const PetDetailPage = () => {
         <div className="overflow-hidden">
           <div className="relative md:h-[600px] h-80">
             <div className="relative w-full h-full rounded-b-[2rem] overflow-hidden shadow-lg mt-6 md:mt-25">
-              <Image
-                src={pet.image || '/api/placeholder/800/600'}
+              <img
+                src={getImageUrl(pet.image) || '/api/placeholder/800/600'}
                 alt={`${pet.name} - ${pet.breed}`}
-                fill
                 className="object-cover"
-                priority
               />
               <div className="absolute inset-0 bg-gradient-to-b from-transparent to-slate-900/90" />
             </div>

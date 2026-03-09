@@ -222,7 +222,7 @@ const PetCard: React.FC<PetCardProps> = ({ pet, onEdit, onDelete, onSave, onTogg
                                     <Edit2 className="w-5 h-5 text-primary" />
                                 </button>
                                 <button
-                                    onClick={() => onDelete(pet._id)}
+                                    onClick={() => onDelete(pet.id)}
                                     className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
                                 >
                                     <Trash2 className="w-5 h-5 text-red-600" />

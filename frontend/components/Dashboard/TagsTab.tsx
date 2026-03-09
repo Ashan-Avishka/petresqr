@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Tag, X, CheckCircle, XCircle, Link, Unlink, ChevronDown } from 'lucide-react';
 import { useUserContext } from '../../contexts/UserContext';
 import type { Tag as TagType } from '../../api/tag-types';
+import { getImageUrl } from '../../api/config';
 
 // ── Assign Modal ─────────────────────────────────────────────────────────────
 interface AssignModalProps {
@@ -239,111 +240,121 @@ const TagsTab: React.FC = () => {
                         >
                             {/* Top row: icon + info + status */}
                             <div className="flex items-start justify-between gap-4">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-11 h-11 bg-black border border-gray-700 shadow-md shadow-primary/20 rounded-xl flex items-center justify-center shrink-0">
-                                        <Tag className="w-5 h-5 text-primary" />
+                                <div className="flex items-start gap-4">
+                                    <div className="w-20 h-20 bg-black border border-gray-700 shadow-md shadow-primary/20 rounded-xl flex items-center justify-center shrink-0 overflow-hidden">
+                                        {tag.productImage
+                                            ? <img src={getImageUrl(tag.productImage)} alt="Product" className="w-full h-full object-cover rounded-xl" />
+                                            : <Tag className="w-5 h-5 text-primary" />
+                                        }
                                     </div>
-                                    <div className='flex'>
-                                        <h3 className="font-bold text-white font-mono text-sm mr-5">
-                                            {hasQRCode ? tag.qrCode : 'Awaiting activation'}
+                                    <div className=''>
+                                        <h3 className="text-white text-2xl">
+                                            {/* {hasQRCode ? tag.qrCode : 'Awaiting activation'} */}
+                                            {tag.qrCode}
                                         </h3>
-                                        <p className="text-xs text-gray-500 border-r-1 border-gray-600 pr-2 mr-2">
-                                            Purchased: {new Date(tag.createdAt).toLocaleDateString()}
-                                        </p>
-                                        {tag.activatedAt && (
-                                            <p className="text-xs text-gray-500">
-                                               Activated: {new Date(tag.activatedAt).toLocaleDateString()}
-                                            </p>
-                                        )}
+
+                                        {/* Pet assignment info */}
+                                        <div className="mt-4">
+                                            {assignedPet?.name ? (
+                                                <div className="flex items-center gap-2 text-sm text-gray-300">
+                                                    <CheckCircle className="w-4 h-4 text-primary shrink-0" />
+                                                    <span>
+                                                        Assigned to{' '}
+                                                        <span className="text-white font-semibold">{assignedPet.name}</span>
+                                                        {assignedPet.breed && (
+                                                            <span className="text-gray-500"> · {assignedPet.breed}</span>
+                                                        )}
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center gap-2 text-sm text-gray-500">
+                                                    <XCircle className="w-4 h-4 shrink-0" />
+                                                    <span>Not assigned to any pet</span>
+                                                </div>
+                                            )}
+
+                                            <div className='flex mt-2'>
+                                                <p className="text-xs text-gray-500 border-r-1 border-gray-600 pr-2 mr-2">
+                                                    Purchased: {new Date(tag.createdAt).toLocaleDateString()}
+                                                </p>
+                                                {tag.activatedAt && (
+                                                    <p className="text-xs text-gray-500">
+                                                        Activated: {new Date(tag.activatedAt).toLocaleDateString()}
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                        </div>
+
+                                        {/* Action buttons */}
+                                        <div className="mt-4 flex flex-wrap gap-2">
+
+                                            {/* Activate — show when (pending OR inactive OR deactivated) AND has a pet */}
+                                            {(tag.status === 'pending' || tag.status === 'inactive' || !tag.isActive) && (
+                                                <button
+                                                    disabled={isLoading || !tag.pet.id}
+                                                    onClick={() => setModal({ type: 'activate', tag })}
+                                                    title={!tag.pet.id ? 'Assign to a pet first' : undefined}
+                                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-black text-xs font-semibold hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+                                                >
+                                                    <CheckCircle className="w-3.5 h-3.5" />
+                                                    Activate
+                                                </button>
+                                            )}
+
+                                            {/* Deactivate — show when status=active and isActive=true */}
+                                            {tag.status === 'active' && tag.isActive && (
+                                                <button
+                                                    disabled={isLoading}
+                                                    onClick={() => setModal({ type: 'deactivate', tag })}
+                                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-600 text-gray-300 text-xs font-semibold hover:bg-gray-700 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                                >
+                                                    <XCircle className="w-3.5 h-3.5" />
+                                                    Deactivate
+                                                </button>
+                                            )}
+
+                                            {/* Assign — show when no pet is linked */}
+                                            {!tag.pet && (
+                                                <button
+                                                    disabled={isLoading || pets.filter(p => p.status === 'inactive' && !p.tag.tagId).length === 0}
+                                                    onClick={() => setModal({ type: 'assign', tag })}
+                                                    title={pets.filter(p => p.status === 'inactive').length === 0 ? 'No inactive pets available' : undefined}
+                                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-600 text-gray-300 text-xs font-semibold hover:bg-gray-700 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                                >
+                                                    <Link className="w-3.5 h-3.5" />
+                                                    Assign to Pet
+                                                </button>
+                                            )}
+
+                                            {/* Unassign — show when a pet is linked */}
+                                            {tag.pet && (
+                                                <button
+                                                    disabled={isLoading}
+                                                    onClick={() => setModal({ type: 'unassign', tag })}
+                                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-900/30 border border-red-500/50 text-red-400 text-xs font-semibold hover:bg-red-900/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                                >
+                                                    <Unlink className="w-3.5 h-3.5" />
+                                                    Unassign
+                                                </button>
+                                            )}
+
+                                            {isLoading && (
+                                                <span className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-400">
+                                                    <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z" />
+                                                    </svg>
+                                                    Working…
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                                 <StatusBadge status={tag.status} isActive={tag.isActive} />
                             </div>
 
-                            {/* Pet assignment info */}
-                            <div className="mt-4 pl-[60px]">
-                                {assignedPet?.name ? (
-                                    <div className="flex items-center gap-2 text-sm text-gray-300">
-                                        <CheckCircle className="w-4 h-4 text-primary shrink-0" />
-                                        <span>
-                                            Assigned to{' '}
-                                            <span className="text-white font-semibold">{assignedPet.name}</span>
-                                            {assignedPet.breed && (
-                                                <span className="text-gray-500"> · {assignedPet.breed}</span>
-                                            )}
-                                        </span>
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                                        <XCircle className="w-4 h-4 shrink-0" />
-                                        <span>Not assigned to any pet</span>
-                                    </div>
-                                )}
-                            </div>
 
-                            {/* Action buttons */}
-                            <div className="mt-4 pl-[60px] flex flex-wrap gap-2">
-
-                                {/* Activate — show when (pending OR inactive OR deactivated) AND has a pet */}
-                                {(tag.status === 'pending' || tag.status === 'inactive' || !tag.isActive) && (
-                                    <button
-                                        // disabled={isLoading || !tag.petId}
-                                        onClick={() => setModal({ type: 'activate', tag })}
-                                        title={!tag.petId ? 'Assign to a pet first' : undefined}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-black text-xs font-semibold hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
-                                    >
-                                        <CheckCircle className="w-3.5 h-3.5" />
-                                        Activate
-                                    </button>
-                                )}
-
-                                {/* Deactivate — show when status=active and isActive=true */}
-                                {tag.status === 'active' && tag.isActive && (
-                                    <button
-                                        disabled={isLoading}
-                                        onClick={() => setModal({ type: 'deactivate', tag })}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-600 text-gray-300 text-xs font-semibold hover:bg-gray-700 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                    >
-                                        <XCircle className="w-3.5 h-3.5" />
-                                        Deactivate
-                                    </button>
-                                )}
-
-                                {/* Assign — show when no pet is linked */}
-                                {!tag.petId && (
-                                    <button
-                                        disabled={isLoading || pets.filter(p => p.status === 'inactive' && !p.tag.tagId).length === 0}
-                                        onClick={() => setModal({ type: 'assign', tag })}
-                                        title={pets.filter(p => p.status === 'inactive').length === 0 ? 'No inactive pets available' : undefined}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-600 text-gray-300 text-xs font-semibold hover:bg-gray-700 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                    >
-                                        <Link className="w-3.5 h-3.5" />
-                                        Assign to Pet
-                                    </button>
-                                )}
-
-                                {/* Unassign — show when a pet is linked */}
-                                {tag.petId && (
-                                    <button
-                                        disabled={isLoading}
-                                        onClick={() => setModal({ type: 'unassign', tag })}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-900/30 border border-red-500/50 text-red-400 text-xs font-semibold hover:bg-red-900/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                    >
-                                        <Unlink className="w-3.5 h-3.5" />
-                                        Unassign
-                                    </button>
-                                )}
-
-                                {isLoading && (
-                                    <span className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-400">
-                                        <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z" />
-                                        </svg>
-                                        Working…
-                                    </span>
-                                )}
-                            </div>
                         </div>
                     );
                 })}

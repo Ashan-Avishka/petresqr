@@ -105,12 +105,16 @@ export class PetController {
         }
       }
 
+      console.log('Looking for tag:', tagId, 'for user:', req.userId);
+      const tag = await Tag.findOne({ _id: tagId, userId: req.userId, status: 'active' });
+      console.log('Tag found:', tag);
+
       // Validate tag if provided
       if (tagId) {
         const tag = await Tag.findOne({
           _id: tagId,
           userId: req.userId,
-          status: 'active'
+          status: 'available' // Only allow tags that are available for assignment
         });
 
         if (!tag) {

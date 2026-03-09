@@ -56,6 +56,7 @@ export interface ITag extends Document {
   qrCode?: string;                      // Physical tag ID (assigned on first activation)
   status: 'active' | 'inactive' | 'pending';
   orderId?: mongoose.Types.ObjectId;
+  productId?: mongoose.Types.ObjectId;
   isActive: boolean;                    // NEW: For re-activation tracking
   activatedAt?: Date;
   createdAt: Date;
@@ -79,6 +80,11 @@ const tagSchema = new Schema<ITag>({
   qrCodeId: {
     type: Schema.Types.ObjectId,
     ref: 'QRCode',
+    default: null,
+  },
+  productId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Product',
     default: null,
   },
   qrCode: {
@@ -121,5 +127,6 @@ tagSchema.index({ petId: 1, status: 1 });
 tagSchema.index({ status: 1, createdAt: -1 });
 tagSchema.index({ qrCode: 1 }, { sparse: true });
 tagSchema.index({ qrCodeId: 1 }, { sparse: true });
+tagSchema.index({ productId: 1 }, { sparse: true });
 
 export const Tag = mongoose.model<ITag>('Tag', tagSchema);

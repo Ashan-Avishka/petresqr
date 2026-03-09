@@ -10,7 +10,7 @@ const PetsTab: React.FC = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     const availableTags = tags.filter(tag => 
-        tag.status === 'active' && !tag.petId
+        tag.status === 'available' && !tag.pet
     );
 
     const handleDeletePet = async (id: string) => {

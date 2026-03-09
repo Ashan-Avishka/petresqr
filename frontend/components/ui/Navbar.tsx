@@ -2,10 +2,12 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, X, ShoppingCart, LogOut } from 'lucide-react';
 import { useAuthModal } from '../../src/app/layout';
 import { useAuthContext } from '../../contexts/AuthContext';
+import { useCart } from '../../contexts/CartContext';
 
 interface NavLink {
   label: string;
@@ -24,7 +26,7 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({
   links = [
-    { label: 'QR TAGS', href: '/tags' },
+    { label: 'SHOP', href: '/shop' },
     { label: 'FOUND A PET', href: '/found-pet' },
     { label: 'GALLERY', href: '/pet-gallery' },
     { label: 'CONTACT', href: '/contact' },
@@ -37,21 +39,21 @@ const Navbar: React.FC<NavbarProps> = ({
   className = '',
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [showUserMenu, setShowUserMenu] = useState(false);
   const { openAuthModal } = useAuthModal();
   const { isAuthenticated, user, logout } = useAuthContext();
+  const { itemCount } = useCart();
+  const pathname = usePathname();
+  const cartCount = itemCount;
+
+  const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
 
   const handleLoginClick = () => {
-    if (onLoginClick) {
-      onLoginClick();
-    } else {
-      openAuthModal();
-    }
+    if (onLoginClick) onLoginClick();
+    else openAuthModal();
   };
 
   const handleLogout = async () => {
     await logout();
-    setShowUserMenu(false);
   };
 
   const defaultLogo = (
@@ -72,7 +74,7 @@ const Navbar: React.FC<NavbarProps> = ({
         style={{ transformOrigin: 'center' }}
       >
         <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4">
-          <motion.div 
+          <motion.div
             initial={{ y: 0 }}
             animate={{ y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
@@ -82,35 +84,59 @@ const Navbar: React.FC<NavbarProps> = ({
               {logo || defaultLogo}
             </Link>
 
+            {/* Desktop Nav Links */}
             <div className="hidden md:flex items-center gap-8">
-              {links.map((link, index) => (
-                <motion.div
-                  key={link.href}
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 + 0.5 }}
-                  className="relative group"
-                >
-                  <Link
-                    href={link.href}
-                    className={`${textColor} font-medium text-sm transition-colors duration-300 group-hover:font-bold group-hover:text-shadow-black relative block pb-1`}
+              {links.map((link, index) => {
+                const active = isActive(link.href);
+                return (
+                  <motion.div
+                    key={link.href}
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 + 0.5 }}
+                    className="relative group"
                   >
-                    {link.label}
-                    <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-yellow-400 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-out origin-center" />
-                  </Link>
-                </motion.div>
-              ))}
+                    <Link
+                      href={link.href}
+                      className={`text-sm transition-colors duration-300 relative block pb-1  ${active ? 'font-bold text-black shadow-primary' : 'font-normal'
+                        }`}
+                      style={active ? { textShadow: '0 0 6px #FABC3F, 0 0 12px #FABC3F, 0 0 20px #FABC3F' } : {}}
+                    >
+                      {link.label}
+
+                      {/* Hover underline */}
+                      {!active && (
+                        <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-yellow-400 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-out origin-center" />
+                      )}
+
+                      {/* Active glowing underline */}
+                      {active && (
+                        <motion.span
+                          layoutId="activeNavIndicator"
+                          className="absolute -bottom-1 left-0 right-0 h-0.5 rounded-full"
+                          style={{
+                            background: 'black',
+                            boxShadow: '0 0 4px 1px var(--color-primary, #f59e0b), 0 0 12px 2px var(--color-primary, #f59e0b)',
+                          }}
+                          transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                        />
+                      )}
+                    </Link>
+                  </motion.div>
+                );
+              })}
             </div>
 
+            {/* Desktop Auth + Cart */}
             {showLogin && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.8 }}
-                className="hidden md:block"
+                className="hidden md:flex items-center gap-4"
               >
                 {isAuthenticated ? (
-                  <div className="flex items-center gap-4">
+                  <>
                     <Link href="/cart">
                       <motion.button
                         whileHover={{ scale: 1.1 }}
@@ -118,76 +144,35 @@ const Navbar: React.FC<NavbarProps> = ({
                         className="p-2 rounded-full hover:bg-white/10 transition-colors relative"
                       >
                         <ShoppingCart className={`w-6 h-6 ${textColor}`} />
+                        {cartCount > 0 && (
+                          <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-tl from-primary  to-black text-white text-xs rounded-full flex items-center justify-center">
+                            {cartCount > 99 ? '99+' : cartCount}
+                          </span>
+                        )}
                       </motion.button>
                     </Link>
 
-                    <div className="relative">
+                    <Link href="/dashboard">
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        onClick={() => setShowUserMenu(!showUserMenu)}
                         className="flex items-center gap-2 px-4 py-2 bg-gradient-to-tl from-primary to-black text-white rounded-full shadow-md shadow-black transition-all"
                       >
                         <User className="w-5 h-5" />
-                        <span className="text-sm font-medium">{user?.name || 'Account'}</span>
+                        <span className="text-sm font-medium">Dashboard</span>
                       </motion.button>
+                    </Link>
 
-                      <AnimatePresence>
-                        {showUserMenu && (
-                          <motion.div
-                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                            transition={{ duration: 0.2 }}
-                            className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg overflow-hidden z-50"
-                          >
-                            <Link
-                              href="/profile"
-                              className="block px-4 py-3 text-gray-700 hover:bg-gray-100 transition-colors relative group"
-                              onClick={() => setShowUserMenu(false)}
-                            >
-                              My Profile
-                              <motion.span
-                                className="absolute bottom-0 left-4 right-4 h-0.5 bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-400"
-                                initial={{ scaleX: 0 }}
-                                whileHover={{ scaleX: 1 }}
-                                transition={{ duration: 0.3, ease: 'easeOut' }}
-                                style={{ transformOrigin: 'left' }}
-                              />
-                            </Link>
-                            <Link
-                              href="/orders"
-                              className="block px-4 py-3 text-gray-700 hover:bg-gray-100 transition-colors relative group"
-                              onClick={() => setShowUserMenu(false)}
-                            >
-                              My Orders
-                              <motion.span
-                                className="absolute bottom-0 left-4 right-4 h-0.5 bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-400"
-                                initial={{ scaleX: 0 }}
-                                whileHover={{ scaleX: 1 }}
-                                transition={{ duration: 0.3, ease: 'easeOut' }}
-                                style={{ transformOrigin: 'left' }}
-                              />
-                            </Link>
-                            <button
-                              onClick={handleLogout}
-                              className="w-full text-left px-4 py-3 text-red-600 hover:bg-gray-100 transition-colors flex items-center gap-2 relative group"
-                            >
-                              <LogOut className="w-4 h-4" />
-                              Logout
-                              <motion.span
-                                className="absolute bottom-0 left-4 right-4 h-0.5 bg-gradient-to-r from-red-400 via-red-500 to-red-400"
-                                initial={{ scaleX: 0 }}
-                                whileHover={{ scaleX: 1 }}
-                                transition={{ duration: 0.3, ease: 'easeOut' }}
-                                style={{ transformOrigin: 'left' }}
-                              />
-                            </button>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  </div>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={handleLogout}
+                      className="p-2 rounded-full hover:bg-white/10 transition-colors"
+                      title="Logout"
+                    >
+                      <LogOut className={`w-5 h-5 ${textColor}`} />
+                    </motion.button>
+                  </>
                 ) : (
                   <motion.button
                     whileHover={{ scale: 1.05, boxShadow: "0 0 40px rgba(251, 191, 36, 0.8), 0 20px 40px rgba(0, 0, 0, 0.3)" }}
@@ -202,7 +187,8 @@ const Navbar: React.FC<NavbarProps> = ({
               </motion.div>
             )}
 
-            <button 
+            {/* Mobile Hamburger */}
+            <button
               className="md:hidden flex flex-col gap-1.5 z-50"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               aria-label="Toggle menu"
@@ -229,37 +215,59 @@ const Navbar: React.FC<NavbarProps> = ({
                 transition={{ duration: 0.3 }}
                 className="md:hidden overflow-hidden mt-4"
               >
-                <motion.div 
+                <motion.div
                   className={`${backgroundColor} backdrop-blur-md rounded-3xl shadow-lg p-4 sm:p-6`}
                   initial={{ y: -20 }}
                   animate={{ y: 0 }}
                   exit={{ y: -20 }}
                 >
                   <div className="flex flex-col gap-4">
-                    {links.map((link, index) => (
-                      <motion.div
-                        key={link.href}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                      >
-                        <Link
-                          href={link.href}
-                          className={`${textColor} font-medium text-base block py-2 px-4 rounded-lg hover:bg-white/10 transition-colors duration-300 relative group`}
-                          onClick={() => setIsMobileMenuOpen(false)}
+                    {links.map((link, index) => {
+                      const active = isActive(link.href);
+                      return (
+                        <motion.div
+                          key={link.href}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.1 }}
                         >
-                          {link.label}
-                          <motion.span
-                            className="absolute bottom-1 left-4 right-4 h-0.5 bg-gradient-to-r from-transparent via-yellow-400 to-transparent"
-                            initial={{ scaleX: 0 }}
-                            whileHover={{ scaleX: 1 }}
-                            transition={{ duration: 0.3, ease: 'easeOut' }}
-                            style={{ transformOrigin: 'center' }}
-                          />
-                        </Link>
-                      </motion.div>
-                    ))}
-                    
+                          <Link
+                            href={link.href}
+                            className={`font-medium text-base block py-2 px-4 rounded-lg transition-colors duration-300 relative group ${active
+                                ? 'text-white bg-white/10'
+                                : `${textColor} hover:bg-white/10`
+                              }`}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                          >
+                            {link.label}
+
+                            {/* Active left bar indicator for mobile */}
+                            {active && (
+                              <motion.span
+                                layoutId="mobileActiveIndicator"
+                                className="absolute left-0 top-2 bottom-2 w-0.5 rounded-full"
+                                style={{
+                                  background: 'var(--color-primary, #f59e0b)',
+                                  boxShadow: '0 0 6px 1px var(--color-primary, #f59e0b)',
+                                }}
+                              />
+                            )}
+
+                            {/* Hover underline for non-active */}
+                            {!active && (
+                              <motion.span
+                                className="absolute bottom-1 left-4 right-4 h-0.5 bg-gradient-to-r from-transparent via-yellow-400 to-transparent"
+                                initial={{ scaleX: 0 }}
+                                whileHover={{ scaleX: 1 }}
+                                transition={{ duration: 0.3, ease: 'easeOut' }}
+                                style={{ transformOrigin: 'center' }}
+                              />
+                            )}
+                          </Link>
+                        </motion.div>
+                      );
+                    })}
+
                     {showLogin && (
                       <motion.div
                         initial={{ opacity: 0, x: -20 }}
@@ -273,49 +281,31 @@ const Navbar: React.FC<NavbarProps> = ({
                               <User className={`w-5 h-5 ${textColor}`} />
                               <span className={`${textColor} font-medium`}>{user?.name || 'Account'}</span>
                             </div>
+
                             <Link
                               href="/cart"
-                              className={`${textColor} font-medium text-base block py-2 px-4 rounded-lg hover:bg-white/10 transition-colors duration-300 flex items-center gap-2 relative group`}
+                              className={`${textColor} font-medium text-base py-2 px-4 rounded-lg hover:bg-white/10 transition-colors duration-300 flex items-center gap-2 relative`}
                               onClick={() => setIsMobileMenuOpen(false)}
                             >
-                              <ShoppingCart className="w-5 h-5" />
-                              Cart
-                              <motion.span
-                                className="absolute bottom-1 left-4 right-4 h-0.5 bg-gradient-to-r from-transparent via-yellow-400 to-transparent"
-                                initial={{ scaleX: 0 }}
-                                whileHover={{ scaleX: 1 }}
-                                transition={{ duration: 0.3, ease: 'easeOut' }}
-                                style={{ transformOrigin: 'left' }}
-                              />
+                              <div className="relative">
+                                <ShoppingCart className="w-5 h-5" />
+                                {cartCount > 0 && (
+                                  <span className="absolute -top-2 -right-2 w-4 h-4 bg-gradient-to-tl from-primary  to-black text-white text-xs font-bold rounded-full flex items-center justify-center">
+                                    {cartCount > 99 ? '99+' : cartCount}
+                                  </span>
+                                )}
+                              </div>
+                              Cart {cartCount > 0 && `(${cartCount})`}
                             </Link>
+
                             <Link
-                              href="/profile"
-                              className={`${textColor} font-medium text-base block py-2 px-4 rounded-lg hover:bg-white/10 transition-colors duration-300 relative group`}
+                              href="/dashboard"
+                              className={`${textColor} font-medium text-base block py-2 px-4 rounded-lg hover:bg-white/10 transition-colors duration-300`}
                               onClick={() => setIsMobileMenuOpen(false)}
                             >
-                              My Profile
-                              <motion.span
-                                className="absolute bottom-1 left-4 right-4 h-0.5 bg-gradient-to-r from-transparent via-yellow-400 to-transparent"
-                                initial={{ scaleX: 0 }}
-                                whileHover={{ scaleX: 1 }}
-                                transition={{ duration: 0.3, ease: 'easeOut' }}
-                                style={{ transformOrigin: 'left' }}
-                              />
+                              Dashboard
                             </Link>
-                            <Link
-                              href="/orders"
-                              className={`${textColor} font-medium text-base block py-2 px-4 rounded-lg hover:bg-white/10 transition-colors duration-300 relative group`}
-                              onClick={() => setIsMobileMenuOpen(false)}
-                            >
-                              My Orders
-                              <motion.span
-                                className="absolute bottom-1 left-4 right-4 h-0.5 bg-gradient-to-r from-transparent via-yellow-400 to-transparent"
-                                initial={{ scaleX: 0 }}
-                                whileHover={{ scaleX: 1 }}
-                                transition={{ duration: 0.3, ease: 'easeOut' }}
-                                style={{ transformOrigin: 'left' }}
-                              />
-                            </Link>
+
                             <button
                               onClick={() => {
                                 handleLogout();

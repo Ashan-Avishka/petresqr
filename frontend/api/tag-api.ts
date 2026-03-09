@@ -24,6 +24,7 @@ export const tagAPI = {
   getTags: async (): Promise<ApiResponse<GetTagsResponse>> => {
     try {
       const response = await apiClient.get('/tags');
+      console.log('Fetched tags:', response.data);
       return { success: true, data: response.data };
     } catch (error: any) {
       return {

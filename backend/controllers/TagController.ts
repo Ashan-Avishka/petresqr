@@ -21,11 +21,15 @@ export class TagController {
       })
         .populate('petId', 'name breed imageUrl')
         .populate('orderId', 'status total createdAt')
+        .populate('productId', 'name images')
         .sort({ createdAt: -1 });
 
       // Manually fetch QRCode data for each tag if qrCodeId exists
       const formattedTags = await Promise.all(tags.map(async (tag) => {
         let qrCodeData = null;
+        const tagDoc = tag as any;
+        const product = tagDoc.productId;
+        const productImage = product?.images?.[0]?.url ?? null;
         
         // Check if qrCodeId exists and fetch QRCode
         if (tag.qrCodeId) {
@@ -47,6 +51,8 @@ export class TagController {
           createdAt: tag.createdAt,
           pet: tag.petId,
           order: tag.orderId,
+          name: product.name,
+          productImage
         };
       }));
 
@@ -408,7 +414,7 @@ export class TagController {
         tagId: null,
       }, { runValidators: false });
 
-      tag.petId = undefined as any;
+      tag.petId = null as any;
       await tag.save();
 
       sendSuccess(res, {

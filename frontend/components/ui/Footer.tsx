@@ -60,6 +60,27 @@ export default function Footer() {
     }
   };
 
+  const quickLinks = [
+    { name: 'Home', href: '/' },
+    { name: 'Shop', href: '/shop' },
+    { name: 'Pet Gallery', href: '/found-pet' },
+    { name: 'Contact Us', href: '/contact' },
+    { name: 'Login', href: '/login' },
+    { name: 'My Account', href: '/account' }
+  ];
+  const productLinks = [
+    { name: 'Pet Tag 01', href: '/shop' },
+    { name: 'Pet Tag 02', href: '/shop' },
+    { name: 'Pet Tag 03', href: '/shop' },
+    { name: 'Pet Tag 04', href: '/shop' }
+  ];
+  const serviceLinks = [
+    { name: 'Worldwide Shipping', href: '#' },
+    { name: 'Premium Quality Tags', href: '#' },
+    { name: 'Secure Payments', href: '#' },
+    { name: 'Best Offers', href: '#' }
+  ];
+
   return (
     <footer className="bg-gradient-to-br from-primary via-black/50 to-black border-t border-primary">
       {/* Main Footer Content */}
@@ -114,7 +135,7 @@ export default function Footer() {
                 <button
                   onClick={handleSubscribe}
                   disabled={isSubmitting}
-                  className="px-6 py-3 bg-gradient-to-br shadow-primary from-primary to-black text-white font-bold rounded-lg hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-6 py-3 bg-gradient-to-br shadow-primary from-primary to-black text-white font-bold rounded-lg shadow-sm hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? 'Sending...' : 'Subscribe'}
                 </button>
@@ -130,19 +151,19 @@ export default function Footer() {
           <div className='md:pl-10'>
             <h3 className="text-lg font-bold text-primary mb-4">Product</h3>
             <ul className="grid grid-cols-2 md:grid-cols-1 gap-x-4 gap-y-3">
-              {['Pet Tag 01', 'Pet Tag 02', 'Pet Tag 03', 'Pet Tag 04'].map((item) => (
-                <li key={item}>
+              {productLinks.map((item) => (
+                <li key={item.name}>
                   <a
-                    href="#"
+                    href={item.href}
                     className="text-gray-300 text-sm hover:text-primary hover:translate-x-1 inline-block transition-all"
                   >
-                    {item}
+                    {item.name}
                   </a>
                 </li>
               ))}
               <li className="col-span-2 md:col-span-1">
                 <a
-                  href="#"
+                  href="/shop"
                   className="text-gray-300 font-semibold text-sm hover:text-primary hover:translate-x-1 inline-block transition-all"
                 >
                   View All
@@ -157,12 +178,11 @@ export default function Footer() {
             <ul className="grid grid-cols-2 md:grid-cols-1 gap-x-4 gap-y-3">
               {['Worldwide Shipping', 'Premium Quality Tags', 'Secure Payments', 'Best Offers'].map((item) => (
                 <li key={item}>
-                  <a
-                    href="#"
+                  <span
                     className="text-gray-300 text-sm hover:text-primary hover:translate-x-1 inline-block transition-all"
                   >
                     {item}
-                  </a>
+                  </span>
                 </li>
               ))}
             </ul>
@@ -172,13 +192,13 @@ export default function Footer() {
           <div>
             <h3 className="text-lg font-bold text-primary mb-4">Quick Links</h3>
             <ul className="grid grid-cols-2 md:grid-cols-1 gap-x-4 gap-y-3">
-              {['Home', 'Get Your QR Tag', 'Pet Gallery', 'Contact Us', 'Login', 'My Account'].map((item) => (
-                <li key={item}>
+              {quickLinks.map((item) => (
+                <li key={item.name}>
                   <a
-                    href="#"
+                    href={item.href}
                     className="text-gray-300 text-sm hover:text-primary hover:translate-x-1 inline-block transition-all"
                   >
-                    {item}
+                    {item.name}
                   </a>
                 </li>
               ))}
@@ -190,7 +210,7 @@ export default function Footer() {
       {/* Copyright Section */}
       <div className="border-t border-primary bg-gradient-to-l from-black via-primary to-black">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <p className="text-center text-sm text-slate-400">
+          <p className="text-center text-sm text-gray-800">
             © 2025 PetResQR. All Rights Reserved. Keeping Your Pets Safe.
           </p>
         </div>

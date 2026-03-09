@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import Image from 'next/image';
 import { Star } from 'lucide-react';
+import { getImageUrl } from '../../api/config';
 
 interface ProductCardProps {
   id: string;
@@ -44,12 +44,13 @@ const ProductCard: React.FC<ProductCardProps> = ({
     setIsMounted(true);
   }, []);
 
-  const handleAddToCart = () => {
+const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();  // ← stops the Link navigation
+    e.stopPropagation(); // ← stops event bubbling
     if (onAddToCart && inStock) {
-      onAddToCart(id);
+        onAddToCart(id);
     }
-    console.log(`Added ${name} to cart`);
-  };
+};
 
   const handleLikeToggle = () => {
     setIsLiked(!isLiked);
@@ -117,12 +118,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
           transition={{ duration: 0.4, ease: 'easeOut' }}
           className="relative w-full h-full"
         >
-          <Image
-            src={image}
+          <img
+            src={getImageUrl(image)}
             alt={name}
-            fill
             className="object-contain p-4"
-            priority
           />
         </motion.div>
 
@@ -229,7 +228,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
             disabled={!inStock}
             className={`md:w-12 w-8 h-8 md:h-12 rounded-full flex items-center justify-center shadow-md transition-all duration-300 group ${
               inStock
-                ? 'bg-gradient-to-br from-primary via-black via-70% to-black shadow-primary hover:shadow-xl hover:scale-110 active:scale-90'
+                ? 'bg-gradient-to-br from-primary via-black via-70% to-black shadow-primary hover:shadow-lg hover:scale-110 active:scale-90'
                 : 'bg-gray-600 cursor-not-allowed opacity-50'
             }`}
             aria-label={inStock ? "Add to cart" : "Out of stock"}
