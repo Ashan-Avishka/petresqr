@@ -70,13 +70,11 @@ const StatItem: React.FC<StatItemProps> = ({ icon, number, label, delay }) => {
       </p>
     </motion.div>
   );
-}
 };
 
 const WhoWeAreSection: React.FC = () => {
   const isMobile = useIsMobile();
 
-<<<<<<< Updated upstream
   const stats = [
     {
       icon: <Dog className="w-10 h-10 text-white" strokeWidth={1} />,
