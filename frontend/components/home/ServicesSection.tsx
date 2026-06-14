@@ -6,6 +6,7 @@ import {
   Award,
   CreditCard,
   Zap,
+  RotateCcw,
 } from "lucide-react";
 
 const services = [
@@ -28,6 +29,11 @@ const services = [
     icon: Zap,
     title: "Best Offers",
     description: "We provide the best offers to our valued customers",
+  },
+  {
+    icon: RotateCcw,
+    title: "Easy Returns",
+    description: "Hassle-free returns within 30 days guaranteed",
   },
 ];
 
@@ -84,7 +90,7 @@ export default function ServicesSection() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
-          className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 max-w-2xl"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-4xl"
         >
           {services.map((service, index) => (
             <motion.div
