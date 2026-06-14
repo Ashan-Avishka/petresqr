@@ -102,18 +102,18 @@ export default function ServicesSection() {
               className="group"
             >
               <div className="bg-white/20 backdrop-blur-sm rounded-xl sm:rounded-2xl p-5 sm:p-6 lg:p-8 shadow-lg hover:shadow-2xl shadow-amber-950/40 transition-all duration-300 h-full">
-                <div className="flex flex-row items-start gap-3 sm:gap-4">
+                <div className="flex flex-row items-center gap-3 sm:gap-4">
                   <div className="flex-shrink-0">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                      <service.icon className="w-6 h-6 sm:w-8 sm:h-8 text-primary" strokeWidth={1.5} />
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                      <service.icon className="w-7 h-7 sm:w-9 sm:h-9 text-primary" strokeWidth={1.5} />
                     </div>
                   </div>
                   
-                  <div className="flex-1 w-full text-left">
-                    <h3 className="text-lg sm:text-xl font-bold text-white mb-1 sm:mb-2">
+                  <div className="flex-1">
+                    <h3 className="text-lg sm:text-2xl font-bold text-white leading-tight">
                       {service.title}
                     </h3>
-                    <p className="text-xs sm:text-sm text-gray-300 leading-relaxed">
+                    <p className="text-xs sm:text-sm text-gray-300 leading-tight">
                       {service.description}
                     </p>
                   </div>
