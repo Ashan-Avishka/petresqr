@@ -1,38 +1,33 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
-import { Truck, Award, CreditCard, Zap, RotateCcw, Headphones } from 'lucide-react';
+import { motion } from "framer-motion";
+import {
+  Truck,
+  Award,
+  CreditCard,
+  Zap,
+} from "lucide-react";
 
 const services = [
   {
     icon: Truck,
-    title: 'Worldwide Shipping',
-    description: 'We provide the best offers to our valued customers',
+    title: "Worldwide Shipping",
+    description: "We provide the best offers to our valued customers",
   },
   {
     icon: Award,
-    title: 'Best Quality',
-    description: 'We offer best quality tags there are. Get your tag today!',
+    title: "Best Quality",
+    description: "We offer best quality tags there are. Get your tag today!",
   },
   {
     icon: CreditCard,
-    title: 'Secure Payments',
-    description: 'We offer secure payments to our customers always',
+    title: "Secure Payments",
+    description: "We offer secure payments to our customers always",
   },
   {
     icon: Zap,
-    title: 'Best Offers',
-    description: 'We provide the best offers to our valued customers',
-  },
-  {
-    icon: RotateCcw,
-    title: 'Easy Returns',
-    description: 'Hassle-free returns within 30 days guaranteed',
-  },
-  {
-    icon: Headphones,
-    title: 'Expert Support',
-    description: 'Our team is here to help you anytime',
+    title: "Best Offers",
+    description: "We provide the best offers to our valued customers",
   },
 ];
 
@@ -54,7 +49,7 @@ const itemVariants = {
     y: 0,
     transition: {
       duration: 0.6,
-      ease: 'easeOut',
+      ease: "easeOut",
     },
   },
 };
@@ -65,8 +60,8 @@ export default function ServicesSection() {
       {/* Background Image */}
       <div className="absolute right-0 top-0 h-full w-full sm:w-3/4 md:w-2/3 lg:w-auto opacity-30 sm:opacity-50 lg:opacity-100">
         <img
-          src="/images/services-bg.png" 
-          alt="Services Background" 
+          src="/images/services-bg.png"
+          alt="Services Background"
           className="w-full h-full object-cover object-center"
         />
       </div>
@@ -89,15 +84,15 @@ export default function ServicesSection() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-7xl mx-auto"
+          className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 max-w-2xl"
         >
           {services.map((service, index) => (
             <motion.div
               key={index}
               variants={itemVariants}
-              whileHover={{ 
-                y: -8, 
-                transition: { duration: 0.3 } 
+              whileHover={{
+                y: -8,
+                transition: { duration: 0.3 },
               }}
               className="group"
             >
@@ -105,10 +100,13 @@ export default function ServicesSection() {
                 <div className="flex flex-col items-start gap-4">
                   <div className="flex-shrink-0">
                     <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                      <service.icon className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 text-primary" strokeWidth={1.5} />
+                      <service.icon
+                        className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 text-primary"
+                        strokeWidth={1.5}
+                      />
                     </div>
                   </div>
-                  
+
                   <div className="flex-1 w-full text-left">
                     <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 sm:mb-3">
                       {service.title}
