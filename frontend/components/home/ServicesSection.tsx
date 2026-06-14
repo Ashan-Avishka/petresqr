@@ -90,7 +90,7 @@ export default function ServicesSection() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-3xl"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-4xl"
         >
           {services.map((service, index) => (
             <motion.div
@@ -102,7 +102,7 @@ export default function ServicesSection() {
               }}
               className="group"
             >
-              <div className="bg-white/20 backdrop-blur-sm rounded-xl sm:rounded-2xl p-5 sm:p-6 lg:p-8 shadow-lg hover:shadow-2xl shadow-amber-950/40 transition-all duration-300 h-full">
+              <div className="bg-white/20 backdrop-blur-sm rounded-xl sm:rounded-2xl p-5 sm:p-6 lg:p-8 shadow-lg hover:shadow-2xl shadow-amber-950/40 transition-all duration-300 h-full aspect-square">
                 <div className="flex flex-col items-start gap-4">
                   <div className="flex-shrink-0">
                     <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
