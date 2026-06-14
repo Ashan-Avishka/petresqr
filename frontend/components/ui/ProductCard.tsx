@@ -206,7 +206,15 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* Description - Desktop only */}
         {description && (
-          <p className="hidden md:block text-xs text-gray-400 line-clamp-3">
+          <p
+            className="hidden md:block text-xs text-gray-400"
+            style={{
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}
+          >
             {description}
           </p>
         )}
