@@ -54,9 +54,6 @@ export class ProductController {
         filters.$text = { $search: req.query.search as string };
       }
 
-      // DEBUG: Log the filters being used
-      console.log('🔍 Query filters:', JSON.stringify(filters, null, 2));
-      console.log('📊 Pagination:', { page, limit, skip, sortBy, sortOrder });
 
       // DEBUG: Check total count without isActive filter
       const totalAllProducts = await Product.countDocuments({});
@@ -72,9 +69,6 @@ export class ProductController {
           .lean(),
         Product.countDocuments(filters)
       ]);
-
-      console.log('🎯 Products found with filters:', products.length);
-      console.log('📦 Total matching documents:', total);
 
       // DEBUG: If no products found, try without isActive filter
       if (products.length === 0) {

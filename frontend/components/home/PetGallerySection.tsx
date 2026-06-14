@@ -1,138 +1,169 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useIsMobile } from '../../hooks/useIsMobile';
-import Button from '../ui/Button';
+import { motion } from "framer-motion";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useIsMobile } from "../../hooks/useIsMobile";
+import Button from "../ui/Button";
+import { useRouter } from 'next/navigation';
 
 const galleryImagesSets = [
   // First Set - 6 images
   [
     {
       id: 1,
-      src: '/images/gallery-1.jpg',
-      alt: 'Golden Retriever',
-      className: 'col-span-2 row-span-2',
+      src: "/images/gallery-1.jpg",
+      alt: "Golden Retriever",
+      className: "col-span-2 row-span-2",
     },
     {
       id: 2,
-      src: '/images/gallery-2.jpg',
-      alt: 'Black Pug',
-      className: 'col-span-2 row-span-3',
+      src: "/images/gallery-2.jpg",
+      alt: "Black Pug",
+      className: "col-span-2 row-span-3",
     },
     {
       id: 3,
-      src: '/images/gallery-3.jpg',
-      alt: 'White Kitten',
-      className: 'col-span-2 row-span-3',
+      src: "/images/gallery-3.jpg",
+      alt: "White Kitten",
+      className: "col-span-2 row-span-3",
     },
     {
       id: 4,
-      src: '/images/gallery-4.jpg',
-      alt: 'Border Collie',
-      className: 'col-span-4 row-span-5',
+      src: "/images/gallery-4.jpg",
+      alt: "Border Collie",
+      className: "col-span-4 row-span-5",
     },
     {
       id: 5,
-      src: '/images/gallery-5.jpg',
-      alt: 'Happy Dog',
-      className: 'col-span-2 row-span-3',
+      src: "/images/gallery-5.jpg",
+      alt: "Happy Dog",
+      className: "col-span-2 row-span-3",
     },
     {
       id: 6,
-      src: '/images/gallery-6.jpg',
-      alt: 'Cozy Puppy',
-      className: 'col-span-4 row-span-2',
+      src: "/images/gallery-6.jpg",
+      alt: "Cozy Puppy",
+      className: "col-span-4 row-span-2",
     },
   ],
   // Second Set - 6 images with DIFFERENT layout
   [
     {
       id: 1,
-      src: '/images/gallery-1.jpg',
-      alt: 'Golden Retriever',
-      className: 'col-span-3 row-span-2',
+      src: "/images/gallery-1.jpg",
+      alt: "Golden Retriever",
+      className: "col-span-3 row-span-2",
     },
     {
       id: 2,
-      src: '/images/gallery-2.jpg',
-      alt: 'Black Pug',
-      className: 'col-span-3 row-span-3',
+      src: "/images/gallery-2.jpg",
+      alt: "Black Pug",
+      className: "col-span-3 row-span-3",
     },
     {
       id: 3,
-      src: '/images/gallery-3.jpg',
-      alt: 'White Kitten',
-      className: 'col-span-4 row-span-2',
+      src: "/images/gallery-3.jpg",
+      alt: "White Kitten",
+      className: "col-span-4 row-span-2",
     },
     {
       id: 4,
-      src: '/images/gallery-4.jpg',
-      alt: 'Border Collie',
-      className: 'col-span-3 row-span-3',
+      src: "/images/gallery-4.jpg",
+      alt: "Border Collie",
+      className: "col-span-3 row-span-3",
     },
     {
       id: 5,
-      src: '/images/gallery-5.jpg',
-      alt: 'Happy Dog',
-      className: 'col-span-4 row-span-3',
+      src: "/images/gallery-5.jpg",
+      alt: "Happy Dog",
+      className: "col-span-4 row-span-3",
     },
     {
       id: 6,
-      src: '/images/gallery-6.jpg',
-      alt: 'Cozy Puppy',
-      className: 'col-span-3 row-span-2',
+      src: "/images/gallery-6.jpg",
+      alt: "Cozy Puppy",
+      className: "col-span-3 row-span-2",
     },
   ],
   // Third Set - 6 images with ANOTHER layout
   [
     {
       id: 1,
-      src: '/images/gallery-1.jpg',
-      alt: 'Golden Retriever',
-      className: 'col-span-4 row-span-3',
+      src: "/images/gallery-1.jpg",
+      alt: "Golden Retriever",
+      className: "col-span-4 row-span-3",
     },
     {
       id: 2,
-      src: '/images/gallery-2.jpg',
-      alt: 'Black Pug',
-      className: 'col-span-3 row-span-2',
+      src: "/images/gallery-2.jpg",
+      alt: "Black Pug",
+      className: "col-span-3 row-span-2",
     },
     {
       id: 3,
-      src: '/images/gallery-3.jpg',
-      alt: 'White Kitten',
-      className: 'col-span-3 row-span-2',
+      src: "/images/gallery-3.jpg",
+      alt: "White Kitten",
+      className: "col-span-3 row-span-2",
     },
     {
       id: 4,
-      src: '/images/gallery-4.jpg',
-      alt: 'Border Collie',
-      className: 'col-span-4 row-span-3',
+      src: "/images/gallery-4.jpg",
+      alt: "Border Collie",
+      className: "col-span-4 row-span-3",
     },
     {
       id: 5,
-      src: '/images/gallery-5.jpg',
-      alt: 'Happy Dog',
-      className: 'col-span-2 row-span-3',
+      src: "/images/gallery-5.jpg",
+      alt: "Happy Dog",
+      className: "col-span-2 row-span-3",
     },
     {
       id: 6,
-      src: '/images/gallery-6.jpg',
-      alt: 'Cozy Puppy',
-      className: 'col-span-4 row-span-2',
+      src: "/images/gallery-6.jpg",
+      alt: "Cozy Puppy",
+      className: "col-span-4 row-span-2",
     },
   ],
 ];
 
 // Static mobile layout - different sizes with masonry-style grid
 const mobileImages = [
-  { id: 1, src: '/images/gallery-1.jpg', alt: 'Golden Retriever', className: 'row-span-2' },
-  { id: 2, src: '/images/gallery-2.jpg', alt: 'Black Pug', className: 'row-span-1' },
-  { id: 3, src: '/images/gallery-3.jpg', alt: 'White Kitten', className: 'row-span-1' },
-  { id: 4, src: '/images/gallery-4.jpg', alt: 'Border Collie', className: 'row-span-1' },
-  { id: 5, src: '/images/gallery-5.jpg', alt: 'Happy Dog', className: 'row-span-2' },
-  { id: 6, src: '/images/gallery-6.jpg', alt: 'Cozy Puppy', className: 'row-span-1' },
+  {
+    id: 1,
+    src: "/images/gallery-1.jpg",
+    alt: "Golden Retriever",
+    className: "row-span-2",
+  },
+  {
+    id: 2,
+    src: "/images/gallery-2.jpg",
+    alt: "Black Pug",
+    className: "row-span-1",
+  },
+  {
+    id: 3,
+    src: "/images/gallery-3.jpg",
+    alt: "White Kitten",
+    className: "row-span-1",
+  },
+  {
+    id: 4,
+    src: "/images/gallery-4.jpg",
+    alt: "Border Collie",
+    className: "row-span-1",
+  },
+  {
+    id: 5,
+    src: "/images/gallery-5.jpg",
+    alt: "Happy Dog",
+    className: "row-span-2",
+  },
+  {
+    id: 6,
+    src: "/images/gallery-6.jpg",
+    alt: "Cozy Puppy",
+    className: "row-span-1",
+  },
 ];
 
 export default function PetGallery() {
@@ -140,8 +171,12 @@ export default function PetGallery() {
   const [currentSetIndex, setCurrentSetIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const isMobile = useIsMobile(768);
+  const router = useRouter();
 
-  const currentImages = useMemo(() => galleryImagesSets[currentSetIndex], [currentSetIndex]);
+  const currentImages = useMemo(
+    () => galleryImagesSets[currentSetIndex],
+    [currentSetIndex],
+  );
 
   // Auto-rotate through image sets (desktop only)
   useEffect(() => {
@@ -201,7 +236,7 @@ export default function PetGallery() {
                   <div
                     className="absolute inset-0 bg-gradient-to-r from-primary to-yellow-600 transition-all duration-100 ease-linear"
                     style={{
-                      width: currentSetIndex === index ? `${progress}%` : '0%',
+                      width: currentSetIndex === index ? `${progress}%` : "0%",
                     }}
                   />
                 </button>
@@ -238,7 +273,7 @@ export default function PetGallery() {
           </div>
         ) : (
           // Desktop: Dynamic morphing grid
-          <div className="grid grid-cols-4 md:grid-cols-10 auto-rows-[100px] gap-3 md:gap-4">
+          <div className="grid grid-cols-4 md:grid-cols-10 auto-rows-[100px] gap-3 md:gap-4 h-[600px]">
             {currentImages.map((image) => (
               <motion.div
                 key={image.id}
@@ -263,8 +298,9 @@ export default function PetGallery() {
                 />
 
                 <div
-                  className={`absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent flex items-end justify-center pb-4 transition-opacity duration-300 pointer-events-none ${hoveredId === image.id ? 'opacity-100' : 'opacity-0'
-                    }`}
+                  className={`absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent flex items-end justify-center pb-4 transition-opacity duration-300 pointer-events-none ${
+                    hoveredId === image.id ? "opacity-100" : "opacity-0"
+                  }`}
                 >
                   <span className="text-white font-semibold text-sm md:text-base px-4 text-center">
                     {image.alt}
@@ -283,10 +319,7 @@ export default function PetGallery() {
           transition={{ duration: 0.6, delay: 0.5 }}
           className="text-center md:mt-20 mt-10"
         >
-          <Button
-            variant="primary"
-            size="md"
-          >
+          <Button variant="primary" size="md" className="shadow-xs shadow-primary" onClick={() => router.push('/pet-gallery')}>
             View Gallery
           </Button>
         </motion.div>

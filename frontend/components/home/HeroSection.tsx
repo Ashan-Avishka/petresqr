@@ -7,8 +7,15 @@ import { QrCode, MapPin, ShieldCheck, ScanLine, ShoppingBag } from 'lucide-react
 import { foundAPI } from '../../api/found-api';
 import QRScanner from '../Models/QRScanner';
 import PetProfileModal from '../Models/PetProfile';
+import { useRouter } from 'next/navigation';
+import { NotificationModal } from '../Models/MessageModal';
 
 const HeroSection: React.FC = () => {
+  const router = useRouter();
+  const [isOpen, setIsOpen] = useState(false);
+  const [notifType, setNotifType] = useState<'success' | 'error' | 'warning' | 'info'>('success');
+  const [notifTitle, setNotifTitle] = useState('');
+  const [notifMessage, setNotifMessage] = useState('');
   const [mounted, setMounted] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -69,11 +76,17 @@ const HeroSection: React.FC = () => {
         };
         setPetProfile(transformedData);
       } else {
-        alert(response.error?.message || 'Tag not found or not assigned to any pet');
+        setNotifType('warning');
+        setNotifTitle('Tag Not Found');
+        setNotifMessage(response.error?.message || 'The scanned QR code is not assigned to any pet. Please check the code and try again.');
+        setIsOpen(true);
       }
     } catch (error) {
       console.error('Error finding pet:', error);
-      alert('Failed to process QR code. Please try again.');
+      setNotifType('error');
+      setNotifTitle('Scan Failed');
+      setNotifMessage('An error occurred while trying to find the pet. Please try again.');
+      setIsOpen(true);
     } finally {
       setLoading(false);
       setShowScanner(false);
@@ -95,8 +108,7 @@ const HeroSection: React.FC = () => {
   };
 
   const handleActivateTag = () => {
-    console.log('Activate tag clicked');
-    // Add your navigation or modal logic here
+    router.push('/shop');
   };
 
   return (
@@ -328,6 +340,13 @@ const HeroSection: React.FC = () => {
           </div>
         </div>
       </div>
+        <NotificationModal
+          isOpen={isOpen}
+          type={notifType}
+          title={notifTitle}
+          message= {notifMessage}
+          onDismiss={() => setIsOpen(false)}
+        />
     </div>
   );
 };

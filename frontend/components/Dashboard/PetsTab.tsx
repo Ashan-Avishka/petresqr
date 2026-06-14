@@ -4,10 +4,15 @@ import PetCard from './PetCard';
 import { useUserContext } from '../../contexts/UserContext';
 import type { Pet } from '../../api/pet-types';
 import CreatePetModal from '../Models/CreatePetModal';
+import { NotificationModal } from '../Models/MessageModal';
 
 const PetsTab: React.FC = () => {
     const { pets, tags, deletePet, updatePet, togglePetGallery, createPet } = useUserContext();
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isOpen, setIsOpen] = useState(false);
+    const [notifType, setNotifType] = useState<'success' | 'error' | 'warning' | 'info'>('success');
+    const [notifTitle, setNotifTitle] = useState('');
+    const [notifMessage, setNotifMessage] = useState('');
 
     const availableTags = tags.filter(tag => 
         tag.status === 'available' && !tag.pet
@@ -17,8 +22,15 @@ const PetsTab: React.FC = () => {
         if (window.confirm('Are you sure you want to remove this pet?')) {
             const success = await deletePet(id);
             if (!success) {
-                alert('Failed to delete pet');
+                setNotifType('error');
+                setNotifTitle('Deletion Failed');
+                setNotifMessage('Failed to delete the pet. Please try again later.');
+                setIsOpen(true);
             }
+            setNotifType('success');
+            setNotifTitle('Pet Deleted');
+            setNotifMessage('The pet has been deleted successfully.');
+            setIsOpen(true);
         }
     };
 
@@ -29,13 +41,22 @@ const PetsTab: React.FC = () => {
             const success = await updatePet(id, data);
 
             if (success) {
-                console.log('Pet updated successfully!');
+                setNotifType('success');
+                setNotifTitle('Pet Updated');
+                setNotifMessage('The pet information has been updated successfully.');
+                setIsOpen(true);
             } else {
-                alert('Failed to update pet');
+                setNotifType('error');
+                setNotifTitle('Update Failed');
+                setNotifMessage('Failed to update the pet. Please try again later.');
+                setIsOpen(true);
             }
         } catch (error) {
             console.error('Error updating pet:', error);
-            alert('Failed to update pet');
+            setNotifType('error');
+            setNotifTitle('Update Failed');
+            setNotifMessage('An error occurred while updating the pet. Please try again later.');
+            setIsOpen(true);
         }
     };
 
@@ -111,6 +132,13 @@ const PetsTab: React.FC = () => {
                 onClose={() => setIsCreateModalOpen(false)}
                 onSubmit={handleCreatePetSubmit}
                 availableTags={availableTags}
+            />
+            <NotificationModal
+                isOpen={isOpen}
+                type={notifType}
+                title={notifTitle}
+                message= {notifMessage}
+                onDismiss={() => setIsOpen(false)}
             />
         </div>
     );

@@ -302,10 +302,10 @@ const params: any = {
                         initial={{ opacity: 0, y: -20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
-                        className="fixed top-24 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-100 flex items-center gap-2 max-w-xs"
+                        className="fixed top-24 right-[17.5%] bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-100 flex items-center gap-2 max-w-xs"
                     >
                         <Check className="w-5 h-5 flex-shrink-0" />
-                        <span className="text-sm font-medium line-clamp-1">
+                        <span className="text-sm font-medium line-clamp-2">
                             {cartNotification} added to cart!
                         </span>
                     </motion.div>

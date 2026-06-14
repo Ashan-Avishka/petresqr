@@ -353,7 +353,7 @@ const PetProfileModal: React.FC<PetProfileModalProps> = ({ isOpen, onClose, pet 
                             name="finderContact.name"
                             value={formData.finderContact.name}
                             onChange={handleInputChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none text-gray-900 placeholder-gray-400"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none text-white placeholder-gray-400"
                             placeholder="John Doe"
                           />
                         </div>
@@ -367,7 +367,7 @@ const PetProfileModal: React.FC<PetProfileModalProps> = ({ isOpen, onClose, pet 
                             name="finderContact.phone"
                             value={formData.finderContact.phone}
                             onChange={handleInputChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none text-gray-900 placeholder-gray-400"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none text-white placeholder-gray-400"
                             placeholder="+1234567890"
                           />
                         </div>
@@ -381,7 +381,7 @@ const PetProfileModal: React.FC<PetProfileModalProps> = ({ isOpen, onClose, pet 
                             name="finderContact.email"
                             value={formData.finderContact.email}
                             onChange={handleInputChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none text-gray-900 placeholder-gray-400"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none text-white placeholder-gray-400"
                             placeholder="john@example.com"
                           />
                         </div>
@@ -400,7 +400,7 @@ const PetProfileModal: React.FC<PetProfileModalProps> = ({ isOpen, onClose, pet 
                             name="location.address"
                             value={formData.location.address}
                             onChange={handleInputChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none text-gray-900 placeholder-gray-400"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none text-white placeholder-gray-400"
                             placeholder="123 Main St, New York, NY"
                           />
                         </div>
@@ -450,10 +450,10 @@ const PetProfileModal: React.FC<PetProfileModalProps> = ({ isOpen, onClose, pet 
                             onChange={handleInputChange}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none text-white"
                           >
-                            <option value="HEALTHY">Healthy</option>
-                            <option value="INJURED">Injured</option>
-                            <option value="SICK">Sick</option>
-                            <option value="UNKNOWN">Unknown</option>
+                            <option value="HEALTHY" className='bg-gray-500'>Healthy</option>
+                            <option value="INJURED" className='bg-gray-500'>Injured</option>
+                            <option value="SICK" className='bg-gray-500'>Sick</option>
+                            <option value="UNKNOWN" className='bg-gray-500'>Unknown</option>
                           </select>
                         </div>
 

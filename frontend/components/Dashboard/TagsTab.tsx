@@ -236,7 +236,7 @@ const TagsTab: React.FC = () => {
                     return (
                         <div
                             key={tag._id}
-                            className="bg-gradient-to-br from-primary/10 via-black to-black border border-gray-800 rounded-2xl shadow-md p-5 hover:border-gray-700 transition-all"
+                            className="bg-gradient-to-br from-primary/50 via-black to-black border border-gray-800 rounded-xl shadow-md p-5 hover:border-gray-700 transition-all cursor-pointer"
                         >
                             {/* Top row: icon + info + status */}
                             <div className="flex items-start justify-between gap-4">
@@ -254,7 +254,7 @@ const TagsTab: React.FC = () => {
                                         </h3>
 
                                         {/* Pet assignment info */}
-                                        <div className="mt-4">
+                                        <div className="mt-3">
                                             {assignedPet?.name ? (
                                                 <div className="flex items-center gap-2 text-sm text-gray-300">
                                                     <CheckCircle className="w-4 h-4 text-primary shrink-0" />

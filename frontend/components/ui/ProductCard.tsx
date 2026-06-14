@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Star } from 'lucide-react';
-import { getImageUrl } from '../../api/config';
+import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { Star } from "lucide-react";
+import { getImageUrl } from "../../api/config";
 
 interface ProductCardProps {
   id: string;
@@ -14,7 +14,7 @@ interface ProductCardProps {
   description?: string;
   rating?: number;
   reviews?: number;
-  badge?: 'bestseller' | 'new' | 'sale' | 'featured';
+  badge?: "bestseller" | "new" | "sale" | "featured";
   inStock?: boolean;
   onAddToCart?: (id: string) => void;
   className?: string;
@@ -33,7 +33,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   badge,
   inStock = true,
   onAddToCart,
-  className = '',
+  className = "",
   index = 0,
 }) => {
   const [isLiked, setIsLiked] = useState(false);
@@ -44,13 +44,13 @@ const ProductCard: React.FC<ProductCardProps> = ({
     setIsMounted(true);
   }, []);
 
-const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault();  // ← stops the Link navigation
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault(); // ← stops the Link navigation
     e.stopPropagation(); // ← stops event bubbling
     if (onAddToCart && inStock) {
-        onAddToCart(id);
+      onAddToCart(id);
     }
-};
+  };
 
   const handleLikeToggle = () => {
     setIsLiked(!isLiked);
@@ -58,16 +58,16 @@ const handleAddToCart = (e: React.MouseEvent) => {
 
   const getBadgeColor = (badgeType?: string) => {
     switch (badgeType) {
-      case 'bestseller':
-        return 'bg-orange-500';
-      case 'new':
-        return 'bg-green-500';
-      case 'sale':
-        return 'bg-red-500';
-      case 'featured':
-        return 'bg-primary';
+      case "bestseller":
+        return "bg-orange-500";
+      case "new":
+        return "bg-green-500";
+      case "sale":
+        return "bg-red-500";
+      case "featured":
+        return "bg-primary";
       default:
-        return '';
+        return "";
     }
   };
 
@@ -97,10 +97,10 @@ const handleAddToCart = (e: React.MouseEvent) => {
       initial={{ opacity: 0, y: 50, scale: 0.9 }}
       whileInView={{ opacity: 1, y: 0, scale: 1 }}
       viewport={{ once: true, margin: "-50px" }}
-      transition={{ 
+      transition={{
         duration: 0.5,
         delay: index * 0.1,
-        ease: [0.25, 0.46, 0.45, 0.94]
+        ease: [0.25, 0.46, 0.45, 0.94],
       }}
       className={`bg-gray-400/40 backdrop-blur-3xl rounded-2xl md:p-4 p-2 shadow-md hover:shadow-xl transition-shadow duration-300 ${className}`}
     >
@@ -115,7 +115,7 @@ const handleAddToCart = (e: React.MouseEvent) => {
           animate={{
             scale: isHovered ? 1.15 : 1,
           }}
-          transition={{ duration: 0.4, ease: 'easeOut' }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
           className="relative w-full h-full"
         >
           <img
@@ -127,7 +127,9 @@ const handleAddToCart = (e: React.MouseEvent) => {
 
         {/* Badge */}
         {badge && (
-          <div className={`absolute top-3 left-3 px-2 md:px-3 py-1 rounded-full text-white text-xs md:text-sm font-medium ${getBadgeColor(badge)}`}>
+          <div
+            className={`absolute top-3 left-3 px-2 md:px-3 py-1 rounded-full text-white text-xs md:text-sm font-medium ${getBadgeColor(badge)}`}
+          >
             {badge.toUpperCase()}
           </div>
         )}
@@ -142,7 +144,9 @@ const handleAddToCart = (e: React.MouseEvent) => {
         {/* Out of Stock Overlay */}
         {!inStock && (
           <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-            <span className="text-white font-bold text-sm md:text-lg">Out of Stock</span>
+            <span className="text-white font-bold text-sm md:text-lg">
+              Out of Stock
+            </span>
           </div>
         )}
 
@@ -188,8 +192,8 @@ const handleAddToCart = (e: React.MouseEvent) => {
                   key={i}
                   className={`w-3 h-3 ${
                     i < Math.floor(rating)
-                      ? 'fill-yellow-400 text-yellow-400'
-                      : 'text-gray-600'
+                      ? "fill-yellow-400 text-yellow-400"
+                      : "text-gray-600"
                   }`}
                 />
               ))}
@@ -202,7 +206,15 @@ const handleAddToCart = (e: React.MouseEvent) => {
 
         {/* Description - Desktop only */}
         {description && (
-          <p className="hidden md:block text-xs text-gray-400 line-clamp-2">
+          <p
+            className="hidden md:block text-xs text-gray-400"
+            style={{
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}
+          >
             {description}
           </p>
         )}
@@ -228,8 +240,8 @@ const handleAddToCart = (e: React.MouseEvent) => {
             disabled={!inStock}
             className={`md:w-12 w-8 h-8 md:h-12 rounded-full flex items-center justify-center shadow-md transition-all duration-300 group ${
               inStock
-                ? 'bg-gradient-to-br from-primary via-black via-70% to-black shadow-primary hover:shadow-lg hover:scale-110 active:scale-90'
-                : 'bg-gray-600 cursor-not-allowed opacity-50'
+                ? "bg-gradient-to-br from-primary via-black via-70% to-black shadow-primary hover:shadow-lg hover:scale-110 active:scale-90"
+                : "bg-gray-600 cursor-not-allowed opacity-50"
             }`}
             aria-label={inStock ? "Add to cart" : "Out of stock"}
             suppressHydrationWarning
@@ -239,9 +251,13 @@ const handleAddToCart = (e: React.MouseEvent) => {
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
-              whileHover={inStock ? {
-                y: [-1, 0, -1],
-              } : {}}
+              whileHover={
+                inStock
+                  ? {
+                      y: [-1, 0, -1],
+                    }
+                  : {}
+              }
               transition={{
                 duration: 0.5,
                 repeat: inStock ? Infinity : 0,

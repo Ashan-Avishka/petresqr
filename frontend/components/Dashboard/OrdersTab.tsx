@@ -2,12 +2,18 @@ import React, { useState } from 'react';
 import { Package, ChevronDown, ChevronUp, Calendar, CreditCard, MapPin, Tag, XCircle, Image as ImageIcon } from 'lucide-react';
 import { useUserContext } from '../../contexts/UserContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getImageUrl } from '../../api/config';
+import { NotificationModal } from '../Models/MessageModal';
 
 const OrdersTab: React.FC = () => {
     const { orders, cancelOrder } = useUserContext();
     const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
     const [cancelling, setCancelling] = useState<string | null>(null);
     const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
+    const [isOpen, setIsOpen] = useState(false);
+    const [notifType, setNotifType] = useState<'success' | 'error' | 'warning' | 'info'>('success');
+    const [notifTitle, setNotifTitle] = useState('');
+    const [notifMessage, setNotifMessage] = useState('');
 
     const toggleOrder = (orderId: string) => {
         setExpandedOrderId(expandedOrderId === orderId ? null : orderId);
@@ -23,9 +29,15 @@ const OrdersTab: React.FC = () => {
         setCancelling(null);
 
         if (success) {
-            alert('Order cancelled successfully');
+            setNotifType('success');
+            setNotifTitle('Order Cancelled');
+            setNotifMessage('Your order has been cancelled successfully.');
+            setIsOpen(true);
         } else {
-            alert('Failed to cancel order');
+            setNotifType('error');
+            setNotifTitle('Cancellation Failed');
+            setNotifMessage('Failed to cancel the order. Please try again later.');
+            setIsOpen(true);
         }
     };
 
@@ -66,7 +78,7 @@ const OrdersTab: React.FC = () => {
                 {orders.map(order => (
                     <div 
                         key={order._id} 
-                        className="bg-gradient-to-br from-primary via-black to-black rounded-xl shadow-md overflow-hidden transition-shadow hover:shadow-lg"
+                        className="bg-gradient-to-br from-primary/50 via-black to-black border border-gray-800 rounded-xl shadow-md overflow-hidden transition-shadow hover:shadow-lg"
                     >
                         {/* Order Header */}
                         <div 
@@ -142,9 +154,9 @@ const OrdersTab: React.FC = () => {
                                                                             </div>
                                                                         )}
                                                                         <img 
-                                                                            src={item.image} 
+                                                                            src={getImageUrl(item.image)} 
                                                                             alt={item.name}
-                                                                            onLoad={() => handleImageLoad(item.image)}
+                                                                            onLoad={() => handleImageLoad(getImageUrl(item.image))}
                                                                             className={`w-full h-full object-cover transition-opacity duration-300 ${
                                                                                 loadedImages.has(item.image) ? 'opacity-100' : 'opacity-0'
                                                                             }`}
@@ -296,6 +308,13 @@ const OrdersTab: React.FC = () => {
                     <p className="text-gray-400">Your order history will appear here</p>
                 </div>
             )}
+            <NotificationModal
+                isOpen={isOpen}
+                type={notifType}
+                title={notifTitle}
+                message= {notifMessage}
+                onDismiss={() => setIsOpen(false)}
+            />
         </div>
     );
 };

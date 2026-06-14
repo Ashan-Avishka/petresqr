@@ -8,6 +8,8 @@ import AuthModal from "../../components/Models/AuthModel";
 import { AuthProvider } from '../../contexts/AuthContext';
 import { UserProvider } from '../../contexts/UserContext';
 import { CartProvider } from '../../contexts/CartContext';
+import logo from "../../public/images/logo.png";
+import Image from 'next/image';
 
 // Create context for auth modal
 const AuthModalContext = createContext({
@@ -33,7 +35,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               closeAuthModal: () => setIsAuthModalOpen(false),
             }}
           >
-            <Navbar />
+            <Navbar 
+              logo={
+                <Image 
+                  src={logo} 
+                  alt="Logo" 
+                  width={130} 
+                />
+              } 
+            />
             <main className="flex-grow">{children}</main>
             <Footer />
 

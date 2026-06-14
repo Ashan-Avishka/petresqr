@@ -80,7 +80,7 @@ const Navbar: React.FC<NavbarProps> = ({
             transition={{ duration: 0.5, delay: 0.3 }}
             className={`${backgroundColor} backdrop-blur-md shadow-primary rounded-full shadow-md px-4 sm:px-6 py-3 flex items-center justify-between`}
           >
-            <Link href="/" className="flex items-center">
+            <Link href="/" className="flex items-center -mt-3 -mb-3">
               {logo || defaultLogo}
             </Link>
 

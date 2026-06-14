@@ -20,8 +20,8 @@ export const productAPI = {
     
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.limit) queryParams.append('limit', params.limit.toString());
-    if (params?.category) queryParams.append('category', params.category);
-    if (params?.petCategory) queryParams.append('petCategory', params.petCategory);
+    if (params?.category) queryParams.append('category', params.category.toString());
+    if (params?.petCategory) queryParams.append('petCategory', params.petCategory.toString());
     if (params?.availability) queryParams.append('availability', params.availability);
     if (params?.featured !== undefined) queryParams.append('featured', params.featured.toString());
     if (params?.badge) queryParams.append('badge', params.badge);

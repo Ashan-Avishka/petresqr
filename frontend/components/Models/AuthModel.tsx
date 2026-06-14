@@ -16,6 +16,7 @@ import {
   hasErrors,
   type AuthFieldErrors,
 } from '../../utils/validationUtils';
+import { NotificationModal } from '../Models/MessageModal';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -55,6 +56,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
   const [serverError, setServerError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<AuthFieldErrors>({});
   const { login } = useAuthContext();
+  const [isOpen2, setIsOpen2] = useState(false);
+  const [notifType, setNotifType] = useState<'success' | 'error' | 'warning' | 'info'>('success');
+  const [notifTitle, setNotifTitle] = useState('');
+  const [notifMessage, setNotifMessage] = useState('');
 
   const [formData, setFormData] = useState({
     email: '',
@@ -176,18 +181,34 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
             onClose();
             router.push('/dashboard');
           } else {
-            alert('Registration successful! Please sign in with your credentials.');
+            setNotifType('success');
+            setNotifTitle('Registration Successful');
+            setNotifMessage('Your account has been created successfully! Please sign in with your credentials.');
+            setIsOpen2(true);
             switchMode();
           }
         } catch (loginError: any) {
-          alert('Registration successful! Please sign in with your credentials.');
+          setNotifType('error');
+          setNotifTitle('Login Failed');
+          setNotifMessage('An error occurred while logging in. Please try again.');
+          setIsOpen2(true);
           switchMode();
         }
       } else {
         setServerError(response.error?.message || 'Registration failed');
+        setNotifType('error');
+        setNotifTitle('Registration Failed');
+        setNotifMessage('An error occurred while registering. Please try again.');
+        setIsOpen2(true);
+
       }
     } catch (err: any) {
       setServerError(err.message || 'An unexpected error occurred');
+      setNotifType('error');
+      setNotifTitle('');
+      setNotifMessage('An error occurred while registering. Please try again.');
+      setIsOpen2(true);
+
     } finally {
       setLoading(false);
     }
@@ -324,7 +345,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
               <div className="w-full md:w-1/2 p-8 md:p-12 relative flex flex-col">
                 <button
                   onClick={onClose}
-                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-100 transition-colors"
                   disabled={loading}
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -373,7 +394,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
                 </div>
 
                 <div className="flex-1 flex flex-col min-h-0">
-                  <div className="flex-1 space-y-4 pr-2 overflow-y-auto">
+                  <div className="flex-1 space-y-4 pr-2 overflow-y-auto pl-1">
 
                     {/* ── Sign In ── */}
                     {isSignIn && (
@@ -622,7 +643,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
                         size="md"
                         onClick={handleSubmit}
                         disabled={loading}
-                        className={!isSignIn && signUpStep > 1 ? 'flex-1 md:w-41 w-35' : 'md:w-41 w-35'}
+                        className={!isSignIn && signUpStep > 1 ? 'flex-1 md:w-41 w-35 ml-2' : 'md:w-41 w-35 ml-2'}
                       >
                         {loading
                           ? 'Processing...'

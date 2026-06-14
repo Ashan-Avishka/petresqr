@@ -92,7 +92,7 @@ const PetCard: React.FC<PetCardProps> = ({ pet, onEdit, onDelete, onSave, onTogg
         <motion.div
             layout
             key={pet.id}
-            className="bg-gradient-to-br from-primary via-black to-black rounded-xl hover:shadow-lg transition-shadow overflow-hidden cursor-pointer"
+            className="bg-gradient-to-br from-primary/50 via-black to-black border border-gray-800 rounded-xl shadow-md hover:border-gray-700 transition-all cursor-pointer"
             onClick={() => !isEditing && setIsExpanded(!isExpanded)}
         >
             <div className="p-6">
@@ -100,7 +100,7 @@ const PetCard: React.FC<PetCardProps> = ({ pet, onEdit, onDelete, onSave, onTogg
                     <img
                         src={imageUrl}
                         alt={displayData.name}
-                        className="w-20 h-20 rounded-lg object-cover shadow-lg shadow-black"
+                        className="w-20 h-20 rounded-lg object-cover border border-gray-700 shadow-md shadow-primary/20"
                         onError={(e) => {
                             // Fallback if image fails to load
                             e.currentTarget.src = 'https://via.placeholder.com/400x300?text=No+Imagexx';

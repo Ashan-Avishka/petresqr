@@ -2,6 +2,9 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Check } from 'lucide-react';
+import Link from "next/link";
+import { useRouter } from 'next/navigation';
 import Slider from 'react-slick';
 import ProductCard from '../ui/ProductCard';
 import Button from '../ui/Button';
@@ -13,11 +16,13 @@ import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 
 const ProductsSliderSection: React.FC = () => {
+    const router = useRouter();
     const sliderRef = useRef<Slider>(null);
     const [isHovered, setIsHovered] = useState(false);
     const [isClient, setIsClient] = useState(false);
     const [products, setProducts] = useState<Product[]>([]);
     const [loadingProducts, setLoadingProducts] = useState(true);
+    const [cartNotification, setCartNotification] = useState<string | null>(null);
     const { addItem } = useCart();
 
     const isMobile = useIsMobile(640);
@@ -36,6 +41,7 @@ const ProductsSliderSection: React.FC = () => {
                     sortBy: 'createdAt',
                     sortOrder: 'desc',
                     limit: 8,
+                    category: 'tag',
                 });
                 if (response.ok && response.data) {
                     setProducts(response.data);
@@ -70,6 +76,9 @@ const ProductsSliderSection: React.FC = () => {
             stock: product.stock || 0,
             quantity: 1,
         });
+
+        setCartNotification(product.name);
+        setTimeout(() => setCartNotification(null), 3000);
     };
 
     const getSlidesToShow = () => {
@@ -204,20 +213,23 @@ const ProductsSliderSection: React.FC = () => {
 
                                     return (
                                         <div key={product._id} className="px-3 pb-10">
-                                            <ProductCard
-                                                id={product._id}
-                                                name={product.name}
-                                                price={product.price}
-                                                originalPrice={product.compareAtPrice}
-                                                image={primaryImage}
-                                                description={product.description || ''}
-                                                rating={product.rating || 0}
-                                                reviews={product.reviews || 0}
-                                                badge={product.badge}
-                                                inStock={product.availability === 'in_stock' && (product.stock || 0) > 0}
-                                                onAddToCart={handleAddToCart}
-                                                index={index}
-                                            />
+                                            <Link href={`/shop/${product.slug}`} className="block">
+                                                <ProductCard
+                                                    id={product._id}
+                                                    slug={product.slug}
+                                                    name={product.name}
+                                                    price={product.price}
+                                                    originalPrice={product.compareAtPrice}
+                                                    image={primaryImage}
+                                                    description={product.description || ''}
+                                                    rating={product.rating || 0}
+                                                    reviews={product.reviews || 0}
+                                                    badge={product.badge}
+                                                    inStock={product.availability === 'in_stock' && (product.stock || 0) > 0}
+                                                    onAddToCart={handleAddToCart}
+                                                    index={index}
+                                                />
+                                            </Link>
                                         </div>
                                     );
                                 })}
@@ -234,11 +246,28 @@ const ProductsSliderSection: React.FC = () => {
                     transition={{ duration: 0.6, delay: 0.5 }}
                     className="text-center md:mt-20 mt-10"
                 >
-                    <Button variant="primary" size="md">
+                    <Button variant="primary" size="md" onClick={() => router.push('/shop')}>
                         View All Products
                     </Button>
                 </motion.div>
             </div>
+
+            {/* Cart toast notification */}
+            <AnimatePresence>
+                {cartNotification && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className="fixed top-24 right-[17.5%] bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-100 flex items-center gap-2 max-w-xs"
+                    >
+                        <Check className="w-5 h-5 flex-shrink-0" />
+                        <span className="text-sm font-medium line-clamp-2">
+                            {cartNotification} added to cart!
+                        </span>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <style jsx global>{`
                 .custom-dots {

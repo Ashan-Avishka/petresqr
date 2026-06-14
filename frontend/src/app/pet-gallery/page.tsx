@@ -9,7 +9,7 @@ import { petAPI } from '../../../api/pet-api';
 import type { Pet } from '../../../api/pet-types';
 import { getImageUrl } from '../../../api';
 
-type FilterType = 'all' | 'dogs' | 'cats' | 'reunited' | 'adopted' | 'lost' | 'found';
+type FilterType = 'all' | 'dogs' | 'cats' | 'reunited' | 'adopted';
 
 const PetGalleryPage = () => {
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
@@ -52,8 +52,6 @@ const PetGalleryPage = () => {
     { id: 'cats' as FilterType, label: 'Cats' },
     { id: 'reunited' as FilterType, label: 'Reunited' },
     { id: 'adopted' as FilterType, label: 'Adopted' },
-    { id: 'lost' as FilterType, label: 'Lost' },
-    { id: 'found' as FilterType, label: 'Found' }
   ];
 
   const filteredPets = useMemo(() => {
@@ -66,7 +64,7 @@ const PetGalleryPage = () => {
       filtered = filtered.filter(pet => pet.type === 'cat');
     } 
     // Filter by story status
-    else if (['reunited', 'adopted', 'lost', 'found'].includes(activeFilter)) {
+    else if (['reunited', 'adopted'].includes(activeFilter)) {
       filtered = filtered.filter(pet => pet.story?.status === activeFilter);
     }
 
@@ -98,8 +96,6 @@ const PetGalleryPage = () => {
     const badges = {
       reunited: { label: 'Reunited!', color: 'bg-green-500' },
       adopted: { label: 'Adopted', color: 'bg-purple-500' },
-      lost: { label: 'Lost', color: 'bg-red-500' },
-      found: { label: 'Found', color: 'bg-yellow-500' },
       protected: { label: 'Protected', color: 'bg-blue-500' }
     };
     return badges[status as keyof typeof badges] || badges.protected;
@@ -312,9 +308,9 @@ const PetGalleryPage = () => {
                         <button
                           key={pageNum}
                           onClick={() => setCurrentPage(pageNum)}
-                          className={`w-8 h-8 rounded-full font-medium transition-all ${
+                          className={`w-8 h-8 rounded-full font-medium transition-all hover:cursor-pointer ${
                             currentPage === pageNum
-                              ? 'bg-primary text-white shadow-md shadow-primary'
+                              ? 'bg-gradient-to-br from-primary to-black text-white shadow-md shadow-primary'
                               : 'text-gray-300 hover:bg-white/10'
                           }`}
                         >
@@ -334,7 +330,7 @@ const PetGalleryPage = () => {
                   className={`p-2 rounded-lg transition-all ${
                     currentPage === totalPages
                       ? 'text-gray-600 cursor-not-allowed'
-                      : 'text-gray-300 hover:bg-white/10 hover:text-white'
+                      : 'text-gray-300 hover:bg-white/10 hover:text-white hover:cursor-pointer'
                   }`}
                 >
                   <ChevronRight className="w-5 h-5" />

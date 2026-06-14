@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { User, Phone, Mail, MapPin, AlertCircle, CheckCircle } from 'lucide-react';
 import { useUserContext } from '../../contexts/UserContext';
+import { NotificationModal } from '../Models/MessageModal';
 
 interface ValidationErrors {
   firstName?: string;
@@ -110,6 +111,10 @@ const ProfileTab: React.FC = () => {
     const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
     const [showSuccess, setShowSuccess] = useState(false);
     const [formData, setFormData] = useState(userProfile);
+    const [isOpen, setIsOpen] = useState(false);
+    const [notifType, setNotifType] = useState<'success' | 'error' | 'warning' | 'info'>('success');
+    const [notifTitle, setNotifTitle] = useState('');
+    const [notifMessage, setNotifMessage] = useState('');
 
     // Sync form data with context profile when not editing
     useEffect(() => {
@@ -187,7 +192,10 @@ const ProfileTab: React.FC = () => {
         setTouchedFields(allFields);
 
         if (!validateForm()) {
-            alert('Please fix the validation errors before saving.');
+            setNotifType('error');
+            setNotifTitle('Validation Failed');
+            setNotifMessage('Please fix the validation errors before saving.');
+            setIsOpen(true);
             return;
         }
 
@@ -199,9 +207,16 @@ const ProfileTab: React.FC = () => {
             setShowSuccess(true);
             setEditingProfile(false);
             setTouchedFields(new Set());
+            setNotifType('success');
+            setNotifTitle('Profile Updated');
+            setNotifMessage('Your profile has been updated successfully.');
+            setIsOpen(true);
             setTimeout(() => setShowSuccess(false), 3000);
         } else {
-            alert('Failed to update profile');
+            setNotifType('error');
+            setNotifTitle('Update Failed');
+            setNotifMessage('Failed to update profile. Please try again later.');
+            setIsOpen(true);
         }
     };
 
@@ -371,6 +386,13 @@ const ProfileTab: React.FC = () => {
                             </p>
                         </div>
                     )}
+                    <NotificationModal
+                        isOpen={isOpen}
+                        type={notifType}
+                        title={notifTitle}
+                        message= {notifMessage}
+                        onDismiss={() => setIsOpen(false)}
+                    />
                 </div>
             </div>
         </div>
