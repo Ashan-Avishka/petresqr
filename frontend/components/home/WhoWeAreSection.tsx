@@ -1,10 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { Users, UsersRound, BadgeCheck, Clock, Star, Dog } from "lucide-react";
-import { useIsMobile } from "../../hooks/useIsMobile"; // Adjust path as needed
+import { useIsMobile } from "../../hooks/useIsMobile";
 
 interface StatItemProps {
   icon: React.ReactNode;
@@ -14,6 +14,34 @@ interface StatItemProps {
 }
 
 const StatItem: React.FC<StatItemProps> = ({ icon, number, label, delay }) => {
+  const [displayNumber, setDisplayNumber] = useState('0');
+
+  useEffect(() => {
+    // Parse the number to extract numeric value
+    const numericValue = parseInt(number.replace(/[^0-9]/g, ''));
+    const suffix = number.replace(/[0-9]/g, '');
+    
+    if (isNaN(numericValue)) {
+      setDisplayNumber(number);
+      return;
+    }
+
+    let currentNum = 0;
+    const increment = Math.ceil(numericValue / 50); // Divide into 50 steps
+    
+    const interval = setInterval(() => {
+      currentNum += increment;
+      if (currentNum >= numericValue) {
+        setDisplayNumber(numericValue + suffix);
+        clearInterval(interval);
+      } else {
+        setDisplayNumber(currentNum + suffix);
+      }
+    }, 30);
+
+    return () => clearInterval(interval);
+  }, [number]);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -35,18 +63,20 @@ const StatItem: React.FC<StatItemProps> = ({ icon, number, label, delay }) => {
         transition={{ duration: 0.5, delay: delay + 0.2 }}
         className="md:text-4xl text-2xl font-bold md:mt-4 text-gray-300 text-center"
       >
-        {number}
+        {displayNumber}
       </motion.div>
       <p className="text-xs md:text-sm font-medium text-gray-400 text-center -mt-2">
         {label}
       </p>
     </motion.div>
   );
+}
 };
 
 const WhoWeAreSection: React.FC = () => {
   const isMobile = useIsMobile();
 
+<<<<<<< Updated upstream
   const stats = [
     {
       icon: <Dog className="w-10 h-10 text-white" strokeWidth={1} />,
@@ -75,7 +105,7 @@ const WhoWeAreSection: React.FC = () => {
     },
   ];
 
-  // Show only 3 stats on mobile
+  // Show only 3 stats on mobile, 5 on desktop
   const displayStats = isMobile ? stats.slice(0, 3) : stats;
 
   return (

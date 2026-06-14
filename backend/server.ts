@@ -1,4 +1,6 @@
 // src/server.ts
+import dns from 'dns';
+dns.setServers(['8.8.8.8', '1.1.1.1']);
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -157,33 +159,39 @@ app.use('/api', routes);
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-// Initialize services and start server
-async function startServer() {
+async function connectWithRetry(attempt = 1): Promise<void> {
   try {
-    // Connect to database
     await connectDatabase();
     console.log('✅ Database connected');
-
-    // Initialize Firebase
-    await initializeFirebase();
-    console.log('✅ Firebase initialized');
-
-    // Initialize Twilio
-    const twilioStatus = initializeTwilio();
-    console.log(twilioStatus);
-
-    // Start server
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`🔗 API Base URL: http://localhost:${PORT}/api`);
-      console.log(`📚 API Documentation: http://localhost:${PORT}/api-docs`);
-      console.log(`📁 Static files: http://localhost:${PORT}/uploads`);
-    });
   } catch (error) {
-    console.error('❌ Failed to start server:', error);
-    process.exit(1);
+    const delay = Math.min(5000 * attempt, 30000);
+    console.error(`❌ DB connection failed (attempt ${attempt}), retrying in ${delay / 1000}s...`);
+    await new Promise(r => setTimeout(r, delay));
+    return connectWithRetry(attempt + 1);
   }
+}
+
+// Initialize services and start server
+async function startServer() {
+  // Initialize Firebase
+  await initializeFirebase();
+  console.log('✅ Firebase initialized');
+
+  // Initialize Twilio
+  const twilioStatus = initializeTwilio();
+  console.log(twilioStatus);
+
+  // Start HTTP server immediately — DB connects in background
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🔗 API Base URL: http://localhost:${PORT}/api`);
+    console.log(`📚 API Documentation: http://localhost:${PORT}/api-docs`);
+    console.log(`📁 Static files: http://localhost:${PORT}/uploads`);
+  });
+
+  // Connect to DB with retry — server stays up regardless
+  connectWithRetry();
 }
 
 // Handle unhandled promise rejections
