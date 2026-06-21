@@ -1,5 +1,4 @@
 import { API_BASE_URL, getAuthHeaders } from './config';
-import { apiClient } from './client';
 import type {
   AdminStats,
   AdminUser,
@@ -72,6 +71,31 @@ export async function getAdminOrders(
   return { data: res.data, pagination: res.pagination };
 }
 
+async function adminMutate<T>(
+  path: string,
+  body: Record<string, string>
+): Promise<{ ok: boolean; data?: T; error?: any }> {
+  try {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      method: 'PUT',
+      headers: { ...getAuthHeaders() as Record<string, string>, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    let result: any;
+    try {
+      result = await response.json();
+    } catch {
+      result = { error: { code: 'NETWORK_ERROR', message: 'Invalid response' } };
+    }
+    if (!response.ok && AUTH_ERROR_CODES.has(result?.error?.code)) {
+      window.location.href = '/';
+    }
+    return { ok: response.ok, data: result.data, error: result.error };
+  } catch {
+    return { ok: false, error: { code: 'NETWORK_ERROR', message: 'Network error occurred' } };
+  }
+}
+
 export async function updateAdminOrderStatus(
   id: string,
   status: OrderStatus,
@@ -79,11 +103,8 @@ export async function updateAdminOrderStatus(
 ): Promise<AdminOrder | null> {
   const body: Record<string, string> = { status };
   if (trackingNumber) body.trackingNumber = trackingNumber;
-  const res = await apiClient.put<AdminOrder>(`/admin/orders/${id}/status`, body);
-  if (!res.ok) {
-    if (AUTH_ERROR_CODES.has(res.error?.code)) window.location.href = '/';
-    return null;
-  }
+  const res = await adminMutate<AdminOrder>(`/admin/orders/${id}/status`, body);
+  if (!res.ok) return null;
   return res.data ?? null;
 }
 

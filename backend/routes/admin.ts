@@ -22,9 +22,9 @@ const adminRateLimit = rateLimit({
 });
 
 // All admin routes require authentication and admin role
-router.use(adminRateLimit);
 router.use(authenticateToken);
 router.use(requireAdmin);
+router.use(adminRateLimit);
 router.use(adminAudit);
 
 // Dashboard stats

@@ -80,8 +80,7 @@ export default function UsersPanel() {
 
   useEffect(() => {
     fetchUsers(page, search);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, [page, search]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -89,7 +88,6 @@ export default function UsersPanel() {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       setPage(1);
-      fetchUsers(1, val);
     }, 300);
   };
 
