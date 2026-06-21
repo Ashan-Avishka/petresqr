@@ -318,7 +318,7 @@ export default function CartPage() {
                     >
                       <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                       <p className="text-white text-lg mb-6">Your cart is empty</p>
-                      <Link href="/tags">
+                      <Link href="/shop">
                         <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
@@ -661,7 +661,7 @@ export default function CartPage() {
                     </div>
                   </div>
                   <div className="flex gap-3 justify-center">
-                    <Link href="/tags">
+                    <Link href="/shop">
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}

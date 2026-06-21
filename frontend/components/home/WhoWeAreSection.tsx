@@ -17,18 +17,17 @@ const StatItem: React.FC<StatItemProps> = ({ icon, number, label, delay }) => {
   const [displayNumber, setDisplayNumber] = useState('0');
 
   useEffect(() => {
-    // Parse the number to extract numeric value
     const numericValue = parseInt(number.replace(/[^0-9]/g, ''));
     const suffix = number.replace(/[0-9]/g, '');
-    
+
     if (isNaN(numericValue)) {
       setDisplayNumber(number);
       return;
     }
 
     let currentNum = 0;
-    const increment = Math.ceil(numericValue / 50); // Divide into 50 steps
-    
+    const increment = Math.ceil(numericValue / 50);
+
     const interval = setInterval(() => {
       currentNum += increment;
       if (currentNum >= numericValue) {
@@ -103,7 +102,6 @@ const WhoWeAreSection: React.FC = () => {
     },
   ];
 
-  // Show only 3 stats on mobile, 5 on desktop
   const displayStats = isMobile ? stats.slice(0, 3) : stats;
 
   return (
