@@ -2,24 +2,28 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Dog, Tag, User, Truck, Lock } from 'lucide-react';
+import { Dog, Tag, User, Truck, Lock, Shield } from 'lucide-react';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import { useUserContext } from '../../../contexts/UserContext';
 import PetsTab from '../../../components/Dashboard/PetsTab';
 import TagsTab from '../../../components/Dashboard/TagsTab';
 import OrdersTab from '../../../components/Dashboard/OrdersTab';
 import ProfileTab from '../../../components/Dashboard/ProfileTab';
+import AdminTab from '../../../components/Dashboard/AdminTab';
 
 const CustomerDashboard = () => {
-    const { isAuthenticated, isLoading: authLoading } = useAuthContext();
+    const { isAuthenticated, isLoading: authLoading, user } = useAuthContext();
     const { loading, error } = useUserContext();
     const [activeTab, setActiveTab] = useState('pets');
+
+    const isAdmin = user?.role === 'admin';
 
     const tabs = [
         { id: 'pets', label: 'My Pets', icon: Dog },
         { id: 'tags', label: 'Tags', icon: Tag },
         { id: 'orders', label: 'Orders', icon: Truck },
-        { id: 'profile', label: 'Profile', icon: User }
+        { id: 'profile', label: 'Profile', icon: User },
+        ...(isAdmin ? [{ id: 'admin', label: 'Admin', icon: Shield }] : []),
     ];
 
   if (authLoading) {
@@ -97,6 +101,7 @@ const CustomerDashboard = () => {
                     {activeTab === 'tags' && <TagsTab />}
                     {activeTab === 'orders' && <OrdersTab />}
                     {activeTab === 'profile' && <ProfileTab />}
+                    {activeTab === 'admin' && <AdminTab />}
                 </div>
             </div>
         </div>
