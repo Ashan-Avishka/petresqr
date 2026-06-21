@@ -1,16 +1,31 @@
 // src/routes/admin.ts
 import { Router } from 'express';
 import { body, param } from 'express-validator';
+import rateLimit from 'express-rate-limit';
 import { AdminController } from '../controllers/AdminController';
 import { handleValidationErrors } from '../middleware/validation';
 import { authenticateToken, requireAdmin } from '../middleware/auth';
+import { adminAudit } from '../middleware/adminAudit';
 
 const router = Router();
 const adminController = new AdminController();
 
+const adminRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: { code: 'RATE_LIMITED', message: 'Too many requests, please try again later.' },
+  },
+});
+
 // All admin routes require authentication and admin role
 router.use(authenticateToken);
 router.use(requireAdmin);
+router.use(adminRateLimit);
+router.use(adminAudit);
 
 // Dashboard stats
 /**
