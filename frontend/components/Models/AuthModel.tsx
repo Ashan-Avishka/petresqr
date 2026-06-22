@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import Button from '../ui/Button';
 import { authAPI } from '../../api';
 import type { User } from '../../api/types';
@@ -24,27 +24,19 @@ interface AuthModalProps {
   onAuthSuccess?: (user: User) => void;
 }
 
-// ─── Reusable Field Error ─────────────────────────────────────────────────────
 const FieldError: React.FC<{ message?: string }> = ({ message }) =>
   message ? (
     <p className="mt-1 text-xs text-red-400 flex items-center gap-1">
       <svg className="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-        <path
-          fillRule="evenodd"
-          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-          clipRule="evenodd"
-        />
+        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
       </svg>
       {message}
     </p>
   ) : null;
 
-// ─── Input class helper ───────────────────────────────────────────────────────
 const inputClass = (hasError: boolean) =>
   `w-full px-4 py-2 text-sm text-white border rounded-lg focus:ring-1 focus:border-transparent outline-none transition-all disabled:opacity-50 ${
-    hasError
-      ? 'border-red-500/70 bg-red-500/5 focus:ring-red-500'
-      : 'border-white/20 focus:ring-primary'
+    hasError ? 'border-red-500/70 bg-red-500/5 focus:ring-red-500' : 'border-white/20 focus:ring-primary'
   }`;
 
 const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess }) => {
@@ -62,73 +54,40 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
   const [notifMessage, setNotifMessage] = useState('');
 
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    firstName: '',
-    lastName: '',
-    mobile: '',
-    countryCode: '+1',
-    street: '',
-    city: '',
-    state: '',
-    zipCode: '',
-    country: '',
-    username: '',
-    newPassword: '',
-    confirmPassword: '',
+    email: '', password: '', firstName: '', lastName: '', mobile: '',
+    countryCode: '+1', street: '', city: '', state: '', zipCode: '',
+    country: '', username: '', newPassword: '', confirmPassword: '',
   });
 
-  // ─── Live field clearing ────────────────────────────────────────────────────
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-
-    // Clear the error for this field as the user types
-    if (fieldErrors[name]) {
-      setFieldErrors((prev) => ({ ...prev, [name]: undefined }));
-    }
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (fieldErrors[name]) setFieldErrors(prev => ({ ...prev, [name]: undefined }));
     if (serverError) setServerError(null);
   };
 
-  // ─── Validate current step ──────────────────────────────────────────────────
   const validateStep = (): boolean => {
     let errors: AuthFieldErrors = {};
-
     if (isSignIn) {
       errors = validateSignIn(formData);
     } else {
       switch (signUpStep) {
-        case 1:
-          errors = validateSignUpStep1(formData);
-          break;
-        case 2:
-          errors = validateSignUpStep2(formData);
-          break;
-        case 3:
-          errors = validateSignUpStep3(formData);
-          break;
+        case 1: errors = validateSignUpStep1(formData); break;
+        case 2: errors = validateSignUpStep2(formData); break;
+        case 3: errors = validateSignUpStep3(formData); break;
       }
     }
-
-    // Strip undefined values so hasErrors works cleanly
-    const cleaned = Object.fromEntries(
-      Object.entries(errors).filter(([, v]) => v !== undefined)
-    ) as AuthFieldErrors;
-
+    const cleaned = Object.fromEntries(Object.entries(errors).filter(([, v]) => v !== undefined)) as AuthFieldErrors;
     setFieldErrors(cleaned);
     return !hasErrors(cleaned);
   };
 
-  // ─── Auth handlers ──────────────────────────────────────────────────────────
   const handleSignIn = async () => {
     setLoading(true);
     setServerError(null);
     try {
       const firebaseToken = await signInWithEmail(formData.email, formData.password);
       const response = await authAPI.loginEmail({ email: formData.email, firebaseToken });
-
       if (response.success && response.data) {
         login(response.data.user, firebaseToken);
         onAuthSuccess?.(response.data.user);
@@ -150,16 +109,11 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
     try {
       const fullPhone = `${formData.countryCode}${formData.mobile}`;
       const fullAddress = `${formData.street}, ${formData.city}, ${formData.state} ${formData.zipCode}, ${formData.country}`;
-
       const response = await authAPI.registerEmail({
-        email: formData.username,
-        password: formData.newPassword,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        phone: fullPhone,
-        address: fullAddress,
+        email: formData.username, password: formData.newPassword,
+        firstName: formData.firstName, lastName: formData.lastName,
+        phone: fullPhone, address: fullAddress,
       });
-
       if (response.success && response.data) {
         try {
           let firebaseIdToken: string;
@@ -169,12 +123,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
           } else {
             firebaseIdToken = await signInWithEmail(formData.username, formData.newPassword);
           }
-
-          const loginResponse = await authAPI.loginEmail({
-            email: formData.username,
-            firebaseToken: firebaseIdToken,
-          });
-
+          const loginResponse = await authAPI.loginEmail({ email: formData.username, firebaseToken: firebaseIdToken });
           if (loginResponse.success && loginResponse.data) {
             login(loginResponse.data.user, firebaseIdToken);
             onAuthSuccess?.(loginResponse.data.user);
@@ -187,7 +136,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
             setIsOpen2(true);
             switchMode();
           }
-        } catch (loginError: any) {
+        } catch {
           setNotifType('error');
           setNotifTitle('Login Failed');
           setNotifMessage('An error occurred while logging in. Please try again.');
@@ -200,7 +149,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
         setNotifTitle('Registration Failed');
         setNotifMessage('An error occurred while registering. Please try again.');
         setIsOpen2(true);
-
       }
     } catch (err: any) {
       setServerError(err.message || 'An unexpected error occurred');
@@ -208,7 +156,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
       setNotifTitle('');
       setNotifMessage('An error occurred while registering. Please try again.');
       setIsOpen2(true);
-
     } finally {
       setLoading(false);
     }
@@ -220,7 +167,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
     try {
       const firebaseToken = await signInWithGoogle();
       const response = await authAPI.loginGoogle({ firebaseToken });
-
       if (response.success && response.data) {
         login(response.data.user, firebaseToken);
         onAuthSuccess?.(response.data.user);
@@ -238,7 +184,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
 
   const handleSubmit = async () => {
     if (!validateStep()) return;
-
     if (isSignIn) {
       await handleSignIn();
     } else if (signUpStep < 3) {
@@ -258,35 +203,21 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
   };
 
   const switchMode = () => {
-    setIsSignIn(!isSignIn);
+    setIsSignIn(prev => !prev);
     setSignUpStep(1);
     setServerError(null);
     setFieldErrors({});
     setFormData({
-      email: '',
-      password: '',
-      firstName: '',
-      lastName: '',
-      mobile: '',
-      countryCode: '+1',
-      street: '',
-      city: '',
-      state: '',
-      zipCode: '',
-      country: '',
-      username: '',
-      newPassword: '',
-      confirmPassword: '',
+      email: '', password: '', firstName: '', lastName: '', mobile: '',
+      countryCode: '+1', street: '', city: '', state: '', zipCode: '',
+      country: '', username: '', newPassword: '', confirmPassword: '',
     });
   };
 
   const countryCodes = [
-    { code: '+1', country: 'US' },
-    { code: '+44', country: 'UK' },
-    { code: '+91', country: 'IN' },
-    { code: '+94', country: 'LK' },
-    { code: '+61', country: 'AU' },
-    { code: '+81', country: 'JP' },
+    { code: '+1', country: 'US' }, { code: '+44', country: 'UK' },
+    { code: '+91', country: 'IN' }, { code: '+94', country: 'LK' },
+    { code: '+61', country: 'AU' }, { code: '+81', country: 'JP' },
   ];
 
   const getStepTitle = () => {
@@ -310,429 +241,333 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
   };
 
   const getImageForState = () => {
-    if (isSignIn) return 'https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=800&h=1000&fit=crop';
+    if (isSignIn) return '/images/signin.jpg';
     switch (signUpStep) {
-      case 1: return 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=800&h=1000&fit=crop';
-      case 2: return 'https://images.unsplash.com/photo-1415369629372-26f2fe60c467?w=800&h=1000&fit=crop';
-      case 3: return 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=800&h=1000&fit=crop';
-      default: return 'https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=800&h=1000&fit=crop';
+      case 1: return '/images/signup-1.jpg';
+      case 2: return '/images/signup-2.jpg';
+      case 3: return '/images/signup-3.jpg';
+      default: return '/images/signup-1.jpg';
     }
   };
 
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
-          />
+  const contentKey = isSignIn ? 'signin' : `signup-${signUpStep}`;
 
-          <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+  return (
+    <>
+      <NotificationModal
+        isOpen={isOpen2}
+        onClose={() => setIsOpen2(false)}
+        type={notifType}
+        title={notifTitle}
+        message={notifMessage}
+      />
+
+      <AnimatePresence>
+        {isOpen && (
+          <>
             <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              transition={{ type: 'spring', duration: 0.5 }}
-              className="bg-white/20 backdrop-blur-xl border border-white/20 h-160 rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex"
-              style={{ maxHeight: '90vh' }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* ── Form side ── */}
-              <div className="w-full md:w-1/2 p-8 md:p-12 relative flex flex-col">
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={onClose}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+            />
+
+            <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+              <motion.div
+                initial={{ scale: 0.92, opacity: 0, y: 24 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.92, opacity: 0, y: 24 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+                className="relative w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden"
+                style={{ maxHeight: '90vh', height: '640px' }}
+                onClick={e => e.stopPropagation()}
+              >
+                {/* Close button */}
                 <button
                   onClick={onClose}
-                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-100 transition-colors"
                   disabled={loading}
+                  className="absolute top-4 right-4 z-30 text-gray-400 hover:text-white transition-colors"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
 
-                {/* Server-level error banner */}
-                {serverError && (
-                  <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-200 text-sm flex items-start gap-2">
-                    <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                    {serverError}
-                  </div>
-                )}
+                <LayoutGroup>
+                  <div className="flex w-full h-full">
 
-                {/* Step indicator */}
-                {!isSignIn && (
-                  <div className="mb-6">
-                    <div className="flex items-center justify-between">
-                      {[1, 2, 3].map((step) => (
-                        <React.Fragment key={step}>
-                          <div className="flex flex-col items-center">
-                            <div
-                              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors bg-gradient-to-br from-primary via-80% via-black to-black text-white ${signUpStep >= step ? 'shadow-md shadow-primary' : ''}`}
-                            >
-                              {step}
-                            </div>
-                            <span className="text-xs mt-1 text-gray-300">
-                              {step === 1 ? 'Info' : step === 2 ? 'Address' : 'Account'}
-                            </span>
-                          </div>
-                          {step < 3 && (
-                            <div className={`flex-1 h-1 mx-2 rounded transition-colors -mt-4 ${signUpStep > step ? 'bg-gradient-to-l from-primary to-black' : 'bg-gray-200'}`} />
-                          )}
-                        </React.Fragment>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="mb-8">
-                  <h2 className="text-3xl text-white mb-2">{getStepTitle()}</h2>
-                  <p className="text-gray-400">{getStepSubtitle()}</p>
-                </div>
-
-                <div className="flex-1 flex flex-col min-h-0">
-                  <div className="flex-1 space-y-4 pr-2 overflow-y-auto pl-1">
-
-                    {/* ── Sign In ── */}
-                    {isSignIn && (
-                      <>
-                        <div>
-                          <label className="block text-sm font-medium text-white mb-1">Email address</label>
-                          <input
-                            type="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleInputChange}
-                            placeholder="Enter your email"
-                            disabled={loading}
-                            className={inputClass(!!fieldErrors.email)}
-                          />
-                          <FieldError message={fieldErrors.email} />
-                        </div>
-
-                        <div>
-                          <div className="flex justify-between items-center mb-1">
-                            <label className="block text-sm font-medium text-white">Password</label>
-                            <button type="button" className="text-xs text-primary hover:underline">forgot password?</button>
-                          </div>
-                          <input
-                            type="password"
-                            name="password"
-                            value={formData.password}
-                            onChange={handleInputChange}
-                            placeholder="••••••"
-                            disabled={loading}
-                            className={inputClass(!!fieldErrors.password)}
-                          />
-                          <FieldError message={fieldErrors.password} />
-                        </div>
-
-                        <div className="flex items-center">
-                          <input
-                            type="checkbox"
-                            id="remember"
-                            checked={rememberMe}
-                            onChange={(e) => setRememberMe(e.target.checked)}
-                            disabled={loading}
-                            className="w-4 h-4 border-gray-300 rounded focus:ring-amber-500 disabled:opacity-50"
-                          />
-                          <label htmlFor="remember" className="ml-2 text-sm text-gray-400">Remember for 60 days</label>
-                        </div>
-                      </>
-                    )}
-
-                    {/* ── Sign Up Step 1 ── */}
-                    {!isSignIn && signUpStep === 1 && (
-                      <>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-sm font-medium text-white mb-1">First name</label>
-                            <input
-                              type="text"
-                              name="firstName"
-                              value={formData.firstName}
-                              onChange={handleInputChange}
-                              placeholder="John"
-                              disabled={loading}
-                              className={inputClass(!!fieldErrors.firstName)}
-                            />
-                            <FieldError message={fieldErrors.firstName} />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-white mb-1">Last name</label>
-                            <input
-                              type="text"
-                              name="lastName"
-                              value={formData.lastName}
-                              onChange={handleInputChange}
-                              placeholder="Doe"
-                              disabled={loading}
-                              className={inputClass(!!fieldErrors.lastName)}
-                            />
-                            <FieldError message={fieldErrors.lastName} />
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-white mb-1">Mobile number</label>
-                          <div className="flex gap-2">
-                            <select
-                              name="countryCode"
-                              value={formData.countryCode}
-                              onChange={handleInputChange}
-                              disabled={loading}
-                              className="px-3 py-2 text-sm text-white border border-white/20 rounded-lg focus:ring-1 focus:ring-primary focus:border-transparent outline-none transition-all disabled:opacity-50"
-                            >
-                              {countryCodes.map((item) => (
-                                <option key={item.code} value={item.code}>{item.country} {item.code}</option>
-                              ))}
-                            </select>
-                            <div className="flex-1">
-                              <input
-                                type="tel"
-                                name="mobile"
-                                value={formData.mobile}
-                                onChange={handleInputChange}
-                                placeholder="123 456 7890"
-                                disabled={loading}
-                                className={inputClass(!!fieldErrors.mobile)}
-                              />
-                            </div>
-                          </div>
-                          <FieldError message={fieldErrors.mobile} />
-                        </div>
-                      </>
-                    )}
-
-                    {/* ── Sign Up Step 2 ── */}
-                    {!isSignIn && signUpStep === 2 && (
-                      <>
-                        <div>
-                          <label className="block text-sm font-medium text-white mb-1">Street Address</label>
-                          <input
-                            type="text"
-                            name="street"
-                            value={formData.street}
-                            onChange={handleInputChange}
-                            placeholder="123 Main Street"
-                            disabled={loading}
-                            className={inputClass(!!fieldErrors.street)}
-                          />
-                          <FieldError message={fieldErrors.street} />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-sm font-medium text-white mb-1">City</label>
-                            <input
-                              type="text"
-                              name="city"
-                              value={formData.city}
-                              onChange={handleInputChange}
-                              placeholder="New York"
-                              disabled={loading}
-                              className={inputClass(!!fieldErrors.city)}
-                            />
-                            <FieldError message={fieldErrors.city} />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-white mb-1">State/Province</label>
-                            <input
-                              type="text"
-                              name="state"
-                              value={formData.state}
-                              onChange={handleInputChange}
-                              placeholder="NY"
-                              disabled={loading}
-                              className={inputClass(!!fieldErrors.state)}
-                            />
-                            <FieldError message={fieldErrors.state} />
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-sm font-medium text-white mb-1">ZIP/Postal Code</label>
-                            <input
-                              type="text"
-                              name="zipCode"
-                              value={formData.zipCode}
-                              onChange={handleInputChange}
-                              placeholder="10001"
-                              disabled={loading}
-                              className={inputClass(!!fieldErrors.zipCode)}
-                            />
-                            <FieldError message={fieldErrors.zipCode} />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-white mb-1">Country</label>
-                            <input
-                              type="text"
-                              name="country"
-                              value={formData.country}
-                              onChange={handleInputChange}
-                              placeholder="United States"
-                              disabled={loading}
-                              className={inputClass(!!fieldErrors.country)}
-                            />
-                            <FieldError message={fieldErrors.country} />
-                          </div>
-                        </div>
-                      </>
-                    )}
-
-                    {/* ── Sign Up Step 3 ── */}
-                    {!isSignIn && signUpStep === 3 && (
-                      <>
-                        <div>
-                          <label className="block text-sm font-medium text-white mb-1">Email (Username)</label>
-                          <input
-                            type="email"
-                            name="username"
-                            value={formData.username}
-                            onChange={handleInputChange}
-                            placeholder="your@email.com"
-                            disabled={loading}
-                            className={inputClass(!!fieldErrors.username)}
-                          />
-                          <FieldError message={fieldErrors.username} />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-white mb-1">Password</label>
-                          <input
-                            type="password"
-                            name="newPassword"
-                            value={formData.newPassword}
-                            onChange={handleInputChange}
-                            placeholder="Create a password (min 6 characters)"
-                            disabled={loading}
-                            className={inputClass(!!fieldErrors.newPassword)}
-                          />
-                          <FieldError message={fieldErrors.newPassword} />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-white mb-1">Confirm Password</label>
-                          <input
-                            type="password"
-                            name="confirmPassword"
-                            value={formData.confirmPassword}
-                            onChange={handleInputChange}
-                            placeholder="Confirm your password"
-                            disabled={loading}
-                            className={inputClass(!!fieldErrors.confirmPassword)}
-                          />
-                          <FieldError message={fieldErrors.confirmPassword} />
-                        </div>
-                      </>
-                    )}
-
-                    {/* ── Action buttons ── */}
-                    <div className="flex gap-4 pt-4">
-                      {!isSignIn && signUpStep > 1 && (
-                        <Button variant="secondary" size="md" onClick={handleBack} disabled={loading} className="flex-1 md:w-41 w-32">
-                          Back
-                        </Button>
-                      )}
-                      <Button
-                        variant="primary"
-                        size="md"
-                        onClick={handleSubmit}
-                        disabled={loading}
-                        className={!isSignIn && signUpStep > 1 ? 'flex-1 md:w-41 w-35 ml-2' : 'md:w-41 w-35 ml-2'}
-                      >
-                        {loading
-                          ? 'Processing...'
-                          : !isSignIn && signUpStep < 3
-                          ? 'Next'
-                          : isSignIn
-                          ? 'Login'
-                          : 'Sign Up'}
-                      </Button>
-                    </div>
-
-                    {/* ── OAuth (sign-in only) ── */}
-                    {isSignIn && (
-                      <>
-                        <div className="relative my-6">
-                          <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-gray-300"></div>
-                          </div>
-                          <div className="relative flex justify-center text-sm">
-                            <span className="px-4 py-1 bg-gray-600 text-white rounded-2xl border border-b-gray-300">Or</span>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                          <button
-                            type="button"
-                            onClick={handleGoogleSignIn}
-                            disabled={loading}
-                            className="flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-black transition-colors disabled:opacity-50"
-                          >
-                            <svg className="w-5 h-5" viewBox="0 0 24 24">
-                              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-                            </svg>
-                            <span className="text-sm font-medium">Google</span>
-                          </button>
-                          <button
-                            type="button"
-                            disabled={loading}
-                            className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-black transition-colors disabled:opacity-50"
-                          >
-                            <svg className="w-7 h-7" viewBox="0 0 24 24" fill="#CBCBCB">
-                              <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
-                            </svg>
-                            <span className="text-sm font-medium">Apple</span>
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-
-                  <div className="pt-4 mt-4 border-t border-gray-100 flex-shrink-0">
-                    <span className="text-sm text-gray-300">
-                      {isSignIn ? "Don't have an account? " : 'Already have an account? '}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={switchMode}
-                      disabled={loading}
-                      className="ml-2 text-sm text-primary font-semibold hover:underline disabled:opacity-50"
+                    {/* ── Form Panel ── */}
+                    <motion.div
+                      layout
+                      transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+                      style={{ order: isSignIn ? 1 : 2 }}
+                      className="w-full md:w-1/2 flex-shrink-0 bg-white/20 backdrop-blur-xl flex flex-col p-8 md:p-10 overflow-y-auto relative"
                     >
-                      {isSignIn ? 'Sign Up' : 'Sign In'}
-                    </button>
-                  </div>
-                </div>
-              </div>
+                      {/* Server error */}
+                      {serverError && (
+                        <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-200 text-sm flex items-start gap-2">
+                          <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                          {serverError}
+                        </div>
+                      )}
 
-              {/* ── Image side ── */}
-              <div className="hidden md:block md:w-1/2 relative overflow-hidden">
-                <AnimatePresence mode="sync">
-                  <motion.div
-                    key={isSignIn ? 'signin' : `signup-${signUpStep}`}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.6, ease: 'easeInOut' }}
-                    className="absolute inset-0"
-                  >
-                    <img src={getImageForState()} alt="Happy pets" className="w-full h-full object-cover rounded-2xl" />
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-            </motion.div>
-          </div>
-        </>
-      )}
-    </AnimatePresence>
+                      {/* Step indicator */}
+                      {!isSignIn && (
+                        <div className="mb-5 flex-shrink-0">
+                          <div className="flex items-center justify-between">
+                            {[1, 2, 3].map(step => (
+                              <React.Fragment key={step}>
+                                <div className="flex flex-col items-center">
+                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all bg-gradient-to-br from-primary via-80% via-black to-black text-white ${signUpStep >= step ? 'shadow-md shadow-primary' : 'opacity-50'}`}>
+                                    {step}
+                                  </div>
+                                  <span className="text-xs mt-1 text-gray-300">
+                                    {step === 1 ? 'Info' : step === 2 ? 'Address' : 'Account'}
+                                  </span>
+                                </div>
+                                {step < 3 && (
+                                  <div className={`flex-1 h-1 mx-2 rounded transition-colors -mt-4 ${signUpStep > step ? 'bg-gradient-to-l from-primary to-black' : 'bg-gray-600'}`} />
+                                )}
+                              </React.Fragment>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Title */}
+                      <AnimatePresence mode="wait">
+                        <motion.div
+                          key={`title-${contentKey}`}
+                          initial={{ opacity: 0, y: 12 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -12 }}
+                          transition={{ duration: 0.25 }}
+                          className="mb-6 flex-shrink-0"
+                        >
+                          <h2 className="text-3xl text-white mb-2">{getStepTitle()}</h2>
+                          <p className="text-gray-400 text-sm">{getStepSubtitle()}</p>
+                        </motion.div>
+                      </AnimatePresence>
+
+                      {/* Form fields */}
+                      <div className="flex-1 flex flex-col min-h-0">
+                        <AnimatePresence mode="wait">
+                          <motion.div
+                            key={`fields-${contentKey}`}
+                            initial={{ opacity: 0, y: 14 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -14 }}
+                            transition={{ duration: 0.25, delay: 0.04 }}
+                            className="flex-1 space-y-4 pr-1 overflow-y-auto pl-1"
+                          >
+                            {/* Sign In */}
+                            {isSignIn && (
+                              <>
+                                <div>
+                                  <label className="block text-sm font-medium text-white mb-1">Email address</label>
+                                  <input type="email" name="email" value={formData.email} onChange={handleInputChange} placeholder="Enter your email" disabled={loading} className={inputClass(!!fieldErrors.email)} />
+                                  <FieldError message={fieldErrors.email} />
+                                </div>
+                                <div>
+                                  <div className="flex justify-between items-center mb-1">
+                                    <label className="block text-sm font-medium text-white">Password</label>
+                                    <button type="button" className="text-xs text-primary hover:underline">forgot password?</button>
+                                  </div>
+                                  <input type="password" name="password" value={formData.password} onChange={handleInputChange} placeholder="••••••" disabled={loading} className={inputClass(!!fieldErrors.password)} />
+                                  <FieldError message={fieldErrors.password} />
+                                </div>
+                                <div className="flex items-center">
+                                  <input type="checkbox" id="remember" checked={rememberMe} onChange={e => setRememberMe(e.target.checked)} disabled={loading} className="w-4 h-4 border-gray-300 rounded focus:ring-amber-500 disabled:opacity-50" />
+                                  <label htmlFor="remember" className="ml-2 text-sm text-gray-400">Remember for 60 days</label>
+                                </div>
+                              </>
+                            )}
+
+                            {/* Sign Up Step 1 */}
+                            {!isSignIn && signUpStep === 1 && (
+                              <>
+                                <div className="grid grid-cols-2 gap-3">
+                                  <div>
+                                    <label className="block text-sm font-medium text-white mb-1">First name</label>
+                                    <input type="text" name="firstName" value={formData.firstName} onChange={handleInputChange} placeholder="John" disabled={loading} className={inputClass(!!fieldErrors.firstName)} />
+                                    <FieldError message={fieldErrors.firstName} />
+                                  </div>
+                                  <div>
+                                    <label className="block text-sm font-medium text-white mb-1">Last name</label>
+                                    <input type="text" name="lastName" value={formData.lastName} onChange={handleInputChange} placeholder="Doe" disabled={loading} className={inputClass(!!fieldErrors.lastName)} />
+                                    <FieldError message={fieldErrors.lastName} />
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-white mb-1">Mobile number</label>
+                                  <div className="flex gap-2">
+                                    <select name="countryCode" value={formData.countryCode} onChange={handleInputChange} disabled={loading} className="px-3 py-2 text-sm text-white border border-white/20 rounded-lg focus:ring-1 focus:ring-primary outline-none disabled:opacity-50">
+                                      {countryCodes.map(item => (
+                                        <option key={item.code} value={item.code}>{item.country} {item.code}</option>
+                                      ))}
+                                    </select>
+                                    <div className="flex-1">
+                                      <input type="tel" name="mobile" value={formData.mobile} onChange={handleInputChange} placeholder="123 456 7890" disabled={loading} className={inputClass(!!fieldErrors.mobile)} />
+                                    </div>
+                                  </div>
+                                  <FieldError message={fieldErrors.mobile} />
+                                </div>
+                              </>
+                            )}
+
+                            {/* Sign Up Step 2 */}
+                            {!isSignIn && signUpStep === 2 && (
+                              <>
+                                <div>
+                                  <label className="block text-sm font-medium text-white mb-1">Street Address</label>
+                                  <input type="text" name="street" value={formData.street} onChange={handleInputChange} placeholder="123 Main Street" disabled={loading} className={inputClass(!!fieldErrors.street)} />
+                                  <FieldError message={fieldErrors.street} />
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                  <div>
+                                    <label className="block text-sm font-medium text-white mb-1">City</label>
+                                    <input type="text" name="city" value={formData.city} onChange={handleInputChange} placeholder="New York" disabled={loading} className={inputClass(!!fieldErrors.city)} />
+                                    <FieldError message={fieldErrors.city} />
+                                  </div>
+                                  <div>
+                                    <label className="block text-sm font-medium text-white mb-1">State/Province</label>
+                                    <input type="text" name="state" value={formData.state} onChange={handleInputChange} placeholder="NY" disabled={loading} className={inputClass(!!fieldErrors.state)} />
+                                    <FieldError message={fieldErrors.state} />
+                                  </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                  <div>
+                                    <label className="block text-sm font-medium text-white mb-1">ZIP/Postal Code</label>
+                                    <input type="text" name="zipCode" value={formData.zipCode} onChange={handleInputChange} placeholder="10001" disabled={loading} className={inputClass(!!fieldErrors.zipCode)} />
+                                    <FieldError message={fieldErrors.zipCode} />
+                                  </div>
+                                  <div>
+                                    <label className="block text-sm font-medium text-white mb-1">Country</label>
+                                    <input type="text" name="country" value={formData.country} onChange={handleInputChange} placeholder="United States" disabled={loading} className={inputClass(!!fieldErrors.country)} />
+                                    <FieldError message={fieldErrors.country} />
+                                  </div>
+                                </div>
+                              </>
+                            )}
+
+                            {/* Sign Up Step 3 */}
+                            {!isSignIn && signUpStep === 3 && (
+                              <>
+                                <div>
+                                  <label className="block text-sm font-medium text-white mb-1">Email (Username)</label>
+                                  <input type="email" name="username" value={formData.username} onChange={handleInputChange} placeholder="your@email.com" disabled={loading} className={inputClass(!!fieldErrors.username)} />
+                                  <FieldError message={fieldErrors.username} />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-white mb-1">Password</label>
+                                  <input type="password" name="newPassword" value={formData.newPassword} onChange={handleInputChange} placeholder="Create a password (min 6 characters)" disabled={loading} className={inputClass(!!fieldErrors.newPassword)} />
+                                  <FieldError message={fieldErrors.newPassword} />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-white mb-1">Confirm Password</label>
+                                  <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleInputChange} placeholder="Confirm your password" disabled={loading} className={inputClass(!!fieldErrors.confirmPassword)} />
+                                  <FieldError message={fieldErrors.confirmPassword} />
+                                </div>
+                              </>
+                            )}
+
+                            {/* Action buttons */}
+                            <div className="flex gap-3 pt-4">
+                              {!isSignIn && signUpStep > 1 && (
+                                <Button variant="secondary" size="md" onClick={handleBack} disabled={loading} className="flex-1">
+                                  Back
+                                </Button>
+                              )}
+                              <Button
+                                variant="primary"
+                                size="md"
+                                onClick={handleSubmit}
+                                disabled={loading}
+                                className={!isSignIn && signUpStep > 1 ? 'flex-1' : 'w-full md:w-auto px-8'}
+                              >
+                                {loading ? 'Processing...' : !isSignIn && signUpStep < 3 ? 'Next' : isSignIn ? 'Login' : 'Sign Up'}
+                              </Button>
+                            </div>
+
+                            {/* OAuth — sign-in only */}
+                            {isSignIn && (
+                              <>
+                                <div className="relative my-4">
+                                  <div className="absolute inset-0 flex items-center">
+                                    <div className="w-full border-t border-white/20" />
+                                  </div>
+                                  <div className="relative flex justify-center text-sm">
+                                    <span className="px-4 py-1 bg-gray-700 text-white rounded-2xl">Or</span>
+                                  </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                  <button type="button" onClick={handleGoogleSignIn} disabled={loading} className="flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-black transition-colors disabled:opacity-50">
+                                    <svg className="w-5 h-5" viewBox="0 0 24 24">
+                                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                                    </svg>
+                                    <span className="text-sm font-medium">Google</span>
+                                  </button>
+                                  <button type="button" disabled={loading} className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-black transition-colors disabled:opacity-50">
+                                    <svg className="w-7 h-7" viewBox="0 0 24 24" fill="#CBCBCB">
+                                      <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
+                                    </svg>
+                                    <span className="text-sm font-medium">Apple</span>
+                                  </button>
+                                </div>
+                              </>
+                            )}
+                          </motion.div>
+                        </AnimatePresence>
+
+                        {/* Switch mode */}
+                        <div className="pt-4 mt-4 border-t border-white/10 flex-shrink-0">
+                          <span className="text-sm text-gray-300">
+                            {isSignIn ? "Don't have an account? " : 'Already have an account? '}
+                          </span>
+                          <button type="button" onClick={switchMode} disabled={loading} className="ml-1 text-sm text-primary font-semibold hover:underline disabled:opacity-50">
+                            {isSignIn ? 'Sign Up' : 'Sign In'}
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+
+                    {/* ── Image Panel ── */}
+                    <motion.div
+                      layout
+                      transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+                      style={{ order: isSignIn ? 2 : 1 }}
+                      className="hidden md:block md:w-1/2 flex-shrink-0 relative overflow-hidden"
+                    >
+                      <motion.img
+                        key={`img-${contentKey}`}
+                        src={getImageForState()}
+                        alt="Happy pets"
+                        initial={{ scale: 1.08 }}
+                        animate={{ scale: 1 }}
+                        transition={{ duration: 0.55, ease: [0.4, 0, 0.2, 1] }}
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                      <motion.div
+                        animate={{ background: isSignIn ? 'linear-gradient(to left, rgba(0,0,0,0.15), transparent 60%)' : 'linear-gradient(to right, rgba(0,0,0,0.15), transparent 60%)' }}
+                        transition={{ duration: 0.6 }}
+                        className="absolute inset-0 pointer-events-none"
+                      />
+                    </motion.div>
+
+                  </div>
+                </LayoutGroup>
+              </motion.div>
+            </div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   );
 };
 

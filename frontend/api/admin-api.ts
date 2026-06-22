@@ -4,6 +4,8 @@ import type {
   AdminUser,
   AdminPet,
   AdminOrder,
+  AdminTag,
+  AdminProduct,
   AdminPagination,
   ScanAnalytics,
   OrderStatus,
@@ -51,10 +53,12 @@ export async function getAdminUsers(
 
 export async function getAdminPets(
   page = 1,
-  status?: string
+  status?: string,
+  name?: string
 ): Promise<{ data: AdminPet[]; pagination: AdminPagination } | null> {
   const params = new URLSearchParams({ page: String(page), limit: '20' });
   if (status) params.set('status', status);
+  if (name) params.set('name', name);
   const res = await adminFetch<AdminPet[]>(`/admin/pets?${params}`);
   if (!res.ok || !res.data || !res.pagination) return null;
   return { data: res.data, pagination: res.pagination };
@@ -71,19 +75,26 @@ export async function getAdminOrders(
   return { data: res.data, pagination: res.pagination };
 }
 
+export async function getAdminOrderById(id: string): Promise<AdminOrder | null> {
+  const res = await adminFetch<AdminOrder>(`/admin/orders/${id}`);
+  return res.ok ? (res.data ?? null) : null;
+}
+
 async function adminMutate<T>(
   path: string,
-  body: Record<string, string>
+  body: Record<string, any>,
+  method: 'PUT' | 'PATCH' | 'DELETE' = 'PUT'
 ): Promise<{ ok: boolean; data?: T; error?: any }> {
   try {
     const response = await fetch(`${API_BASE_URL}${path}`, {
-      method: 'PUT',
+      method,
       headers: { ...getAuthHeaders() as Record<string, string>, 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      body: method !== 'DELETE' ? JSON.stringify(body) : undefined,
     });
     let result: any;
     try {
-      result = await response.json();
+      const text = await response.text();
+      result = text ? JSON.parse(text) : {};
     } catch {
       result = { error: { code: 'NETWORK_ERROR', message: 'Invalid response' } };
     }
@@ -108,7 +119,97 @@ export async function updateAdminOrderStatus(
   return res.data ?? null;
 }
 
+// ── Users ─────────────────────────────────────────────────────────────────────
+
+export async function updateAdminUser(
+  id: string,
+  data: { role?: 'user' | 'admin'; isActive?: boolean }
+): Promise<AdminUser | null> {
+  const res = await adminMutate<AdminUser>(`/admin/users/${id}`, data);
+  return res.ok ? (res.data ?? null) : null;
+}
+
+export async function deleteAdminUser(id: string): Promise<boolean> {
+  const res = await adminMutate(`/admin/users/${id}`, {}, 'DELETE');
+  return res.ok;
+}
+
+// ── Pets ──────────────────────────────────────────────────────────────────────
+
+export async function getAdminPetById(id: string): Promise<AdminPet | null> {
+  const res = await adminFetch<AdminPet>(`/admin/pets/${id}`);
+  return res.ok ? (res.data ?? null) : null;
+}
+
+export async function updateAdminPet(
+  id: string,
+  data: { name?: string; breed?: string; type?: string; status?: string }
+): Promise<AdminPet | null> {
+  const res = await adminMutate<AdminPet>(`/admin/pets/${id}`, data);
+  return res.ok ? (res.data ?? null) : null;
+}
+
+export async function deleteAdminPet(id: string): Promise<boolean> {
+  const res = await adminMutate(`/admin/pets/${id}`, {}, 'DELETE');
+  return res.ok;
+}
+
+// ── Tags ──────────────────────────────────────────────────────────────────────
+
+export async function getAdminTags(
+  page = 1,
+  status?: string,
+  search?: string
+): Promise<{ data: AdminTag[]; pagination: AdminPagination } | null> {
+  const params = new URLSearchParams({ page: String(page), limit: '20' });
+  if (status) params.set('status', status);
+  if (search) params.set('search', search);
+  const res = await adminFetch<AdminTag[]>(`/admin/tags?${params}`);
+  if (!res.ok || !res.data || !res.pagination) return null;
+  return { data: res.data, pagination: res.pagination };
+}
+
+export async function updateAdminTag(
+  id: string,
+  data: { status?: 'active' | 'inactive' | 'pending'; isActive?: boolean }
+): Promise<AdminTag | null> {
+  const res = await adminMutate<AdminTag>(`/admin/tags/${id}`, data);
+  return res.ok ? (res.data ?? null) : null;
+}
+
+export async function deleteAdminTag(id: string): Promise<boolean> {
+  const res = await adminMutate(`/admin/tags/${id}`, {}, 'DELETE');
+  return res.ok;
+}
+
+export async function getAdminUserPets(userId: string): Promise<{ pets: AdminPet[]; error?: string }> {
+  const res = await adminFetch<{ user: unknown; pets: AdminPet[]; orders: unknown[] }>(`/admin/users/${userId}`);
+  if (!res.ok) return { pets: [], error: res.error?.message ?? 'Failed to load pets' };
+  return { pets: res.data?.pets ?? [] };
+}
+
 export async function getScanAnalytics(days = 30): Promise<ScanAnalytics | null> {
   const res = await adminFetch<ScanAnalytics>(`/admin/analytics/scans?days=${days}`);
+  return res.ok ? (res.data ?? null) : null;
+}
+
+export async function getAdminProducts(
+  page = 1,
+  search?: string,
+  category?: string
+): Promise<{ data: AdminProduct[]; pagination: AdminPagination } | null> {
+  const params = new URLSearchParams({ page: String(page), limit: '20' });
+  if (search) params.set('search', search);
+  if (category) params.set('category', category);
+  const res = await adminFetch<AdminProduct[]>(`/admin/products?${params}`);
+  if (!res.ok || !res.data || !res.pagination) return null;
+  return { data: res.data, pagination: res.pagination };
+}
+
+export async function updateAdminProduct(
+  id: string,
+  data: Partial<Pick<AdminProduct, 'name' | 'description' | 'price' | 'compareAtPrice' | 'availability' | 'stock' | 'availableColors' | 'availableSizes' | 'keyFeatures' | 'badge' | 'isFeatured' | 'isActive' | 'petCategory' | 'weight'>>
+): Promise<AdminProduct | null> {
+  const res = await adminMutate<AdminProduct>(`/admin/products/${id}`, data);
   return res.ok ? (res.data ?? null) : null;
 }

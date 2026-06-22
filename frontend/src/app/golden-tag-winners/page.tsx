@@ -13,7 +13,7 @@ const winners = [
     location: "New York, USA",
     quarter: "Q4 2024",
     drawDate: "December 15, 2024",
-    image: "/images/winner-1.jpg",
+    image: "/images/winner-1.png",
     testimonial: "We're so grateful for this beautiful golden tag! Max looks so stylish, and knowing he's protected with your QR technology gives us such peace of mind."
   },
   {
@@ -24,7 +24,7 @@ const winners = [
     location: "Los Angeles, USA",
     quarter: "Q3 2024",
     drawDate: "September 28, 2024",
-    image: "/images/winner-2.jpg",
+    image: "/images/winner-2.png",
     testimonial: "Luna's golden tag is stunning! The quality is exceptional and we love being part of this amazing community."
   },
   {
@@ -35,7 +35,7 @@ const winners = [
     location: "Miami, USA",
     quarter: "Q2 2024",
     drawDate: "June 10, 2024",
-    image: "/images/winner-3.jpg",
+    image: "/images/winner-3.png",
     testimonial: "This golden tag is absolutely beautiful. Thank you for creating such wonderful products for our furry friends!"
   },
   {
@@ -46,7 +46,7 @@ const winners = [
     location: "Chicago, USA",
     quarter: "Q1 2024",
     drawDate: "March 15, 2024",
-    image: "/images/winner-4.jpg",
+    image: "/images/winner-4.png",
     testimonial: "Bella wears her golden tag with pride! It's not just beautiful, it's also giving us the security we need."
   }
 ];
@@ -232,9 +232,25 @@ export default function GoldenTagWinnersPage() {
                         repeat: Infinity,
                         ease: "easeInOut",
                       }}
-                      className="relative w-80 h-80 rounded-full bg-gradient-to-br from-primary via-black to-black flex items-center justify-center text-white text-8xl font-bold shadow-2xl shadow-amber-400/50"
+                      className="relative w-80 h-80 rounded-full shadow-2xl shadow-amber-400/50 overflow-hidden"
                     >
-                      {latestWinner.name.charAt(0)}
+                      <img
+                        src={latestWinner.image}
+                        alt={latestWinner.petName}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const t = e.currentTarget;
+                          t.style.display = 'none';
+                          const parent = t.parentElement;
+                          if (parent) {
+                            parent.classList.add('bg-gradient-to-br', 'from-primary', 'via-black', 'to-black', 'flex', 'items-center', 'justify-center');
+                            const span = document.createElement('span');
+                            span.className = 'text-white text-8xl font-bold';
+                            span.textContent = latestWinner.name.charAt(0);
+                            parent.appendChild(span);
+                          }
+                        }}
+                      />
                     </motion.div>
                     
                     {/* Orbiting sparkles */}
@@ -329,11 +345,25 @@ export default function GoldenTagWinnersPage() {
                 className="group"
               >
                 <div className="bg-gradient-to-b from-gray-800 to-gray-900 rounded-2xl overflow-hidden border border-gray-700 hover:border-primary/50 transition-all duration-300 h-full">
-                  {/* Winner Image Placeholder */}
-                  <div className="relative h-64 bg-gradient-to-tl from-black via-black to-primary/20 flex items-center justify-center">
-                    <div className="w-32 h-32 rounded-full bg-gradient-to-br from-primary via-black to-black shadow-md shadow-primary flex items-center justify-center text-white text-4xl font-bold">
-                      {winner.name.charAt(0)}
-                    </div>
+                  {/* Winner Image */}
+                  <div className="relative h-64 overflow-hidden">
+                    <img
+                      src={winner.image}
+                      alt={winner.petName}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      onError={(e) => {
+                        const t = e.currentTarget;
+                        t.style.display = 'none';
+                        const parent = t.parentElement;
+                        if (parent) {
+                          parent.classList.add('bg-gradient-to-tl', 'from-black', 'via-black', 'to-primary/20', 'flex', 'items-center', 'justify-center');
+                          const inner = document.createElement('div');
+                          inner.className = 'w-32 h-32 rounded-full bg-gradient-to-br from-primary via-black to-black shadow-md shadow-primary flex items-center justify-center text-white text-4xl font-bold';
+                          inner.textContent = winner.name.charAt(0);
+                          parent.appendChild(inner);
+                        }
+                      }}
+                    />
                   </div>
 
                   {/* Winner Info */}

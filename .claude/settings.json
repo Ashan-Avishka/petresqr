@@ -34,10 +34,21 @@
       "Skill(code-review:*)",
       "Read(//c/Users/MSI/.claude/**)",
       "Bash(bash \"C:/Users/MSI/.claude/plugins/cache/claude-plugins-official/superpowers/6.0.3/skills/subagent-driven-development/scripts/review-package\" ab084a2 HEAD)",
-      "Bash(npm test *)"
+      "Bash(npm test *)",
+      "Bash(git stash *)",
+      "Bash(node -e \"const ts = require\\('typescript'\\); const program = ts.createProgram\\(['controllers/AdminController.ts'], {}\\); const diags = ts.getPreEmitDiagnostics\\(program\\); diags.forEach\\(d => console.log\\(ts.flattenDiagnosticMessageText\\(d.messageText, '\\\\n'\\)\\)\\);\")",
+      "PowerShell(Get-Process -Name \"node\" -ErrorAction SilentlyContinue | Select-Object Id, CPU, @{N='Cmd';E={$_.MainWindowTitle}} | Format-Table -AutoSize)",
+      "Bash(mkdir -p \"c:/Users/MSI/Desktop/Projects/petresqr/frontend/src/app/orders/[id]\")",
+      "PowerShell(cd \"c:\\\\Users\\\\MSI\\\\Desktop\\\\Projects\\\\petresqr\"; $env:MONGODB_URI=\"mongodb+srv://ashanavishka:hHZPiBveiyjxpn2R@cluster0.lqx3s0x.mongodb.net/\"; npx tsx backend/scripts/updateProductVariants.ts 2>&1)",
+      "Skill(impeccable)",
+      "Skill(impeccable:*)",
+      "Bash(node .claude/skills/impeccable/scripts/context.mjs)",
+      "Bash(node \"C:/Users/MSI/.claude/skills/impeccable/scripts/context.mjs\")",
+      "PowerShell(Test-NetConnection smtp.gmail.com -Port 587 -WarningAction SilentlyContinue)"
     ],
     "additionalDirectories": [
-      "c:\\Users\\MSI\\Desktop\\Projects\\petresqr\\docs\\superpowers"
+      "c:\\Users\\MSI\\Desktop\\Projects\\petresqr\\docs\\superpowers",
+      "c:\\Users\\MSI\\Desktop\\Projects\\petresqr\\frontend\\src\\app\\orders"
     ]
   }
 }

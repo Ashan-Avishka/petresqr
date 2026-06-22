@@ -39,7 +39,16 @@ export class ApiClient {
         body: isFormData ? body : (body ? JSON.stringify(body) : undefined),
       });
 
-      const result = await response.json();
+      const text = await response.text();
+      let result: any = {};
+      try {
+        result = JSON.parse(text);
+      } catch {
+        return {
+          ok: false,
+          error: { code: 'SERVER_ERROR', message: text || 'Unexpected server response' },
+        };
+      }
 
       return { ok: response.ok, data: result.data, error: result.error };
     } catch (error) {

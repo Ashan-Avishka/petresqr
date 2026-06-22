@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Package, ChevronDown, ChevronUp, Calendar, CreditCard, MapPin, Tag, XCircle, Image as ImageIcon } from 'lucide-react';
+import { Package, ChevronDown, ChevronUp, Calendar, CreditCard, MapPin, Tag, XCircle, Image as ImageIcon, Search } from 'lucide-react';
 import { useUserContext } from '../../contexts/UserContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getImageUrl } from '../../api/config';
@@ -14,6 +14,8 @@ const OrdersTab: React.FC = () => {
     const [notifType, setNotifType] = useState<'success' | 'error' | 'warning' | 'info'>('success');
     const [notifTitle, setNotifTitle] = useState('');
     const [notifMessage, setNotifMessage] = useState('');
+    const [search, setSearch] = useState('');
+    const [statusFilter, setStatusFilter] = useState('');
 
     const toggleOrder = (orderId: string) => {
         setExpandedOrderId(expandedOrderId === orderId ? null : orderId);
@@ -67,34 +69,71 @@ const OrdersTab: React.FC = () => {
         setLoadedImages(prev => new Set(prev).add(imageUrl));
     };
 
+    const filteredOrders = orders.filter((order) => {
+        const q = search.toLowerCase();
+        const matchesSearch = !q ||
+            order._id.toLowerCase().includes(q) ||
+            (order.petId?.name?.toLowerCase().includes(q));
+        const matchesStatus = !statusFilter || order.status === statusFilter;
+        return matchesSearch && matchesStatus;
+    });
+
     return (
-        <div>
-            <div className="mb-6">
-                <h2 className="text-4xl font-bold text-white">My Orders</h2>
-                <p className="text-gray-400 mt-1">View and track your order history</p>
+        <div className="h-full overflow-y-auto md:pr-4 pr-2">
+            <div className="mb-4 md:mb-6">
+                <div className="hidden md:block mb-3">
+                    <h2 className="text-4xl font-bold text-white">My Orders</h2>
+                    <p className="text-gray-400 mt-1">View and track your order history</p>
+                </div>
+                <div className="flex items-center gap-2">
+                    <div className="relative flex-1 min-w-0">
+                        <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                        <input
+                            type="text"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            placeholder="Search by order ID or pet…"
+                            className="w-full bg-black/40 border border-gray-700 text-white rounded-lg pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-primary/60"
+                        />
+                    </div>
+                    <select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        className="flex-none bg-black/40 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary/60"
+                    >
+                        <option value="">All Statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="paid">Paid</option>
+                        <option value="processing">Processing</option>
+                        <option value="shipped">Shipped</option>
+                        <option value="delivered">Delivered</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
             </div>
 
             <div className="grid gap-4">
-                {orders.map(order => (
+                {filteredOrders.map(order => (
                     <div 
                         key={order._id} 
                         className="bg-gradient-to-br from-primary/50 via-black to-black border border-gray-800 rounded-xl shadow-md overflow-hidden transition-shadow hover:shadow-lg"
                     >
                         {/* Order Header */}
-                        <div 
-                            className="p-6 cursor-pointer"
+                        <div
+                            className="p-4 md:p-6 cursor-pointer"
                             onClick={() => toggleOrder(order._id)}
                         >
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-black shadow-md shadow-primary rounded-lg flex items-center justify-center">
-                                        <Package className="w-6 h-6 text-white" />
+                            <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <div className="w-9 h-9 md:w-12 md:h-12 bg-black shadow-md shadow-primary rounded-lg flex items-center justify-center flex-none">
+                                        <Package className="w-4 h-4 md:w-6 md:h-6 text-white" />
                                     </div>
-                                    <div>
-                                        <h3 className="font-bold text-white font-mono">
-                                            Order #{order._id}
+                                    <div className="min-w-0">
+                                        <h3 className="font-bold text-white font-mono text-xs md:text-base truncate">
+                                            <span className="md:hidden">#{order._id.slice(-8).toUpperCase()}</span>
+                                            <span className="hidden md:inline">Order #{order._id}</span>
                                         </h3>
-                                        <p className="text-sm text-gray-400">
+                                        <p className="text-xs md:text-sm text-gray-400">
                                             {new Date(order.createdAt).toLocaleDateString('en-US', {
                                                 year: 'numeric',
                                                 month: 'long',
@@ -102,23 +141,23 @@ const OrdersTab: React.FC = () => {
                                             })}
                                         </p>
                                         {order.petId && (
-                                            <p className="text-sm text-primary mt-1">
+                                            <p className="text-xs md:text-sm text-primary mt-0.5">
                                                 Pet: {order.petId.name}
                                             </p>
                                         )}
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-3">
-                                    <span className={`px-4 py-2 w-25 text-center rounded-xl text-sm font-medium ${getStatusColor(order.status)}`}>
+                                <div className="flex items-center gap-2 flex-none">
+                                    <span className={`px-2 py-1 md:px-4 md:py-2 text-center rounded-xl text-xs md:text-sm font-medium ${getStatusColor(order.status)}`}>
                                         {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                                     </span>
-                                    <span className="text-xl text-white">
+                                    <span className="text-base md:text-xl text-white font-medium">
                                         ${order.total.toFixed(2)}
                                     </span>
                                     {expandedOrderId === order._id ? (
-                                        <ChevronUp className="w-6 h-6 text-gray-400" />
+                                        <ChevronUp className="w-5 h-5 md:w-6 md:h-6 text-gray-400" />
                                     ) : (
-                                        <ChevronDown className="w-6 h-6 text-gray-400" />
+                                        <ChevronDown className="w-5 h-5 md:w-6 md:h-6 text-gray-400" />
                                     )}
                                 </div>
                             </div>
@@ -146,28 +185,34 @@ const OrdersTab: React.FC = () => {
                                                     {order.items.map((item, index) => (
                                                         <div key={index} className="bg-black bg-opacity-50 rounded-lg p-4">
                                                             <div className="flex gap-4">
-                                                                {item.image && (
-                                                                    <div className="w-20 h-20 flex-shrink-0 bg-gray-800 rounded-lg overflow-hidden relative">
-                                                                        {!loadedImages.has(item.image) && (
-                                                                            <div className="absolute inset-0 flex items-center justify-center">
-                                                                                <ImageIcon className="w-8 h-8 text-gray-600" />
-                                                                            </div>
-                                                                        )}
-                                                                        <img 
-                                                                            src={getImageUrl(item.image)} 
-                                                                            alt={item.name}
-                                                                            onLoad={() => handleImageLoad(getImageUrl(item.image))}
-                                                                            className={`w-full h-full object-cover transition-opacity duration-300 ${
-                                                                                loadedImages.has(item.image) ? 'opacity-100' : 'opacity-0'
-                                                                            }`}
-                                                                        />
-                                                                    </div>
-                                                                )}
+                                                                <div className="w-20 h-20 flex-shrink-0 bg-gray-800 rounded-lg overflow-hidden relative">
+                                                                    {item.image ? (
+                                                                        <>
+                                                                            {!loadedImages.has(item.image) && (
+                                                                                <div className="absolute inset-0 flex items-center justify-center">
+                                                                                    <Tag className="w-8 h-8 text-primary/40" />
+                                                                                </div>
+                                                                            )}
+                                                                            <img
+                                                                                src={getImageUrl(item.image)}
+                                                                                alt={item.name}
+                                                                                onLoad={() => handleImageLoad(item.image)}
+                                                                                className={`w-full h-full object-cover transition-opacity duration-300 ${
+                                                                                    loadedImages.has(item.image) ? 'opacity-100' : 'opacity-0'
+                                                                                }`}
+                                                                            />
+                                                                        </>
+                                                                    ) : (
+                                                                        <div className="absolute inset-0 flex items-center justify-center">
+                                                                            <Tag className="w-8 h-8 text-primary/40" />
+                                                                        </div>
+                                                                    )}
+                                                                </div>
                                                                 <div className="flex-1 flex justify-between items-start">
                                                                     <div>
                                                                         <p className="font-medium text-white">{item.name}</p>
-                                                                        <p className="text-sm text-gray-400">Size: {item.size}</p>
-                                                                        <p className="text-sm text-gray-400">Color: {item.color}</p>
+                                                                        {item.size && <p className="text-sm text-gray-400">Size: {item.size}</p>}
+                                                                        {item.color && <p className="text-sm text-gray-400">Color: {item.color}</p>}
                                                                         <p className="text-sm text-gray-200">Quantity: {item.quantity}</p>
                                                                     </div>
                                                                     <p className="text-primary">${(item.price * item.quantity).toFixed(2)}</p>
@@ -301,7 +346,7 @@ const OrdersTab: React.FC = () => {
                 ))}
             </div>
 
-            {orders.length === 0 && (
+            {filteredOrders.length === 0 && (
                 <div className="text-center py-16">
                     <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                     <h3 className="text-xl font-semibold text-white mb-2">No orders yet</h3>

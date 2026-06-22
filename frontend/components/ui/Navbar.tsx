@@ -29,6 +29,8 @@ const Navbar: React.FC<NavbarProps> = ({
     { label: 'SHOP', href: '/shop' },
     { label: 'FOUND A PET', href: '/found-pet' },
     { label: 'GALLERY', href: '/pet-gallery' },
+    { label: 'WINNERS', href: '/golden-tag-winners' },
+    { label: 'FUNDING', href: '/paw-resqr-funding' },
     { label: 'CONTACT', href: '/contact' },
   ],
   logo,
@@ -137,20 +139,22 @@ const Navbar: React.FC<NavbarProps> = ({
               >
                 {isAuthenticated ? (
                   <>
-                    <Link href="/cart">
-                      <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.95 }}
-                        className="p-2 rounded-full hover:bg-white/10 transition-colors relative"
-                      >
-                        <ShoppingCart className={`w-6 h-6 ${textColor}`} />
-                        {cartCount > 0 && (
-                          <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-tl from-primary  to-black text-white text-xs rounded-full flex items-center justify-center">
-                            {cartCount > 99 ? '99+' : cartCount}
-                          </span>
-                        )}
-                      </motion.button>
-                    </Link>
+                    {user?.role !== 'admin' && (
+                      <Link href="/cart">
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="p-2 rounded-full hover:bg-white/10 transition-colors relative"
+                        >
+                          <ShoppingCart className={`w-6 h-6 ${textColor}`} />
+                          {cartCount > 0 && (
+                            <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-tl from-primary  to-black text-white text-xs rounded-full flex items-center justify-center">
+                              {cartCount > 99 ? '99+' : cartCount}
+                            </span>
+                          )}
+                        </motion.button>
+                      </Link>
+                    )}
 
                     <Link href="/dashboard">
                       <motion.button
@@ -282,21 +286,23 @@ const Navbar: React.FC<NavbarProps> = ({
                               <span className={`${textColor} font-medium`}>{user?.name || 'Account'}</span>
                             </div>
 
-                            <Link
-                              href="/cart"
-                              className={`${textColor} font-medium text-base py-2 px-4 rounded-lg hover:bg-white/10 transition-colors duration-300 flex items-center gap-2 relative`}
-                              onClick={() => setIsMobileMenuOpen(false)}
-                            >
-                              <div className="relative">
-                                <ShoppingCart className="w-5 h-5" />
-                                {cartCount > 0 && (
-                                  <span className="absolute -top-2 -right-2 w-4 h-4 bg-gradient-to-tl from-primary  to-black text-white text-xs font-bold rounded-full flex items-center justify-center">
-                                    {cartCount > 99 ? '99+' : cartCount}
-                                  </span>
-                                )}
-                              </div>
-                              Cart {cartCount > 0 && `(${cartCount})`}
-                            </Link>
+                            {user?.role !== 'admin' && (
+                              <Link
+                                href="/cart"
+                                className={`${textColor} font-medium text-base py-2 px-4 rounded-lg hover:bg-white/10 transition-colors duration-300 flex items-center gap-2 relative`}
+                                onClick={() => setIsMobileMenuOpen(false)}
+                              >
+                                <div className="relative">
+                                  <ShoppingCart className="w-5 h-5" />
+                                  {cartCount > 0 && (
+                                    <span className="absolute -top-2 -right-2 w-4 h-4 bg-gradient-to-tl from-primary  to-black text-white text-xs font-bold rounded-full flex items-center justify-center">
+                                      {cartCount > 99 ? '99+' : cartCount}
+                                    </span>
+                                  )}
+                                </div>
+                                Cart {cartCount > 0 && `(${cartCount})`}
+                              </Link>
+                            )}
 
                             <Link
                               href="/dashboard"

@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Truck, Award, CreditCard, Zap, RotateCcw, Headphones } from 'lucide-react';
+import { Truck, Award, CreditCard, Zap, RotateCcw, Handshake } from 'lucide-react';
 
 const services = [
   {
@@ -30,7 +30,7 @@ const services = [
     description: 'Hassle-free returns within 30 days guaranteed',
   },
   {
-    icon: Headphones,
+    icon: Handshake,
     title: 'Expert Support',
     description: 'Our team is here to help you anytime',
   },

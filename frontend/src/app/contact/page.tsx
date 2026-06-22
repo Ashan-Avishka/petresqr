@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Phone, Printer, Mail, CheckCircle, AlertCircle } from 'lucide-react';
+import { Phone, MapPin, Mail, CheckCircle, AlertCircle } from 'lucide-react';
 
 export default function ContactUsPage() {
     const [formData, setFormData] = useState({
@@ -182,28 +182,28 @@ export default function ContactUsPage() {
                                         <Phone className="w-6 h-6 text-gray-400" />
                                     </div>
                                     <div>
-                                        <p className="text-gray-300 font-semibold text-sm mb-1">PHONE</p>
-                                        <p className="text-primary text-sm">03 5432 1234</p>
+                                        <p className="text-gray-300 font-semibold text-sm mb-1">MOBILE</p>
+                                        <p className="text-primary text-sm">+1 (416) 559-3620</p>
                                     </div>
                                 </div>
 
-                                <div className="flex items-start gap-3">
-                                    <div className="flex-shrink-0">
-                                        <Printer className="w-6 h-6 text-gray-400" />
-                                    </div>
-                                    <div>
-                                        <p className="text-gray-300 font-semibold text-sm mb-1">FAX</p>
-                                        <p className="text-primary text-sm">03 5432 1234</p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-start gap-3">
+                                <div className="flex items-start gap-3 -ml-3">
                                     <div className="flex-shrink-0">
                                         <Mail className="w-6 h-6 text-gray-400" />
                                     </div>
                                     <div>
                                         <p className="text-gray-300 font-semibold text-sm mb-1">EMAIL</p>
-                                        <p className="text-primary text-sm break-all">info@marcc.com.au</p>
+                                        <p className="text-primary text-sm break-all">contact@petreqr.com</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-start gap-3">
+                                    <div className="flex-shrink-0">
+                                        <MapPin className="w-6 h-6 text-gray-400" />
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-300 font-semibold text-sm mb-1">ADDRESS</p>
+                                        <p className="text-primary text-sm">petresqr(pvt) Ltd. <br></br>Toranto, Canada</p>
                                     </div>
                                 </div>
                             </div>

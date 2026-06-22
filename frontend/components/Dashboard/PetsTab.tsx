@@ -84,22 +84,22 @@ const PetsTab: React.FC = () => {
     };
 
     return (
-        <div>
-            <div className="flex items-center justify-between mb-6">
-                <div>
+        <div className="h-full overflow-y-auto md:pr-4 pr-2">
+            <div className="flex items-center justify-between mb-4 md:mb-6">
+                <div className="hidden md:block">
                     <h2 className="text-4xl font-bold text-white">My Pets</h2>
                     <p className="text-gray-400 mt-1">Manage your pet's information</p>
                 </div>
                 <button
                     onClick={() => setIsCreateModalOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-br from-primary via-black to-black text-white rounded-lg shadow-sm hover:shadow-md hover:scale-105 shadow-primary transition-all"
+                    className="flex items-center gap-1.5 px-3 py-1.5 md:px-4 md:py-2 bg-gradient-to-br from-primary via-black to-black text-white rounded-lg shadow-sm hover:shadow-md hover:scale-105 shadow-primary transition-all text-sm md:text-base ml-auto"
                 >
-                    <Plus className="w-5 h-5" />
+                    <Plus className="w-4 h-4 md:w-5 md:h-5" />
                     Add New Pet
                 </button>
             </div>
 
-            <div className="space-y-8">
+            <div className="space-y-3 md:space-y-4">
                 {pets.map(pet => (
                     <Fragment key={pet.id}>
                         <PetCard

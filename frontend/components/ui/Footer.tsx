@@ -69,10 +69,10 @@ export default function Footer() {
     { name: 'My Account', href: '/account' }
   ];
   const productLinks = [
-    { name: 'Pet Tag 01', href: '/shop' },
-    { name: 'Pet Tag 02', href: '/shop' },
-    { name: 'Pet Tag 03', href: '/shop' },
-    { name: 'Pet Tag 04', href: '/shop' }
+    { name: 'Standard QR Tag', href: '/shop' },
+    { name: 'Premium QR Tag', href: '/shop' },
+    { name: '24K Golden Tag', href: '/golden-tag-winners' },
+    { name: 'Pet ID Accessories', href: '/shop' }
   ];
   const serviceLinks = [
     { name: 'Worldwide Shipping', href: '#' },

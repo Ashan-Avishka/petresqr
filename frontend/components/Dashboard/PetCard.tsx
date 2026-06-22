@@ -95,94 +95,110 @@ const PetCard: React.FC<PetCardProps> = ({ pet, onEdit, onDelete, onSave, onTogg
             className="bg-gradient-to-br from-primary/50 via-black to-black border border-gray-800 rounded-xl shadow-md hover:border-gray-700 transition-all cursor-pointer"
             onClick={() => !isEditing && setIsExpanded(!isExpanded)}
         >
-            <div className="p-6">
-                <div className="flex items-center gap-4">
+            <div className="p-3 md:p-6">
+                <div className="flex items-center gap-3">
                     <img
                         src={imageUrl}
                         alt={displayData.name}
-                        className="w-20 h-20 rounded-lg object-cover border border-gray-700 shadow-md shadow-primary/20"
+                        className="w-14 h-14 md:w-20 md:h-20 rounded-lg object-cover border border-gray-700 shadow-md shadow-primary/20 flex-none"
                         onError={(e) => {
-                            // Fallback if image fails to load
                             e.currentTarget.src = 'https://via.placeholder.com/400x300?text=No+Imagexx';
                         }}
                     />
-                    <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
                             {isEditing ? (
                                 <input
                                     type="text"
                                     value={displayData.name}
                                     onChange={(e) => updateTopLevel('name', e.target.value)}
-                                    className="text-white text-2xl bg-gray-800 rounded px-2 py-1 border border-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                                    className="text-white text-lg md:text-2xl bg-gray-800 rounded px-2 py-1 border border-primary focus:outline-none focus:ring-2 focus:ring-primary"
                                 />
                             ) : (
-                                <h3 className="text-white text-2xl">{displayData.name}</h3>
+                                <h3 className="text-white text-lg md:text-2xl truncate">{displayData.name}</h3>
                             )}
                             {displayData.type === 'dog' ? (
-                                <Dog className="w-5 h-5 text-primary" />
+                                <Dog className="w-4 h-4 md:w-5 md:h-5 text-primary flex-none" />
                             ) : (
-                                <Cat className="w-5 h-5 text-primary" />
-                            )}
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium shadow-sm shadow-primary ${
-                                displayData.tag.status === 'active'
-                                    ? 'bg-black text-gray-300'
-                                    : 'bg-gray-400 text-gray-100'
-                            }`}>
-                                {displayData.tag.status === 'active' ? 'Active' : 'inactive'}
-                            </span>
-                            {pet.gallery && (
-                                <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-900 text-green-300 shadow-sm shadow-green-500">
-                                    In Gallery
-                                </span>
+                                <Cat className="w-4 h-4 md:w-5 md:h-5 text-primary flex-none" />
                             )}
                         </div>
-                        <div className="flex items-center gap-6 text-sm text-gray-300">
+                        <div className="flex items-center gap-2 text-sm text-gray-300 flex-wrap">
                             {isEditing ? (
                                 <>
                                     <input
                                         type="text"
                                         value={displayData.breed}
                                         onChange={(e) => updateTopLevel('breed', e.target.value)}
-                                        className=" bg-gray-800 text-gray-300 rounded px-2 py-1 border border-primary focus:outline-none focus:ring-2 focus:ring-primary text-sm w-24"
+                                        className="bg-gray-800 text-gray-300 rounded px-2 py-1 border border-primary focus:outline-none focus:ring-2 focus:ring-primary text-sm w-24"
                                         placeholder="Breed"
                                     />
-                                    <span>|</span>
+                                    <span className="hidden md:inline">|</span>
                                     <input
                                         type="number"
                                         value={displayData.age}
                                         onChange={(e) => updateTopLevel('age', Number(e.target.value))}
-                                        className="bg-gray-800 rounded px-2 py-1 border border-primary text-sm w-16 focus:outline-none focus:ring-2 focus:ring-primary"
+                                        className="hidden md:block bg-gray-800 rounded px-2 py-1 border border-primary text-sm w-16 focus:outline-none focus:ring-2 focus:ring-primary"
                                         placeholder="Age"
                                     />
-                                    <span>years |</span>
+                                    <span className="hidden md:inline">years |</span>
                                     <input
                                         type="number"
                                         value={displayData.weight}
                                         onChange={(e) => updateTopLevel('weight', Number(e.target.value))}
-                                        className="bg-gray-800 rounded px-2 py-1 border border-primary text-sm w-16 focus:outline-none focus:ring-2 focus:ring-primary"
+                                        className="hidden md:block bg-gray-800 rounded px-2 py-1 border border-primary text-sm w-16 focus:outline-none focus:ring-2 focus:ring-primary"
                                         placeholder="Weight"
                                     />
-                                    <span>kg</span>
+                                    <span className="hidden md:inline">kg</span>
                                 </>
                             ) : (
                                 <>
-                                    <span>{displayData.breed}</span>
-                                    <span>|</span>
-                                    <span>{displayData.age} years</span>
-                                    <span>|</span>
-                                    <span>{displayData.weight} kg</span>
-                                    <span>|</span>
-                                    <span className="font-mono text-xs">{displayData.tag.tagId || 'No tag'}</span>
+                                    <span className="text-xs">{displayData.breed}</span>
+                                    <span className="hidden md:inline text-gray-600">|</span>
+                                    <span className="hidden md:inline text-xs">{displayData.age} years</span>
+                                    <span className="hidden md:inline text-gray-600">|</span>
+                                    <span className="hidden md:inline text-xs">{displayData.weight} kg</span>
+                                    <span className="hidden md:inline text-gray-600">|</span>
+                                    <span className="hidden md:inline font-mono text-xs text-gray-400">{displayData.tag.tagId || 'No tag'}</span>
                                 </>
                             )}
                         </div>
+                        {/* Status badges row — mobile */}
+                        <div className="flex items-center gap-1.5 mt-1.5 md:hidden flex-wrap">
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium shadow-sm shadow-primary ${
+                                displayData.tag.status === 'active'
+                                    ? 'bg-black text-gray-300'
+                                    : 'bg-gray-400 text-gray-100'
+                            }`}>
+                                {displayData.tag.status === 'active' ? 'Active' : 'Inactive'}
+                            </span>
+                            {pet.gallery && (
+                                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-900 text-green-300">
+                                    Gallery
+                                </span>
+                            )}
+                        </div>
                     </div>
-                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                        {/* Gallery Toggle Button */}
+                    {/* Badges — desktop inline */}
+                    <div className="hidden md:flex items-center gap-2 flex-none">
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium shadow-sm shadow-primary ${
+                            displayData.tag.status === 'active'
+                                ? 'bg-black text-gray-300'
+                                : 'bg-gray-400 text-gray-100'
+                        }`}>
+                            {displayData.tag.status === 'active' ? 'Active' : 'inactive'}
+                        </span>
+                        {pet.gallery && (
+                            <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-900 text-green-300 shadow-sm shadow-green-500">
+                                In Gallery
+                            </span>
+                        )}
+                    </div>
+                    <div className="flex items-center gap-1 flex-none" onClick={(e) => e.stopPropagation()}>
                         <button
                             onClick={handleToggleGallery}
                             disabled={isTogglingGallery}
-                            className={`p-2 rounded-lg transition-all disabled:opacity-50 ${
+                            className={`p-1.5 md:p-2 rounded-lg transition-all disabled:opacity-50 ${
                                 pet.gallery
                                     ? 'hover:bg-gray-800 text-green-300'
                                     : 'hover:bg-gray-800 text-gray-400'
@@ -190,9 +206,9 @@ const PetCard: React.FC<PetCardProps> = ({ pet, onEdit, onDelete, onSave, onTogg
                             title={pet.gallery ? 'Remove from gallery' : 'Add to gallery'}
                         >
                             {pet.gallery ? (
-                                <Eye className="w-5 h-5" />
+                                <Eye className="w-4 h-4 md:w-5 md:h-5" />
                             ) : (
-                                <EyeOff className="w-5 h-5" />
+                                <EyeOff className="w-4 h-4 md:w-5 md:h-5" />
                             )}
                         </button>
 
@@ -201,14 +217,14 @@ const PetCard: React.FC<PetCardProps> = ({ pet, onEdit, onDelete, onSave, onTogg
                                 <button
                                     onClick={handleSave}
                                     disabled={isSaving}
-                                    className="p-2 hover:bg-green-900 rounded-lg transition-colors disabled:opacity-50 text-green-400"
+                                    className="p-1.5 md:p-2 hover:bg-green-900 rounded-lg transition-colors disabled:opacity-50 text-green-400 text-xs"
                                 >
                                     save
                                 </button>
                                 <button
                                     onClick={handleCancel}
                                     disabled={isSaving}
-                                    className="p-2 hover:bg-gray-800 rounded-lg transition-colors disabled:opacity-50 text-gray-400"
+                                    className="p-1.5 md:p-2 hover:bg-gray-800 rounded-lg transition-colors disabled:opacity-50 text-gray-400 text-xs"
                                 >
                                     close
                                 </button>
@@ -217,24 +233,24 @@ const PetCard: React.FC<PetCardProps> = ({ pet, onEdit, onDelete, onSave, onTogg
                             <>
                                 <button
                                     onClick={handleEdit}
-                                    className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+                                    className="p-1.5 md:p-2 hover:bg-gray-800 rounded-lg transition-colors"
                                 >
-                                    <Edit2 className="w-5 h-5 text-primary" />
+                                    <Edit2 className="w-4 h-4 md:w-5 md:h-5 text-primary" />
                                 </button>
                                 <button
                                     onClick={() => onDelete(pet.id)}
-                                    className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+                                    className="p-1.5 md:p-2 hover:bg-gray-800 rounded-lg transition-colors"
                                 >
-                                    <Trash2 className="w-5 h-5 text-red-600" />
+                                    <Trash2 className="w-4 h-4 md:w-5 md:h-5 text-red-600" />
                                 </button>
                                 <button
                                     onClick={() => setIsExpanded(!isExpanded)}
-                                    className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+                                    className="p-1.5 md:p-2 hover:bg-gray-800 rounded-lg transition-colors"
                                 >
                                     {isExpanded ? (
-                                        <ChevronUp className="w-6 h-6 text-gray-400" />
+                                        <ChevronUp className="w-5 h-5 md:w-6 md:h-6 text-gray-400" />
                                     ) : (
-                                        <ChevronDown className="w-6 h-6 text-gray-400" />
+                                        <ChevronDown className="w-5 h-5 md:w-6 md:h-6 text-gray-400" />
                                     )}
                                 </button>
                             </>

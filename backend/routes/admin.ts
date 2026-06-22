@@ -105,6 +105,16 @@ router.get('/stats', adminController.getDashboardStats);
  *         description: Forbidden (admin access required)
  */
 router.get('/users', adminController.getUsers);
+router.put('/users/:id',
+  [param('id').isMongoId(), body('role').optional().isIn(['user', 'admin']), body('isActive').optional().isBoolean()],
+  handleValidationErrors,
+  adminController.updateUser
+);
+router.delete('/users/:id',
+  [param('id').isMongoId()],
+  handleValidationErrors,
+  adminController.deleteUser
+);
 
 /**
  * @swagger
@@ -193,6 +203,42 @@ router.get('/users/:id',
  *         description: Forbidden (admin access required)
  */
 router.get('/pets', adminController.getPets);
+router.get('/pets/:id',
+  [param('id').isMongoId()],
+  handleValidationErrors,
+  adminController.getPetById
+);
+router.put('/pets/:id',
+  [param('id').isMongoId(), body('name').optional().trim(), body('breed').optional().trim(), body('type').optional().trim(), body('status').optional().isIn(['active', 'inactive', 'pending'])],
+  handleValidationErrors,
+  adminController.updatePet
+);
+router.delete('/pets/:id',
+  [param('id').isMongoId()],
+  handleValidationErrors,
+  adminController.deletePet
+);
+
+// Product management
+router.get('/products', adminController.getProducts);
+router.put('/products/:id',
+  [param('id').isMongoId()],
+  handleValidationErrors,
+  adminController.updateProduct
+);
+
+// Tag management
+router.get('/tags', adminController.getTags);
+router.put('/tags/:id',
+  [param('id').isMongoId(), body('status').optional().isIn(['active', 'inactive', 'pending']), body('isActive').optional().isBoolean()],
+  handleValidationErrors,
+  adminController.updateTag
+);
+router.delete('/tags/:id',
+  [param('id').isMongoId()],
+  handleValidationErrors,
+  adminController.deleteTag
+);
 
 // Order management
 /**
@@ -246,6 +292,11 @@ router.get('/pets', adminController.getPets);
  *         description: Forbidden (admin access required)
  */
 router.get('/orders', adminController.getOrders);
+router.get('/orders/:id',
+  [param('id').isMongoId()],
+  handleValidationErrors,
+  adminController.getOrderById
+);
 
 /**
  * @swagger

@@ -14,7 +14,8 @@
     "seed": "tsx backend/scripts/seedDatabase.ts",
     "seed:orders": "tsx backend/scripts/seedOrders.ts",
     "seed:products": "tsx backend/scripts/seedProducts.ts",
-    "seed:qrcodes": "tsx backend/scripts/seedQrcodes.ts"
+    "seed:qrcodes": "tsx backend/scripts/seedQrcodes.ts",
+    "update:variants": "tsx -r dotenv/config backend/scripts/updateProductVariants.ts"
   },
   "keywords": [
     "pet",

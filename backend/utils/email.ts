@@ -1,11 +1,20 @@
 // src/utils/email.ts
 import nodemailer from 'nodemailer';
+import dns from 'dns';
+
+// Force Node.js to prefer IPv4 for DNS lookups (avoids timeout on IPv6 SMTP routes)
+dns.setDefaultResultOrder('ipv4first');
+
+const EMAIL_USER = process.env.EMAIL_USER || 'support@petresqr.com';
+const EMAIL_PASS = process.env.EMAIL_PASS || 'iydo ucvb wvvv avhu';
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail', // or your email service
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false,
   auth: {
-    user: process.env.EMAIL_USER || 'support@petresqr.com',
-    pass: process.env.EMAIL_PASS || 'iydo ucvb wvvv avhu',
+    user: EMAIL_USER,
+    pass: EMAIL_PASS,
   },
 });
 
@@ -18,7 +27,7 @@ export interface EmailTemplate {
 export const sendEmail = async (emailData: EmailTemplate): Promise<void> => {
   try {
     await transporter.sendMail({
-      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+      from: process.env.EMAIL_FROM || EMAIL_USER,
       ...emailData,
     });
     console.log(`Email sent to ${emailData.to}`);

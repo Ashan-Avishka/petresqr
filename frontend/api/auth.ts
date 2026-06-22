@@ -19,6 +19,15 @@ import type {
   TestTokenResponse,
 } from './types';
 
+async function safeJson(response: Response): Promise<any> {
+  const text = await response.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(text || 'Unexpected server response');
+  }
+}
+
 class AuthAPI {
   private baseURL: string;
 
@@ -39,7 +48,7 @@ class AuthAPI {
         body: JSON.stringify(data),
       });
 
-      const result = await response.json();
+      const result = await safeJson(response);
 
       if (!response.ok) {
         return {
@@ -61,7 +70,7 @@ class AuthAPI {
         success: false,
         error: {
           code: 'NETWORK_ERROR',
-          message: 'Network error occurred',
+          message: error instanceof Error ? error.message : 'Network error occurred',
         },
       };
     }
@@ -80,7 +89,7 @@ class AuthAPI {
         body: JSON.stringify(data),
       });
 
-      const result = await response.json();
+      const result = await safeJson(response);
 
       if (!response.ok) {
         return {
@@ -108,7 +117,7 @@ class AuthAPI {
         success: false,
         error: {
           code: 'NETWORK_ERROR',
-          message: 'Network error occurred',
+          message: error instanceof Error ? error.message : 'Network error occurred',
         },
       };
     }
@@ -127,7 +136,7 @@ class AuthAPI {
         body: JSON.stringify(data),
       });
 
-      const result = await response.json();
+      const result = await safeJson(response);
 
       if (!response.ok) {
         return {
@@ -154,7 +163,7 @@ class AuthAPI {
         success: false,
         error: {
           code: 'NETWORK_ERROR',
-          message: 'Network error occurred',
+          message: error instanceof Error ? error.message : 'Network error occurred',
         },
       };
     }
@@ -173,7 +182,7 @@ class AuthAPI {
         body: JSON.stringify(data),
       });
 
-      const result = await response.json();
+      const result = await safeJson(response);
 
       if (!response.ok) {
         return {
@@ -195,7 +204,7 @@ class AuthAPI {
         success: false,
         error: {
           code: 'NETWORK_ERROR',
-          message: 'Network error occurred',
+          message: error instanceof Error ? error.message : 'Network error occurred',
         },
       };
     }
@@ -211,7 +220,7 @@ class AuthAPI {
         headers: getAuthHeaders(),
       });
 
-      const result = await response.json();
+      const result = await safeJson(response);
 
       // Always remove token on logout attempt
       removeAuthToken();
@@ -238,7 +247,7 @@ class AuthAPI {
         success: false,
         error: {
           code: 'NETWORK_ERROR',
-          message: 'Network error occurred',
+          message: error instanceof Error ? error.message : 'Network error occurred',
         },
       };
     }
@@ -257,7 +266,7 @@ class AuthAPI {
         body: JSON.stringify(data),
       });
 
-      const result = await response.json();
+      const result = await safeJson(response);
 
       if (!response.ok) {
         return {
@@ -279,7 +288,7 @@ class AuthAPI {
         success: false,
         error: {
           code: 'NETWORK_ERROR',
-          message: 'Network error occurred',
+          message: error instanceof Error ? error.message : 'Network error occurred',
         },
       };
     }
@@ -296,7 +305,7 @@ class AuthAPI {
         body: JSON.stringify(data),
       });
 
-      const result = await response.json();
+      const result = await safeJson(response);
 
       if (!response.ok) {
         return {
@@ -318,7 +327,7 @@ class AuthAPI {
         success: false,
         error: {
           code: 'NETWORK_ERROR',
-          message: 'Network error occurred',
+          message: error instanceof Error ? error.message : 'Network error occurred',
         },
       };
     }
@@ -337,7 +346,7 @@ class AuthAPI {
         body: JSON.stringify(data),
       });
 
-      const result = await response.json();
+      const result = await safeJson(response);
 
       if (!response.ok) {
         return {
@@ -364,7 +373,7 @@ class AuthAPI {
         success: false,
         error: {
           code: 'NETWORK_ERROR',
-          message: 'Network error occurred',
+          message: error instanceof Error ? error.message : 'Network error occurred',
         },
       };
     }

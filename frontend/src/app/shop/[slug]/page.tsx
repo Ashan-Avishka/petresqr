@@ -133,8 +133,8 @@ const ProductDetailPage = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-16">
         {/* Back Button */}
         <button
-          onClick={() => router.push('/tags')}
-          className="flex items-center gap-2 text-gray-300 hover:text-white mb-6 md:mb-8 transition-colors"
+          onClick={() => router.back()}
+          className="mt-10 flex items-center gap-2 text-gray-300 hover:text-white mb-6 md:mb-8 transition-colors"
         >
           <ArrowLeft className="w-4 h-4 md:w-5 md:h-5" />
           <span className="text-sm md:text-base">Back to Products</span>

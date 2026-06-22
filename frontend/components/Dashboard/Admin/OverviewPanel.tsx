@@ -65,8 +65,8 @@ export default function OverviewPanel() {
   ];
 
   return (
-    <div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-8">
+    <div className="h-full overflow-y-auto pb-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 mb-6 md:mb-8">
         {statCards.map((card, i) => {
           const Icon = card.icon;
           return (
@@ -75,14 +75,14 @@ export default function OverviewPanel() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
-              className="bg-black/40 backdrop-blur-md rounded-xl border border-primary/20 p-6 flex items-center gap-4"
+              className="bg-black/40 backdrop-blur-md rounded-xl border border-primary/20 p-3 md:p-6 flex items-center gap-3"
             >
-              <div className={`p-3 rounded-lg ${card.color}`}>
-                <Icon className="w-6 h-6 text-white" />
+              <div className={`p-2 md:p-3 rounded-lg ${card.color} flex-none`}>
+                <Icon className="w-5 h-5 md:w-6 md:h-6 text-white" />
               </div>
-              <div>
-                <p className="text-gray-400 text-sm">{card.label}</p>
-                <p className="text-white text-2xl font-bold">{card.value}</p>
+              <div className="min-w-0">
+                <p className="text-gray-400 text-xs md:text-sm truncate">{card.label}</p>
+                <p className="text-white text-lg md:text-2xl font-bold">{card.value}</p>
               </div>
             </motion.div>
           );
@@ -93,26 +93,26 @@ export default function OverviewPanel() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="bg-black/40 backdrop-blur-md rounded-xl border border-primary/20 p-6"
+        className="bg-black/40 backdrop-blur-md rounded-xl border border-primary/20 p-4 md:p-6"
       >
-        <h3 className="text-white font-semibold text-lg mb-4">Recent Orders</h3>
+        <h3 className="text-white font-semibold text-base md:text-lg mb-3 md:mb-4">Recent Orders</h3>
         <div className="space-y-1">
           {stats.recentOrders.map((order) => (
             <div
               key={order._id}
-              className="flex items-center justify-between py-3 border-b border-white/5 hover:bg-white/5 px-2 rounded-lg transition-colors"
+              className="flex items-center justify-between py-3 border-b border-white/5 hover:bg-white/5 px-2 rounded-lg transition-colors gap-3"
             >
-              <div>
-                <p className="text-white text-sm font-medium">
+              <div className="min-w-0 flex-1">
+                <p className="text-white text-sm font-medium truncate">
                   {order.userId
                     ? `${order.userId.firstName} ${order.userId.lastName}`
                     : 'Unknown User'}
                 </p>
-                <p className="text-gray-400 text-xs">
+                <p className="text-gray-400 text-xs truncate">
                   {order.petId?.name ?? '—'} · {new Date(order.createdAt).toLocaleDateString()}
                 </p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 flex-none">
                 <StatusBadge status={order.status} />
                 <span className="text-white text-sm font-medium">${order.total.toFixed(2)}</span>
               </div>

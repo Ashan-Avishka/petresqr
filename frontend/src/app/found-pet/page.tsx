@@ -153,8 +153,8 @@ export default function LostPetPage() {
             {/* Hero Header */}
             <HeroHeader
                 backgroundImage="./images/page-hero8.png"
-                title="Lorem ipsum dolor"
-                subtitle="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+                title="Found a Lost Pet?"
+                subtitle="Help reunite a furry friend with their family. Scan the QR code on their tag or enter the code below to instantly connect with the owner."
             ></HeroHeader>
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">

@@ -3,6 +3,8 @@ import { Request, Response } from 'express';
 import { User } from '../models/User';
 import { Pet } from '../models/Pet';
 import { Order } from '../models/Order';
+import { Tag } from '../models/Tag';
+import { Product } from '../models/Product';
 import { ScanLog } from '../models/ScanLog';
 import { Notification } from '../models/Notification';
 import { sendSuccess, sendError } from '../utils/response';
@@ -114,10 +116,10 @@ export class AdminController {
         return;
       }
 
-      // Get user's pets and orders
+      // Get user's pets and orders (lean keeps _id as-is, consistent with other admin endpoints)
       const [pets, orders] = await Promise.all([
-        Pet.find({ ownerId: user._id }).populate('tagId'),
-        Order.find({ userId: user._id }).populate('petId').populate('tagId')
+        Pet.find({ ownerId: user._id }).populate('tagId', 'qrCode status').lean(),
+        Order.find({ userId: user._id }).populate('petId', 'name breed').populate('tagId', 'qrCode').lean(),
       ]);
 
       sendSuccess(res, {
@@ -137,11 +139,11 @@ export class AdminController {
       const skip = (page - 1) * limit;
 
       const status = req.query.status as string;
+      const name = req.query.name as string;
       let filter: any = { isActive: true };
 
-      if (status) {
-        filter.status = status;
-      }
+      if (status) filter.status = status;
+      if (name) filter.name = { $regex: name, $options: 'i' };
 
       const [pets, total] = await Promise.all([
         Pet.find(filter)
@@ -307,6 +309,212 @@ export class AdminController {
     } catch (error) {
       console.error('Get scan analytics error:', error);
       sendError(res, 'Failed to fetch scan analytics', 500, 'SCAN_ANALYTICS_ERROR');
+    }
+  }
+
+  // ── User CRUD ──────────────────────────────────────────────────────────────
+
+  async updateUser(req: Request, res: Response): Promise<void> {
+    try {
+      const { role, isActive } = req.body;
+      const update: any = {};
+      if (role !== undefined) update.role = role;
+      if (isActive !== undefined) update.isActive = isActive;
+
+      const user = await User.findByIdAndUpdate(req.params.id, update, { new: true });
+      if (!user) { sendError(res, 'User not found', 404, 'USER_NOT_FOUND'); return; }
+      sendSuccess(res, user.toJSON());
+    } catch (error) {
+      console.error('Update user error:', error);
+      sendError(res, 'Failed to update user', 500, 'UPDATE_USER_ERROR');
+    }
+  }
+
+  async deleteUser(req: Request, res: Response): Promise<void> {
+    try {
+      const user = await User.findByIdAndDelete(req.params.id);
+      if (!user) { sendError(res, 'User not found', 404, 'USER_NOT_FOUND'); return; }
+      sendSuccess(res, { message: 'User deleted' });
+    } catch (error) {
+      console.error('Delete user error:', error);
+      sendError(res, 'Failed to delete user', 500, 'DELETE_USER_ERROR');
+    }
+  }
+
+  // ── Pet CRUD ───────────────────────────────────────────────────────────────
+
+  async getPetById(req: Request, res: Response): Promise<void> {
+    try {
+      const pet = await Pet.findById(req.params.id)
+        .populate('ownerId', 'firstName lastName email')
+        .populate('tagId', 'qrCode status isActive activatedAt')
+        .lean();
+      if (!pet) { sendError(res, 'Pet not found', 404, 'PET_NOT_FOUND'); return; }
+      sendSuccess(res, pet);
+    } catch (error) {
+      console.error('Get pet by ID error:', error);
+      sendError(res, 'Failed to fetch pet', 500, 'FETCH_PET_ERROR');
+    }
+  }
+
+  async updatePet(req: Request, res: Response): Promise<void> {
+    try {
+      const { name, breed, type, status } = req.body;
+      const update: any = {};
+      if (name !== undefined) update.name = name;
+      if (breed !== undefined) update.breed = breed;
+      if (type !== undefined) update.type = type;
+      if (status !== undefined) update.status = status;
+
+      const pet = await Pet.findByIdAndUpdate(req.params.id, update, { new: true })
+        .populate('ownerId', 'firstName lastName email')
+        .populate('tagId', 'qrCode status');
+      if (!pet) { sendError(res, 'Pet not found', 404, 'PET_NOT_FOUND'); return; }
+      sendSuccess(res, pet.toJSON());
+    } catch (error) {
+      console.error('Update pet error:', error);
+      sendError(res, 'Failed to update pet', 500, 'UPDATE_PET_ERROR');
+    }
+  }
+
+  async deletePet(req: Request, res: Response): Promise<void> {
+    try {
+      const pet = await Pet.findByIdAndDelete(req.params.id);
+      if (!pet) { sendError(res, 'Pet not found', 404, 'PET_NOT_FOUND'); return; }
+      sendSuccess(res, { message: 'Pet deleted' });
+    } catch (error) {
+      console.error('Delete pet error:', error);
+      sendError(res, 'Failed to delete pet', 500, 'DELETE_PET_ERROR');
+    }
+  }
+
+  // ── Tag CRUD ───────────────────────────────────────────────────────────────
+
+  async getTags(req: Request, res: Response): Promise<void> {
+    try {
+      const { page, limit, sortBy, sortOrder } = getPaginationOptions(req.query);
+      const skip = (page - 1) * limit;
+
+      const status = req.query.status as string;
+      const search = req.query.search as string;
+      const filter: any = {};
+      if (status) filter.status = status;
+      if (search) filter.qrCode = { $regex: search, $options: 'i' };
+
+      const [tags, total] = await Promise.all([
+        Tag.find(filter)
+          .populate('userId', 'firstName lastName email')
+          .populate('petId', 'name breed')
+          .populate('productId', 'name images')
+          .sort({ [sortBy!]: sortOrder === 'asc' ? 1 : -1 })
+          .skip(skip)
+          .limit(limit)
+          .lean(),
+        Tag.countDocuments(filter),
+      ]);
+
+      const processed = tags.map((t: any) => ({
+        ...t,
+        productImage: t.productId?.images?.[0]?.url ?? null,
+        productId: undefined,
+      }));
+
+      const pagination = createPaginationResult(page, limit, total);
+      sendSuccess(res, processed, 200, pagination);
+    } catch (error) {
+      console.error('Get tags error:', error);
+      sendError(res, 'Failed to fetch tags', 500, 'FETCH_TAGS_ERROR');
+    }
+  }
+
+  async updateTag(req: Request, res: Response): Promise<void> {
+    try {
+      const { status, isActive } = req.body;
+      const update: any = {};
+      if (status !== undefined) update.status = status;
+      if (isActive !== undefined) update.isActive = isActive;
+
+      const tag = await Tag.findByIdAndUpdate(req.params.id, update, { new: true })
+        .populate('userId', 'firstName lastName email')
+        .populate('petId', 'name breed')
+        .lean();
+      if (!tag) { sendError(res, 'Tag not found', 404, 'TAG_NOT_FOUND'); return; }
+      sendSuccess(res, tag);
+    } catch (error) {
+      console.error('Update tag error:', error);
+      sendError(res, 'Failed to update tag', 500, 'UPDATE_TAG_ERROR');
+    }
+  }
+
+  async getOrderById(req: Request, res: Response): Promise<void> {
+    try {
+      const order = await Order.findById(req.params.id)
+        .populate('userId', 'firstName lastName email phone')
+        .populate('petId', 'name breed photoUrl')
+        .populate('tagId', 'qrCode status')
+        .lean();
+      if (!order) { sendError(res, 'Order not found', 404, 'ORDER_NOT_FOUND'); return; }
+      sendSuccess(res, order);
+    } catch (error) {
+      console.error('Get order by id error:', error);
+      sendError(res, 'Failed to fetch order', 500, 'FETCH_ORDER_ERROR');
+    }
+  }
+
+  async getProducts(req: Request, res: Response): Promise<void> {
+    try {
+      const { page, limit, sortBy, sortOrder } = getPaginationOptions(req.query);
+      const skip = (page - 1) * limit;
+      const search = req.query.search as string;
+      const category = req.query.category as string;
+
+      const filter: any = {};
+      if (search) filter.$or = [{ name: new RegExp(search, 'i') }, { sku: new RegExp(search, 'i') }];
+      if (category) filter.category = category;
+
+      const [products, total] = await Promise.all([
+        Product.find(filter)
+          .sort({ [sortBy!]: sortOrder === 'asc' ? 1 : -1 })
+          .skip(skip)
+          .limit(limit)
+          .lean(),
+        Product.countDocuments(filter),
+      ]);
+
+      sendSuccess(res, products, 200, createPaginationResult(page, limit, total));
+    } catch (error) {
+      console.error('Get products error:', error);
+      sendError(res, 'Failed to fetch products', 500, 'FETCH_PRODUCTS_ERROR');
+    }
+  }
+
+  async updateProduct(req: Request, res: Response): Promise<void> {
+    try {
+      const allowed = ['name', 'description', 'price', 'compareAtPrice', 'availability', 'stock',
+        'availableColors', 'availableSizes', 'keyFeatures', 'badge', 'isFeatured', 'isActive',
+        'petCategory', 'specifications', 'weight'];
+      const update: any = {};
+      for (const key of allowed) {
+        if (req.body[key] !== undefined) update[key] = req.body[key];
+      }
+
+      const product = await Product.findByIdAndUpdate(req.params.id, update, { new: true, runValidators: true }).lean();
+      if (!product) { sendError(res, 'Product not found', 404, 'PRODUCT_NOT_FOUND'); return; }
+      sendSuccess(res, product);
+    } catch (error) {
+      console.error('Update product error:', error);
+      sendError(res, 'Failed to update product', 500, 'UPDATE_PRODUCT_ERROR');
+    }
+  }
+
+  async deleteTag(req: Request, res: Response): Promise<void> {
+    try {
+      const tag = await Tag.findByIdAndDelete(req.params.id);
+      if (!tag) { sendError(res, 'Tag not found', 404, 'TAG_NOT_FOUND'); return; }
+      sendSuccess(res, { message: 'Tag deleted' });
+    } catch (error) {
+      console.error('Delete tag error:', error);
+      sendError(res, 'Failed to delete tag', 500, 'DELETE_TAG_ERROR');
     }
   }
 

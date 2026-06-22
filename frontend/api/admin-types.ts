@@ -45,12 +45,24 @@ export interface AdminPet {
   type: string;
   status: string;
   isActive: boolean;
-  ownerId: { firstName: string; lastName: string; email: string } | null;
-  tagId: { qrCode: string; status: string } | null;
+  photoUrl?: string;
+  ownerId: { _id?: string; firstName: string; lastName: string; email: string } | null;
+  tagId: { _id?: string; qrCode: string; status: string } | null;
   createdAt: string;
 }
 
 export type OrderStatus = 'pending' | 'paid' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+
+export interface AdminOrderItem {
+  productId: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image?: string;
+  sku?: string;
+  size?: string;
+  color?: string;
+}
 
 export interface AdminOrder {
   _id: string;
@@ -60,6 +72,12 @@ export interface AdminOrder {
   tagId: { qrCode: string; status: string } | null;
   status: OrderStatus;
   total: number;
+  subtotal?: number;
+  tax?: number;
+  shipping?: number;
+  items?: AdminOrderItem[];
+  shippingAddress?: { street: string; city: string; state: string; zipCode: string; country: string };
+  paymentMethod?: string;
   trackingNumber?: string;
   createdAt: string;
   updatedAt: string;
@@ -85,6 +103,47 @@ export interface TopScannedPet {
     breed: string;
     ownerId?: { firstName: string; lastName: string };
   }>;
+}
+
+export interface AdminTag {
+  _id: string;
+  qrCode?: string;
+  status: 'active' | 'inactive' | 'pending';
+  isActive: boolean;
+  productImage?: string | null;
+  userId: { _id: string; firstName: string; lastName: string; email: string } | null;
+  petId: { _id: string; name: string; breed: string } | null;
+  createdAt: string;
+  updatedAt: string;
+  activatedAt?: string;
+  purchaseDate?: string;
+}
+
+export interface AdminProduct {
+  _id: string;
+  name: string;
+  slug: string;
+  category: 'tag' | 'accessory' | 'bundle' | 'merchandise';
+  petCategory?: 'dogs' | 'cats' | 'others';
+  description: string;
+  price: number;
+  compareAtPrice?: number;
+  availability: 'in_stock' | 'out_of_stock' | 'pre_order' | 'discontinued';
+  stock: number;
+  availableColors: Array<{ name: string; hexCode: string }>;
+  availableSizes: string[];
+  keyFeatures: string[];
+  images: Array<{ url: string; alt: string; isPrimary: boolean }>;
+  specifications: Record<string, any>;
+  weight?: number;
+  sku: string;
+  isActive: boolean;
+  isFeatured: boolean;
+  badge?: 'bestseller' | 'new' | 'sale' | 'limited';
+  rating?: number;
+  reviews?: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ScanAnalytics {

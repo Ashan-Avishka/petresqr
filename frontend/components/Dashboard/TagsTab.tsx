@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Tag, X, CheckCircle, XCircle, Link, Unlink, ChevronDown } from 'lucide-react';
+import { Tag, X, CheckCircle, XCircle, Link, Unlink, ChevronDown, Search } from 'lucide-react';
 import { useUserContext } from '../../contexts/UserContext';
 import type { Tag as TagType } from '../../api/tag-types';
 import { getImageUrl } from '../../api/config';
@@ -180,6 +180,8 @@ const TagsTab: React.FC = () => {
     const [modal, setModal] = useState<ModalState>({ type: 'none' });
     const [loadingId, setLoadingId] = useState<string | null>(null);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
+    const [search, setSearch] = useState('');
+    const [statusFilter, setStatusFilter] = useState('');
 
     const withLoading = async (tagId: string, fn: () => Promise<boolean>) => {
         setLoadingId(tagId);
@@ -207,12 +209,45 @@ const TagsTab: React.FC = () => {
     const handleUnassign = (tag: TagType) =>
         withLoading(tag._id, () => unassignTag(tag._id));
 
+    const filteredTags = tags.filter((tag) => {
+        const q = search.toLowerCase();
+        const matchesSearch = !q ||
+            (tag.qrCode?.toLowerCase().includes(q)) ||
+            (tag.pet?.name?.toLowerCase().includes(q));
+        const matchesStatus = !statusFilter || tag.status === statusFilter;
+        return matchesSearch && matchesStatus;
+    });
+
     return (
-        <div>
+        <div className="h-full overflow-y-auto md:pr-4 pr-2">
             {/* Header */}
-            <div className="mb-6">
-                <h2 className="text-4xl font-bold text-white">My Tags</h2>
-                <p className="text-gray-400 mt-1">Manage your pet tracking tags</p>
+            <div className="mb-4 md:mb-6">
+                <div className="hidden md:block mb-3">
+                    <h2 className="text-4xl font-bold text-white">My Tags</h2>
+                    <p className="text-gray-400 mt-1">Manage your pet tracking tags</p>
+                </div>
+                <div className="flex items-center gap-2">
+                    <div className="relative flex-1 min-w-0">
+                        <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                        <input
+                            type="text"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            placeholder="Search by QR code or pet…"
+                            className="w-full bg-black/40 border border-gray-700 text-white rounded-lg pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-primary/60"
+                        />
+                    </div>
+                    <select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        className="flex-none bg-black/40 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary/60"
+                    >
+                        <option value="">All Statuses</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="pending">Pending</option>
+                    </select>
+                </div>
             </div>
 
             {/* Error banner */}
@@ -228,7 +263,7 @@ const TagsTab: React.FC = () => {
 
             {/* Tag list */}
             <div className="grid gap-4">
-                {tags.map(tag => {
+                {filteredTags.map(tag => {
                     const isLoading = loadingId === tag._id;
                     const assignedPet = tag.pet;
                     const hasQRCode = !!tag.qrCode;
@@ -238,120 +273,112 @@ const TagsTab: React.FC = () => {
                             key={tag._id}
                             className="bg-gradient-to-br from-primary/50 via-black to-black border border-gray-800 rounded-xl shadow-md p-5 hover:border-gray-700 transition-all cursor-pointer"
                         >
-                            {/* Top row: icon + info + status */}
-                            <div className="flex items-start justify-between gap-4">
-                                <div className="flex items-start gap-4">
-                                    <div className="w-20 h-20 bg-black border border-gray-700 shadow-md shadow-primary/20 rounded-xl flex items-center justify-center shrink-0 overflow-hidden">
-                                        {tag.productImage
-                                            ? <img src={getImageUrl(tag.productImage)} alt="Product" className="w-full h-full object-cover rounded-xl" />
-                                            : <Tag className="w-5 h-5 text-primary" />
-                                        }
+                            {/* Top row: image + info (QR code, status, pet, dates) */}
+                            <div className="flex items-start gap-3">
+                                <div className="w-14 h-14 md:w-16 md:h-16 bg-black border border-gray-700 shadow-md shadow-primary/20 rounded-xl flex items-center justify-center shrink-0 overflow-hidden">
+                                    {tag.productImage
+                                        ? <img src={getImageUrl(tag.productImage)} alt="Product" className="w-full h-full object-cover rounded-xl" />
+                                        : <Tag className="w-4 h-4 text-primary" />
+                                    }
+                                </div>
+
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-start justify-between gap-2 mb-1">
+                                        <h3 className="text-white text-sm md:text-lg font-mono truncate">{tag.qrCode}</h3>
+                                        <StatusBadge status={tag.status} isActive={tag.isActive} />
                                     </div>
-                                    <div className=''>
-                                        <h3 className="text-white text-2xl">
-                                            {/* {hasQRCode ? tag.qrCode : 'Awaiting activation'} */}
-                                            {tag.qrCode}
-                                        </h3>
 
-                                        {/* Pet assignment info */}
-                                        <div className="mt-3">
-                                            {assignedPet?.name ? (
-                                                <div className="flex items-center gap-2 text-sm text-gray-300">
-                                                    <CheckCircle className="w-4 h-4 text-primary shrink-0" />
-                                                    <span>
-                                                        Assigned to{' '}
-                                                        <span className="text-white font-semibold">{assignedPet.name}</span>
-                                                        {assignedPet.breed && (
-                                                            <span className="text-gray-500"> · {assignedPet.breed}</span>
-                                                        )}
-                                                    </span>
-                                                </div>
-                                            ) : (
-                                                <div className="flex items-center gap-2 text-sm text-gray-500">
-                                                    <XCircle className="w-4 h-4 shrink-0" />
-                                                    <span>Not assigned to any pet</span>
-                                                </div>
-                                            )}
-
-                                            <div className='flex mt-2'>
-                                                <p className="text-xs text-gray-500 border-r-1 border-gray-600 pr-2 mr-2">
-                                                    Purchased: {new Date(tag.createdAt).toLocaleDateString()}
-                                                </p>
-                                                {tag.activatedAt && (
-                                                    <p className="text-xs text-gray-500">
-                                                        Activated: {new Date(tag.activatedAt).toLocaleDateString()}
-                                                    </p>
+                                    {assignedPet?.name ? (
+                                        <div className="flex items-center gap-1.5 text-xs text-gray-300">
+                                            <CheckCircle className="w-3.5 h-3.5 text-primary shrink-0" />
+                                            <span className="truncate">
+                                                <span className="text-white font-semibold">{assignedPet.name}</span>
+                                                {assignedPet.breed && (
+                                                    <span className="text-gray-500"> · {assignedPet.breed}</span>
                                                 )}
-                                            </div>
-
+                                            </span>
                                         </div>
-
-                                        {/* Action buttons */}
-                                        <div className="mt-4 flex flex-wrap gap-2">
-
-                                            {/* Activate — show when (pending OR inactive OR deactivated) AND has a pet */}
-                                            {(tag.status === 'pending' || tag.status === 'inactive' || !tag.isActive) && (
-                                                <button
-                                                    disabled={isLoading || !tag.pet.id}
-                                                    onClick={() => setModal({ type: 'activate', tag })}
-                                                    title={!tag.pet.id ? 'Assign to a pet first' : undefined}
-                                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-black text-xs font-semibold hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
-                                                >
-                                                    <CheckCircle className="w-3.5 h-3.5" />
-                                                    Activate
-                                                </button>
-                                            )}
-
-                                            {/* Deactivate — show when status=active and isActive=true */}
-                                            {tag.status === 'active' && tag.isActive && (
-                                                <button
-                                                    disabled={isLoading}
-                                                    onClick={() => setModal({ type: 'deactivate', tag })}
-                                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-600 text-gray-300 text-xs font-semibold hover:bg-gray-700 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                                >
-                                                    <XCircle className="w-3.5 h-3.5" />
-                                                    Deactivate
-                                                </button>
-                                            )}
-
-                                            {/* Assign — show when no pet is linked */}
-                                            {!tag.pet && (
-                                                <button
-                                                    disabled={isLoading || pets.filter(p => p.status === 'inactive' && !p.tag.tagId).length === 0}
-                                                    onClick={() => setModal({ type: 'assign', tag })}
-                                                    title={pets.filter(p => p.status === 'inactive').length === 0 ? 'No inactive pets available' : undefined}
-                                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-600 text-gray-300 text-xs font-semibold hover:bg-gray-700 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                                >
-                                                    <Link className="w-3.5 h-3.5" />
-                                                    Assign to Pet
-                                                </button>
-                                            )}
-
-                                            {/* Unassign — show when a pet is linked */}
-                                            {tag.pet && (
-                                                <button
-                                                    disabled={isLoading}
-                                                    onClick={() => setModal({ type: 'unassign', tag })}
-                                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-900/30 border border-red-500/50 text-red-400 text-xs font-semibold hover:bg-red-900/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                                >
-                                                    <Unlink className="w-3.5 h-3.5" />
-                                                    Unassign
-                                                </button>
-                                            )}
-
-                                            {isLoading && (
-                                                <span className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-400">
-                                                    <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
-                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z" />
-                                                    </svg>
-                                                    Working…
-                                                </span>
-                                            )}
+                                    ) : (
+                                        <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                                            <XCircle className="w-3.5 h-3.5 shrink-0" />
+                                            <span>Not assigned</span>
                                         </div>
+                                    )}
+
+                                    <div className="flex flex-wrap gap-x-2 mt-1">
+                                        <p className="text-xs text-gray-500">
+                                            Purchased: {new Date(tag.createdAt).toLocaleDateString()}
+                                        </p>
+                                        {tag.activatedAt && (
+                                            <p className="text-xs text-gray-500">
+                                                · Activated: {new Date(tag.activatedAt).toLocaleDateString()}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
-                                <StatusBadge status={tag.status} isActive={tag.isActive} />
+                            </div>
+
+                            {/* Buttons row — full width */}
+                            <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-white/10">
+                                {/* Activate */}
+                                {(tag.status === 'pending' || tag.status === 'inactive' || !tag.isActive) && (
+                                    <button
+                                        disabled={isLoading || !tag.pet?.id}
+                                        onClick={() => setModal({ type: 'activate', tag })}
+                                        title={!tag.pet?.id ? 'Assign to a pet first' : undefined}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-black text-xs font-semibold hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                        <CheckCircle className="w-3.5 h-3.5" />
+                                        Activate
+                                    </button>
+                                )}
+
+                                {/* Deactivate */}
+                                {tag.status === 'active' && tag.isActive && (
+                                    <button
+                                        disabled={isLoading}
+                                        onClick={() => setModal({ type: 'deactivate', tag })}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-600 text-gray-300 text-xs font-semibold hover:bg-gray-700 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                        <XCircle className="w-3.5 h-3.5" />
+                                        Deactivate
+                                    </button>
+                                )}
+
+                                {/* Assign */}
+                                {!tag.pet && (
+                                    <button
+                                        disabled={isLoading || pets.filter(p => p.status === 'inactive' && !p.tag.tagId).length === 0}
+                                        onClick={() => setModal({ type: 'assign', tag })}
+                                        title={pets.filter(p => p.status === 'inactive').length === 0 ? 'No inactive pets available' : undefined}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-600 text-gray-300 text-xs font-semibold hover:bg-gray-700 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                        <Link className="w-3.5 h-3.5" />
+                                        Assign to Pet
+                                    </button>
+                                )}
+
+                                {/* Unassign */}
+                                {tag.pet && (
+                                    <button
+                                        disabled={isLoading}
+                                        onClick={() => setModal({ type: 'unassign', tag })}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-900/30 border border-red-500/50 text-red-400 text-xs font-semibold hover:bg-red-900/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                        <Unlink className="w-3.5 h-3.5" />
+                                        Unassign
+                                    </button>
+                                )}
+
+                                {isLoading && (
+                                    <span className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-400">
+                                        <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z" />
+                                        </svg>
+                                        Working…
+                                    </span>
+                                )}
                             </div>
 
 
@@ -361,7 +388,7 @@ const TagsTab: React.FC = () => {
             </div>
 
             {/* Empty state */}
-            {tags.length === 0 && (
+            {filteredTags.length === 0 && (
                 <div className="text-center py-16">
                     <Tag className="w-16 h-16 text-gray-700 mx-auto mb-4" />
                     <h3 className="text-xl font-semibold text-white mb-2">No tags yet</h3>

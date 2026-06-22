@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import config from '../../../config/env';
 import { useAuthContext } from '../../../contexts/AuthContext';
+import { useUserContext } from '../../../contexts/UserContext';
 import { getImageUrl } from '../../../api/config';
 
 const SQUARE_APPLICATION_ID = config.square.applicationId;
@@ -32,6 +33,7 @@ export default function CartPage() {
   } = useCart();
 
   const { isAuthenticated, isLoading: authLoading } = useAuthContext();
+  const { refreshUserData } = useUserContext();
   const [currentStep, setCurrentStep] = useState(1);
   const [promoCode, setPromoCode] = useState('');
   const [appliedPromo, setAppliedPromo] = useState(false);
@@ -218,6 +220,7 @@ export default function CartPage() {
       if (response.ok && response.data) {
         setOrderDetails(response.data);
         clearCart();
+        refreshUserData();
         nextStep();
       } else {
         setPaymentError(response.error?.message || 'Payment failed. Please try again.');
@@ -670,7 +673,7 @@ export default function CartPage() {
                         Continue Shopping
                       </motion.button>
                     </Link>
-                    <Link href={`/orders/${orderDetails.order._id}`}>
+                    <Link href="/dashboard/orders">
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
