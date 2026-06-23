@@ -3,8 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, MapPin, Phone, Mail, User, HeartPulse, Navigation } from 'lucide-react';
-import Image from 'next/image';
-import { foundAPI } from '../../api/found-api'; 
+import { foundAPI } from '../../api/found-api';
 import { getImageUrl } from '../../api/config';
 
 interface PetProfileModalProps {
@@ -216,276 +215,219 @@ const PetProfileModal: React.FC<PetProfileModalProps> = ({ isOpen, onClose, pet 
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white/20 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+              className="bg-zinc-900 border border-white/10 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden"
             >
-              {/* Header */}
-              <div className="sticky top-0 bg-gradient-to-tl from-black to-primary p-6 flex justify-between items-start z-10">
-                <div className="flex items-center gap-4">
-                  {pet.photoUrl && (
-                    <div className="relative w-20 h-20 rounded-full overflow-hidden border-4 border-white shadow-lg">
+              {!showNotifyForm ? (
+                /* ── Pet Profile View ── */
+                <div className="flex flex-col">
+                  {/* Square image */}
+                  <div className="relative w-full overflow-hidden bg-black/40">
+                    {pet.photoUrl ? (
                       <img
                         src={getImageUrl(pet.photoUrl)}
                         alt={pet.name}
-                        className="object-cover"
+                        className="w-full h-full object-cover object-center"
                       />
-                    </div>
-                  )}
-                  <div>
-                    <h2 className="text-3xl font-bold text-white">{pet.name}</h2>
-                    <p className="text-white">{pet.breed}</p>
-                    <p className="text-white text-sm">{pet.age} years old</p>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <span className="text-7xl">🐾</span>
+                      </div>
+                    )}
+                    <button
+                      onClick={onClose}
+                      className="absolute top-3 right-3 bg-black/50 hover:bg-black/80 text-white rounded-full p-1.5 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
                   </div>
-                </div>
-                <button
-                  onClick={onClose}
-                  className="text-white hover:bg-white/20 rounded-full p-2 transition-colors"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
 
-              {/* Content */}
-              <div className="p-6 space-y-6">
-                {!showNotifyForm ? (
-                  <>
-                    {/* Medical Information */}
-                    {hasMedicalInfo && (
-                      <div className="space-y-4">
-                        <h3 className="text-xl text-white flex items-center gap-2">
-                          <HeartPulse className="w-5 h-5 text-red-500" />
-                          Medical Information
-                        </h3>
+                  {/* Name bar */}
+                  <div className="px-5 pt-4 pb-3 border-b border-white/10">
+                    <h2 className="text-2xl font-bold text-white leading-tight">{pet.name}</h2>
+                    <p className="text-gray-400 text-sm mt-0.5">{pet.breed} · {pet.age} yrs</p>
+                  </div>
 
-                        <div className="space-y-3">
-                          {pet.medical.conditions !== 'None' && (
-                            <div className="bg-black/20 p-4 rounded-lg border border-red-400">
-                              <p className="text-sm text-red-400 font-semibold">
-                                Medical Conditions
-                              </p>
-                              <p className="text-white mt-1">{pet.medical.conditions}</p>
-                            </div>
-                          )}
+                  {/* Info grid */}
+                  <div className="px-5 py-4 grid grid-cols-2 gap-3">
+                    {/* Owner */}
+                    <div className="col-span-2 bg-white/5 rounded-xl p-3 flex items-center gap-3">
+                      <User className="w-4 h-4 text-primary shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs text-gray-400">Owner</p>
+                        <p className="text-white text-sm font-medium truncate">{pet.owner.name}</p>
+                      </div>
+                    </div>
 
-                          {pet.medical.allergies !== 'None' && (
-                            <div className="bg-black/20 p-4 rounded-lg border border-orange-400">
-                              <p className="text-sm text-orange-400 font-semibold">Allergies</p>
-                              <p className="text-white mt-1">{pet.medical.allergies}</p>
-                            </div>
-                          )}
+                    <div className="bg-white/5 rounded-xl p-3 flex items-center gap-2 min-w-0">
+                      <Mail className="w-4 h-4 text-primary shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs text-gray-400">Email</p>
+                        <p className="text-white text-xs truncate">{pet.owner.email}</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-white/5 rounded-xl p-3 flex items-center gap-2 min-w-0">
+                      <Phone className="w-4 h-4 text-primary shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs text-gray-400">Phone</p>
+                        <p className="text-white text-xs truncate">{pet.owner.phone}</p>
+                      </div>
+                    </div>
+
+                    {/* Medical — only if present */}
+                    {pet.medical.conditions !== 'None' && (
+                      <div className="bg-red-950/40 rounded-xl p-3 flex items-start gap-2 col-span-2">
+                        <HeartPulse className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-xs text-red-400">Medical Conditions</p>
+                          <p className="text-white text-sm">{pet.medical.conditions}</p>
                         </div>
                       </div>
                     )}
 
-                    {/* Owner Information */}
-                    <div className="space-y-4">
-                      <h3 className="text-xl text-white flex items-center gap-2">
-                        <User className="w-5 h-5 text-primary" />
-                        Owner Information
-                      </h3>
-
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-3 bg-gray-50/20 p-4 rounded-lg">
-                          <User className="w-5 h-5 text-gray-300" />
-                          <div>
-                            <p className="text-sm text-gray-300">Name</p>
-                            <p className="text-white font-medium">{pet.owner.name}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-3 bg-gray-50/20 p-4 rounded-lg">
-                          <Mail className="w-5 h-5 text-gray-300" />
-                          <div>
-                            <p className="text-sm text-gray-300">Email</p>
-                            <p className="text-white font-medium">{pet.owner.email}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-3 bg-gray-50/20 p-4 rounded-lg">
-                          <Phone className="w-5 h-5 text-gray-300" />
-                          <div>
-                            <p className="text-sm text-gray-300">Phone</p>
-                            <p className="text-white font-medium">{pet.owner.phone}</p>
-                          </div>
+                    {pet.medical.allergies !== 'None' && (
+                      <div className="bg-orange-950/40 rounded-xl p-3 flex items-start gap-2 col-span-2">
+                        <HeartPulse className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-xs text-orange-400">Allergies</p>
+                          <p className="text-white text-sm">{pet.medical.allergies}</p>
                         </div>
                       </div>
-                    </div>
+                    )}
+                  </div>
 
-                    {/* Notify Button */}
+                  {/* Notify button */}
+                  <div className="px-5 pb-5">
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => setShowNotifyForm(true)}
-                      className="w-full py-4 bg-gradient-to-tl from-black to-primary text-white font-semibold rounded-xl shadow-sm shadow-primary hover:shadow-md transition-all"
+                      className="w-full py-3 bg-gradient-to-tl from-black to-primary text-white font-semibold rounded-xl shadow-sm shadow-primary hover:shadow-md transition-all"
                     >
                       Notify Owner
                     </motion.button>
-                  </>
-                ) : (
-                  <>
-                    {/* Notification Form */}
-                    <div className="space-y-6">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-xl text-white">Notify Owner</h3>
-                        <button
-                          onClick={() => setShowNotifyForm(false)}
-                          className="text-gray-400 hover:text-white"
-                        >
-                          Back
-                        </button>
-                      </div>
-
-                      <p className="text-sm text-gray-300">
-                        Fill in your contact information and location details. All fields are
-                        optional, but providing more information helps reunite {pet.name} with
-                        their owner faster.
-                      </p>
-
-                      {/* Finder Contact */}
-                      <div className="space-y-4">
-                        <h4 className="text-white">Your Contact Information</h4>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-300 mb-1">
-                            Your Name
-                          </label>
-                          <input
-                            type="text"
-                            name="finderContact.name"
-                            value={formData.finderContact.name}
-                            onChange={handleInputChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none text-white placeholder-gray-400"
-                            placeholder="John Doe"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-300 mb-1">
-                            Your Phone
-                          </label>
-                          <input
-                            type="tel"
-                            name="finderContact.phone"
-                            value={formData.finderContact.phone}
-                            onChange={handleInputChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none text-white placeholder-gray-400"
-                            placeholder="+1234567890"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-300 mb-1">
-                            Your Email
-                          </label>
-                          <input
-                            type="email"
-                            name="finderContact.email"
-                            value={formData.finderContact.email}
-                            onChange={handleInputChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none text-white placeholder-gray-400"
-                            placeholder="john@example.com"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Location */}
-                      <div className="space-y-4">
-                        <h4 className="text-white">Location</h4>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-300 mb-1">
-                            Address
-                          </label>
-                          <input
-                            type="text"
-                            name="location.address"
-                            value={formData.location.address}
-                            onChange={handleInputChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none text-white placeholder-gray-400"
-                            placeholder="123 Main St, New York, NY"
-                          />
-                        </div>
-
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            onClick={getCurrentLocation}
-                            disabled={gettingLocation}
-                            className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 disabled:bg-gray-400"
-                          >
-                            <Navigation className="w-4 h-4" />
-                            {gettingLocation ? 'Getting Location...' : 'Use Current Location'}
-                          </button>
-                        </div>
-
-                        {formData.location.latitude && formData.location.longitude && (
-                          <div className="bg-green-50/60 p-3 rounded-lg border border-green-200">
-                            <p className="text-sm text-green-800 flex items-center gap-2">
-                              <MapPin className="w-4 h-4" />
-                              Location captured: {formData.location.latitude.toFixed(6)},{' '}
-                              {formData.location.longitude.toFixed(6)}
-                            </p>
-                            <a
-                              href={getGoogleMapsLink() || '#'}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:underline text-sm mt-1 inline-block"
-                            >
-                              View on Google Maps →
-                            </a>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Pet Condition */}
-                      <div className="space-y-4">
-                        <h4 className="text-white">Pet Condition</h4>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-300 mb-1">
-                            Condition
-                          </label>
-                          <select
-                            name="condition"
-                            value={formData.condition}
-                            onChange={handleInputChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none text-white"
-                          >
-                            <option value="HEALTHY" className='bg-gray-500'>Healthy</option>
-                            <option value="INJURED" className='bg-gray-500'>Injured</option>
-                            <option value="SICK" className='bg-gray-500'>Sick</option>
-                            <option value="UNKNOWN" className='bg-gray-500'>Unknown</option>
-                          </select>
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-300 mb-1">
-                            Additional Notes
-                          </label>
-                          <textarea
-                            name="additionalNotes"
-                            value={formData.additionalNotes}
-                            onChange={handleInputChange}
-                            rows={4}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none focus:outline-none text-white placeholder-gray-400"
-                            placeholder="Found near the park, seems friendly and well-fed..."
-                          />
-                        </div>
-                      </div>
-
-                      {/* Submit Button */}
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={handleNotifyOwner}
-                        disabled={loading}
-                        className="w-full py-4 bg-gradient-to-tl from-black to-primary text-white font-semibold rounded-xl shadow-sm shadow-primary hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {loading ? 'Sending Notification...' : 'Send Notification to Owner'}
-                      </motion.button>
+                  </div>
+                </div>
+              ) : (
+                /* ── Notify Form View ── */
+                <div className="flex flex-col max-h-[90vh] overflow-y-auto">
+                  {/* Form header */}
+                  <div className="sticky top-0 bg-zinc-900 border-b border-white/10 px-5 py-4 flex items-center justify-between z-10">
+                    <div>
+                      <h3 className="text-lg font-semibold text-white">Notify Owner</h3>
+                      <p className="text-xs text-gray-400 mt-0.5">All fields optional</p>
                     </div>
-                  </>
-                )}
-              </div>
+                    <button
+                      onClick={() => setShowNotifyForm(false)}
+                      className="text-gray-400 hover:text-white transition-colors flex items-center gap-1.5 text-sm"
+                    >
+                      <X className="w-4 h-4" /> Back
+                    </button>
+                  </div>
+
+                  <div className="px-5 py-4 space-y-5">
+                    <p className="text-sm text-gray-400">
+                      More details help reunite <span className="text-white">{pet.name}</span> with their owner faster.
+                    </p>
+
+                    {/* Contact fields */}
+                    <div className="space-y-3">
+                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Your Contact</p>
+                      {[
+                        { label: 'Name', name: 'finderContact.name', type: 'text', placeholder: 'John Doe' },
+                        { label: 'Phone', name: 'finderContact.phone', type: 'tel', placeholder: '+1234567890' },
+                        { label: 'Email', name: 'finderContact.email', type: 'email', placeholder: 'john@example.com' },
+                      ].map(f => (
+                        <div key={f.name}>
+                          <label className="block text-xs text-gray-400 mb-1">{f.label}</label>
+                          <input
+                            type={f.type}
+                            name={f.name}
+                            value={f.name.split('.').reduce((o: any, k) => o?.[k], formData) ?? ''}
+                            onChange={handleInputChange}
+                            placeholder={f.placeholder}
+                            className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-primary/60 transition-colors"
+                          />
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Location */}
+                    <div className="space-y-3">
+                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Location</p>
+                      <input
+                        type="text"
+                        name="location.address"
+                        value={formData.location.address}
+                        onChange={handleInputChange}
+                        placeholder="123 Main St, City"
+                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-primary/60 transition-colors"
+                      />
+                      <button
+                        type="button"
+                        onClick={getCurrentLocation}
+                        disabled={gettingLocation}
+                        className="w-full px-3 py-2 bg-white/5 border border-white/10 hover:border-primary/40 rounded-lg text-gray-300 text-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                      >
+                        <Navigation className="w-4 h-4" />
+                        {gettingLocation ? 'Getting location…' : 'Use current location'}
+                      </button>
+                      {formData.location.latitude && formData.location.longitude && (
+                        <div className="bg-green-950/40 border border-green-800/40 rounded-lg px-3 py-2 flex items-center justify-between">
+                          <p className="text-xs text-green-400 flex items-center gap-1.5">
+                            <MapPin className="w-3 h-3" />
+                            {formData.location.latitude.toFixed(5)}, {formData.location.longitude.toFixed(5)}
+                          </p>
+                          <a
+                            href={getGoogleMapsLink() || '#'}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-primary hover:underline"
+                          >
+                            View map →
+                          </a>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Condition + Notes */}
+                    <div className="space-y-3">
+                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Pet Condition</p>
+                      <select
+                        name="condition"
+                        value={formData.condition}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 bg-zinc-800 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-primary/60 transition-colors"
+                      >
+                        <option value="HEALTHY">Healthy</option>
+                        <option value="INJURED">Injured</option>
+                        <option value="SICK">Sick</option>
+                        <option value="UNKNOWN">Unknown</option>
+                      </select>
+                      <textarea
+                        name="additionalNotes"
+                        value={formData.additionalNotes}
+                        onChange={handleInputChange}
+                        rows={3}
+                        placeholder="Found near the park, seems friendly…"
+                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-primary/60 resize-none transition-colors"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="px-5 pb-5">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleNotifyOwner}
+                      disabled={loading}
+                      className="w-full py-3 bg-gradient-to-tl from-black to-primary text-white font-semibold rounded-xl shadow-sm shadow-primary hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {loading ? 'Sending…' : 'Send Notification'}
+                    </motion.button>
+                  </div>
+                </div>
+              )}
             </motion.div>
           </div>
         </>

@@ -340,7 +340,7 @@ export default function LostPetPage() {
                         transition={{ duration: 0.8, delay: 0.4 }}
                         className="hidden md:block h-64 lg:h-140 -mt-10 lg:-mt-30 bg-gradient-to-br from-primary via-primary via-30% to-black"
                         style={{
-                            WebkitMaskImage: "url('./images/paw-img.png')",
+                            WebkitMaskImage: "url('/images/paw-img.png')",
                             WebkitMaskRepeat: "no-repeat",
                             WebkitMaskSize: "contain",
                             WebkitMaskPosition: "center",

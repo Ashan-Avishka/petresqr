@@ -88,17 +88,19 @@ export const isValidPhoneNumber = (phoneNumber: string): boolean => {
  */
 export const formatPhoneNumber = (
   phoneNumber: string,
-  defaultCountryCode: string = '1'
+  defaultCountryCode: string = '94'
 ): string => {
-  // Remove all non-digit characters
   const digits = phoneNumber.replace(/\D/g, '');
 
-  // If already has country code
   if (phoneNumber.startsWith('+')) {
     return `+${digits}`;
   }
 
-  // Add default country code
+  // Sri Lankan numbers starting with 0 — strip the leading 0
+  if (digits.startsWith('0')) {
+    return `+${defaultCountryCode}${digits.slice(1)}`;
+  }
+
   return `+${defaultCountryCode}${digits}`;
 };
 
